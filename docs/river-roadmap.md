@@ -21,60 +21,82 @@ so the port stays and the decision waits.
 
 ## M2 — Make the number trustworthy
 
-- **Ranges on estimates.** Groceries, fuel, leisure and the freelance invoices
-  are estimates. Give them a low/likely/high and draw the bed as a cone; the
-  headline answer becomes a range on those dates, which is the honest reading.
-- **Payment-day rules.** "Last working day of the month", and shifting a due
-  date off a weekend or a public holiday. A salary pinned to the 27th is a
-  simplification that will drift against the real statement.
-- **Indexation and end dates.** A yearly percentage rise per line (rent,
-  insurance, energy) and a visible end date (the kitchen loan already has one,
-  but nothing shows it).
-- **Engine tests.** `node:test` over the occurrence generator: month-end
-  clamping (31st in February), leap day, cadence end dates, a line whose anchor
-  is in the past, and the UTC-only arithmetic. Wire it into the build.
+Each step is one slice: tests first, then the code, then the ledger and chart
+catch up. The first three change the domain, so they come before anything that
+reads it.
+
+1. **Per-occurrence amounts.** `occurrenceAmount(line, date)` replaces the flat
+   `line.amount` inside the projection, so an amount can depend on when it
+   falls. Nothing changes on screen; it is the seam the next two steps need.
+   *Tests:* a line with no rules returns its own amount on every occurrence.
+2. **Indexation.** A yearly percentage rise per line from a given date — rent,
+   insurance, energy. *Tests:* 2% a year lands on the anniversary, not on 1
+   January; a rise applied to a month-end line keeps its day; the rise compounds
+   over three years.
+3. **Ranges on the estimated lines.** Groceries, fuel, leisure and the freelance
+   invoices carry a low and a high as well as a likely figure. The projection
+   returns three balances per day, the answer becomes a range on the read-out
+   date, and the bed is drawn as a cone with the likely line inside it.
+   *Tests:* the cone never crosses itself; a scenario with no estimates has a
+   cone of zero width; the low band drives the buffer warnings, not the likely
+   one.
+4. **Payment-day rules.** `exact`, `last working day of the month`, and `shift
+   off a weekend or public holiday`. The holiday list comes in through a small
+   port so the calendar is data, not code. *Tests:* a salary anchored to the
+   27th moves when the 27th is a Sunday; a rule that shifts backwards never
+   moves a payment into the past.
+5. **Ended lines.** A line whose end date has passed is shown as ended in the
+   ledger instead of quietly contributing nothing.
 
 ## M3 — Answer "so what"
 
-- **The Horizon Dial's dials, here.** The prototype's what-if sliders — scale
-  everything coming in, the day-to-day spending, the transfer to savings — and
-  its draggable needle, brought into the river. Both are worth having: the
-  sliders answer "what if this changed", the needle answers "what about that
-  day" without going through a date field.
-
-- **Tight-day panel.** List every breach of the buffer, and for each one the
-  smallest fix: move a planned one-off three weeks later, or cut the savings
-  transfer for two months. The forecast already knows enough to search for this.
-- **Compare two rivers.** Baseline against a variant (solar panels in June, car
-  sold, one salary drops) — two beds overlaid, a per-month delta strip.
-- **A sentence at the top.** Plain language: "You are fine until 24 October,
-  then €254 short of your buffer for eleven days." That is the answer most
-  people came for.
+6. **Stretches, not days.** Group the days under the buffer into stretches with
+   a start, an end and a depth. *Tests:* two breaches a day apart are one
+   stretch; a single day is a stretch of one.
+7. **A sentence at the top.** "You are fine until 24 October, then €254 short of
+   your buffer for eleven days." Pure function over the projection, so it is
+   tested rather than eyeballed.
+8. **Smallest fix.** For each stretch, search for the least disruptive change
+   that clears it: move a planned one-off later, pause the transfer to savings
+   for a month or two, or split a one-off in half. *Tests:* the search returns
+   the smallest change that works, and nothing when no single change is enough.
+9. **The Horizon Dial's dials, here.** The prototype's what-if sliders — scale
+   everything coming in, the day-to-day spending, the transfer to savings — as a
+   layer over the scenario rather than an edit to it, so it can be thrown away.
+   Plus its draggable needle on the bed panel, which answers "what about that
+   day" without going through the date field.
+10. **Compare two rivers.** Baseline against a variant (solar panels in June,
+    car sold, one salary drops): two beds overlaid, a per-month delta strip.
 
 ## M4 — Keep it, share it
 
-- **Somewhere to keep it.** Browser storage is per-browser: clear the site data
-  and the ledger is gone, and a second person cannot see it. Pick a backing
-  store (a service, an object store, a hosted runtime's own storage) and put it
-  behind the existing `ScenarioStore` port, keeping the local copy as the
-  offline fallback.
-- **A printable one-pager.** Month table, the bed, the tight days — for the
-  kitchen-table conversation the tool is really for.
+11. **Pick a backing store.** Still open, and the one decision that needs
+    answering rather than building: a small service with a database, an object
+    store, or a hosted runtime's own storage. Whatever it is goes behind the
+    existing `ScenarioStore` port, with the browser copy kept as the offline
+    fallback.
+12. **Save, auto-save, restore.** Debounced writes, a revision per save so two
+    devices cannot silently overwrite each other, and a list of earlier versions
+    to restore from.
+13. **Named ledgers.** More than one scenario side by side — the household's
+    real one, and the variants worth keeping.
+14. **A printable one-pager.** The month table, the bed and the tight days, for
+    the conversation the tool is really for.
 
 ## M5 — Craft
 
-- **Recompute cost.** Every keystroke currently re-projects 913 days and redraws
-  everything. Debounce the inputs, and recompute from the changed month forward
-  rather than from today.
-- **Keyboard and screen reader.** The river's month columns should be walkable
-  with arrow keys the way the Runway Grid's cells are, plus a spoken summary of
-  each column.
-- **Phone layout.** At 400px the ledger and the river stack; the ledger wants to
-  become a sheet you pull up, not 40 rows above the chart.
-- **Repo shape.** Engine as a real module with tests, templates split into
-  partials, `build.mjs` keeping the single-file publish it does now.
+15. **Recompute cost.** Every keystroke re-projects the whole horizon. Debounce
+    the inputs and recompute from the changed month forward.
+16. **Phone layout.** At 400px the ledger becomes a sheet you pull up over a
+    chart that stays put, instead of forty rows above it.
+17. **Spoken detail.** A summary sentence per month column for screen readers,
+    and focus that lands where the eye does after a change.
+18. **Tests at the edges.** The Playwright drive used by hand during M1 becomes
+    a checked-in end-to-end suite, plus a screenshot check of both themes.
+19. **Publish.** `npm run build` already emits one self-contained file; wire it
+    to a published page so the household can open it without a dev server.
 
 ## Next slice
 
-M2: ranges on the estimated lines and the payment-day rules, both of which the
-engine's cadence registry and the chart's geometry model are already shaped for.
+Steps 1–3. They change the domain, everything else reads it, and the ranges are
+what turn a single confident figure into an honest one.
