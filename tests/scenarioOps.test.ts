@@ -138,3 +138,45 @@ describe('applyPatch', () => {
     expect(line).toEqual(before);
   });
 });
+
+describe('applyPatch keeps a range consistent with its amount', () => {
+  const guessed = {
+    kind: 'recurring' as const, id: 'food', label: 'Groceries', amount: euros(-195),
+    category: 'living' as const, cadence: 'monthly' as const, anchor: plainDate('2026-09-12'),
+    estimate: true as const, range: { low: euros(-165), high: euros(-235) }
+  };
+
+  it('widens the range when a new amount falls outside it', () => {
+    // Typing 400 for a line whose guess spans 165–235 must not leave a range
+    // that excludes the amount: the stored scenario would no longer load.
+    const patched = applyPatch(guessed, { amount: euros(-400) });
+    expect(patched.range).toEqual({ low: euros(-165), high: euros(-400) });
+  });
+
+  it('turns the range round with the amount when the direction changes', () => {
+    const asIncome = applyPatch(guessed, { amount: euros(195) });
+    expect(asIncome.range).toEqual({ low: euros(165), high: euros(235) });
+  });
+
+  it('leaves a range that already contains the amount alone', () => {
+    expect(applyPatch(guessed, { amount: euros(-200) }).range).toEqual(guessed.range);
+  });
+
+  it('widens the modest end too, when the amount is smaller than the whole range', () => {
+    const patched = applyPatch(guessed, { amount: euros(-100) });
+    expect(patched.range).toEqual({ low: euros(-100), high: euros(-235) });
+  });
+
+  it('normalises a range that arrives outside the amount', () => {
+    const patched = applyPatch(guessed, { range: { low: euros(-100), high: euros(-150) } });
+    expect(patched.range).toEqual({ low: euros(-100), high: euros(-195) });
+  });
+
+  it('keeps the range and the payment rule through a change of kind', () => {
+    const withRule = { ...guessed, dueRule: 'next-working-day' as const, to: plainDate('2028-01-01') };
+    const asPlanned = switchKind(withRule, 'planned', plainDate('2026-09-10'));
+    expect(asPlanned).toMatchObject({ kind: 'planned', range: guessed.range, dueRule: 'next-working-day' });
+    expect(asPlanned).not.toHaveProperty('to');
+    expect(asPlanned).not.toHaveProperty('cadence');
+  });
+});

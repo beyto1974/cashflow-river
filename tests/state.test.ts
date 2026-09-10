@@ -96,6 +96,26 @@ describe('ledger state', () => {
     expect(ledger.editing).toBeNull();
   });
 
+  it('folds what has happened when the start date is moved forward', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const opening = ledger.forecast.opening;
+
+    ledger.setAsOf(plainDate('2026-10-05'));
+
+    expect(ledger.scenario.asOf).toBe('2026-10-05');
+    // the salary on 27 September and the boiler service on 2 October are behind us now
+    expect(ledger.forecast.opening).toBe(opening + euros(2500) - euros(190));
+    expect(ledger.scenario.lines.some((line) => line.id === 'fix')).toBe(false);
+  });
+
+  it('moves the start date back without inventing money', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const opening = ledger.forecast.opening;
+    ledger.setAsOf(plainDate('2026-08-01'));
+    expect(ledger.scenario.asOf).toBe('2026-08-01');
+    expect(ledger.forecast.opening).toBe(opening);
+  });
+
   it('will not remove the last account', () => {
     const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.removeAccount('a');

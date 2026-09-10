@@ -64,3 +64,33 @@ describe('adjustDueDate', () => {
     }
   });
 });
+
+describe('effectiveDueRule', () => {
+  it('keeps the rule for a line that falls due monthly or less often', async () => {
+    const { effectiveDueRule } = await import('../src/domain/dueDates');
+    expect(effectiveDueRule('last-working-day', 'monthly')).toBe('last-working-day');
+    expect(effectiveDueRule('last-working-day', 'quarterly')).toBe('last-working-day');
+    expect(effectiveDueRule('last-working-day', 'yearly')).toBe('last-working-day');
+  });
+
+  it('ignores the last-working-day rule on a weekly line, which it would collapse', () => {
+    // Four grocery runs a month all resolving to the 30th is a dip that is not real.
+    return import('../src/domain/dueDates').then(({ effectiveDueRule }) => {
+      expect(effectiveDueRule('last-working-day', 'weekly')).toBe('exact');
+      expect(effectiveDueRule('last-working-day', 'biweekly')).toBe('exact');
+    });
+  });
+
+  it('leaves the working-day shifts alone at every cadence', async () => {
+    const { effectiveDueRule } = await import('../src/domain/dueDates');
+    expect(effectiveDueRule('next-working-day', 'weekly')).toBe('next-working-day');
+    expect(effectiveDueRule('previous-working-day', 'biweekly')).toBe('previous-working-day');
+    expect(effectiveDueRule(undefined, 'weekly')).toBe('exact');
+  });
+
+  it('lists which rules a cadence may use, for the picker', async () => {
+    const { rulesFor } = await import('../src/domain/dueDates');
+    expect(rulesFor('monthly')).toContain('last-working-day');
+    expect(rulesFor('weekly')).not.toContain('last-working-day');
+  });
+});

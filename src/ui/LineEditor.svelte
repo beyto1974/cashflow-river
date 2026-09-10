@@ -4,7 +4,7 @@
   import { CATEGORIES, type Cadence, type Category, type Line, type LinePatch } from '../domain/types';
   import type { Cents } from '../domain/money';
   import { CADENCES, cadenceKeys } from '../domain/schedule';
-  import { DUE_RULES, type DueRule } from '../domain/dueDates';
+  import { DUE_RULES, rulesFor, type DueRule } from '../domain/dueDates';
   import { CATEGORY_LABELS } from './bands';
   import AmountInput from './AmountInput.svelte';
 
@@ -189,8 +189,8 @@
           onpatch({ dueRule: rule === 'exact' ? undefined : rule });
         }}
       >
-        {#each Object.entries(DUE_RULES) as [rule, spec] (rule)}
-          <option value={rule}>{spec.label}</option>
+        {#each rulesFor(line.cadence) as rule (rule)}
+          <option value={rule}>{DUE_RULES[rule].label}</option>
         {/each}
       </select>
     </label>

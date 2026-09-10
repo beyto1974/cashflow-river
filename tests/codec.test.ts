@@ -46,6 +46,14 @@ describe('codec', () => {
     expect(decodeScenario(document).lines[0]).not.toHaveProperty('mystery');
   });
 
+  it('widens a range that no longer contains its amount rather than refusing the file', () => {
+    const document = JSON.parse(encodeScenario(tinyScenario()));
+    document.scenario.lines[0].range = { low: -1000, high: -2000 };
+    const decoded = decodeScenario(document);
+    // the amount is +250000, so the range is turned round and widened to hold it
+    expect(decoded.lines[0]).toMatchObject({ range: { low: 1000, high: 250_000 } });
+  });
+
   it('answers null instead of throwing when asked safely', () => {
     expect(safeDecodeScenario('not json')).toBeNull();
     expect(safeDecodeScenario(null)).toBeNull();

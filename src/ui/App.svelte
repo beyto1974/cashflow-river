@@ -3,7 +3,7 @@
   import { formatEUR } from '../domain/money';
   import type { LedgerState } from './state.svelte';
   import { BANDS } from './bands';
-  import { distanceFrom, longDate, longMonth, shortMonth } from './format';
+  import { distanceFrom, longDate, longMonth, shortDate, shortMonth } from './format';
   import LedgerPanel from './LedgerPanel.svelte';
   import RiverChart from './RiverChart.svelte';
   import MonthDetail from './MonthDetail.svelte';
@@ -63,10 +63,32 @@
     {/if}
     <span class="aside">
       · {distance}, starting from {formatEUR(ledger.forecast.opening)}{worst < ledger.forecast.buffer
-        ? ` · could be under the ${formatEUR(ledger.forecast.buffer, { cents: false })} buffer`
+        ? ledger.banded.hasRange
+          ? ` · could be under the ${formatEUR(ledger.forecast.buffer, { cents: false })} buffer`
+          : ` · under the ${formatEUR(ledger.forecast.buffer, { cents: false })} buffer`
         : ''}
     </span>
   </div>
+
+  <p class="verdict" data-tone={ledger.summary.tone}>{ledger.summary.sentence}</p>
+
+  {#if ledger.summary.stretches.length > 0}
+    <div class="stretches">
+      <span class="eyebrow">Tight stretches</span>
+      {#each ledger.summary.stretches as stretch (stretch.from)}
+        <button
+          type="button"
+          class="stretch"
+          class:red={stretch.overdrawn}
+          onclick={() => ledger.setTarget(stretch.deepest.date)}
+        >
+          {shortDate(stretch.from)} → {shortDate(stretch.to)}
+          <b class="mono">{stretch.overdrawn ? formatEUR(stretch.deepest.balance) : `-${formatEUR(stretch.shortfall)}`}</b>
+          <span class="days">{stretch.days}d</span>
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   <div class="board">
     <LedgerPanel {ledger} />
@@ -167,6 +189,53 @@
   .aside {
     color: var(--ink-2);
     font-size: 13px;
+  }
+  .verdict {
+    margin: 14px 0 0;
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    line-height: 1.4;
+    max-width: 68ch;
+    border-left: 3px solid var(--accent);
+    padding-left: 12px;
+  }
+  .verdict[data-tone='tight'] {
+    border-left-color: var(--warning);
+  }
+  .verdict[data-tone='red'] {
+    border-left-color: var(--critical);
+  }
+  .stretches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 10px;
+  }
+  .stretch {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12.5px;
+    background: var(--sheet);
+    color: var(--ink-2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+  .stretch:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+  .stretch b {
+    color: var(--warning);
+    font-weight: 600;
+  }
+  .stretch.red b {
+    color: var(--critical);
+  }
+  .stretch .days {
+    color: var(--ink-3);
   }
   .board {
     display: grid;

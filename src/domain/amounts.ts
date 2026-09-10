@@ -1,6 +1,5 @@
 import { compareDates, type PlainDate } from './dates';
 import { scale, type Cents } from './money';
-import { isNegative } from './money';
 import { isRecurring, type Indexation, type Line } from './types';
 
 /**
@@ -28,11 +27,11 @@ export function occurrenceAmount(line: Line, date: PlainDate, outlook: Outlook =
  */
 function pick(line: Line, outlook: Outlook): Cents {
   if (outlook === 'likely' || !line.range) return line.amount;
+  /* Deliberately order-agnostic: the smaller signed value is the worse one for
+     spending (the dearer month) and for income (the thinner month) alike, so
+     min and max do the work whichever way round the range is stored. */
   const { low, high } = line.range;
-  const spending = isNegative(line.amount);
-  const worst = spending ? Math.min(low, high) : Math.min(low, high);
-  const best = spending ? Math.max(low, high) : Math.max(low, high);
-  return outlook === 'pessimistic' ? worst : best;
+  return outlook === 'pessimistic' ? Math.min(low, high) : Math.max(low, high);
 }
 
 /**

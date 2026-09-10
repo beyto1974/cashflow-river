@@ -2,6 +2,7 @@ import { addMonths, compareDates, monthKey, today, type MonthKey, type PlainDate
 import type { Cents } from '../domain/money';
 import { project, projectBand, type BandedForecast, type Forecast } from '../domain/forecast';
 import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domain/rollups';
+import { summarise, type Summary } from '../domain/summary';
 import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { ScenarioStore } from '../persistence/ports';
@@ -13,6 +14,8 @@ export interface LedgerState {
   readonly banded: BandedForecast;
   readonly months: MonthSummary[];
   readonly rhythm: Rhythm;
+  /** The answer in a sentence, plus the tight stretches behind it. */
+  readonly summary: Summary;
   readonly target: PlainDate;
   readonly selectedMonth: MonthKey;
   readonly editing: string | null;
@@ -56,6 +59,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   const forecast = $derived(banded.likely);
   const months = $derived(byMonth(forecast));
   const rhythm = $derived(monthlyRhythm(scenario));
+  const summary = $derived(summarise(banded, scenario.buffer, target));
 
   function commit(next: Scenario): void {
     scenario = next;
@@ -73,6 +77,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     get banded() { return banded; },
     get months() { return months; },
     get rhythm() { return rhythm; },
+    get summary() { return summary; },
     get target() { return target; },
     get selectedMonth() { return selected ?? monthKey(forecast.low.date); },
     get editing() { return editing; },
@@ -127,8 +132,14 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     setHorizon(horizonMonths) {
       commit({ ...scenario, horizonMonths: Math.min(600, Math.max(1, Math.round(horizonMonths))) });
     },
+    /**
+     * Moving the start date forward folds what has fallen due in between into
+     * the balance, exactly as loading a stored ledger does — otherwise a payment
+     * whose working-day rule shifts it before the new start is simply lost.
+     * Moving it back only re-opens days that are projected again anyway.
+     */
     setAsOf(date) {
-      commit({ ...scenario, asOf: date });
+      commit(compareDates(date, scenario.asOf) > 0 ? advanceTo(scenario, date) : { ...scenario, asOf: date });
     },
     reset() {
       store.clear();

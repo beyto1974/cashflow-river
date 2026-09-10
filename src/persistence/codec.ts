@@ -3,6 +3,7 @@ import {
   CATEGORIES, type Account, type AmountRange, type Category, type Indexation, type Line, type Scenario
 } from '../domain/types';
 import { CADENCES } from '../domain/schedule';
+import { normaliseRange } from '../domain/scenarioOps';
 import { DUE_RULES, type DueRule } from '../domain/dueDates';
 import type { Cadence } from '../domain/types';
 
@@ -73,14 +74,17 @@ function asIndexation(value: unknown, at: string): Indexation {
   return { ratePerYear: rate as number, from: asDate(raw.from, `${at}.from`) };
 }
 
+/**
+ * A range is normalised rather than refused: it has to point the same way as the
+ * amount and contain it, and a scenario that has drifted is worth loading with
+ * the range widened, not throwing away.
+ */
 function asRange(value: unknown, at: string, amount: number): AmountRange {
   const raw = asRecord(value, at);
-  const low = asCents(raw.low, `${at}.low`);
-  const high = asCents(raw.high, `${at}.high`);
-  if (Math.min(low, high) > amount || Math.max(low, high) < amount) {
-    fail(at, 'does not contain the line amount');
-  }
-  return { low, high };
+  return normaliseRange(
+    { low: asCents(raw.low, `${at}.low`), high: asCents(raw.high, `${at}.high`) },
+    amount
+  );
 }
 
 function asAccount(value: unknown, index: number): Account {

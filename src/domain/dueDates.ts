@@ -1,4 +1,5 @@
 import { addDays, lastDayOfMonth, weekday, type PlainDate } from './dates';
+import type { Cadence } from './types';
 
 /**
  * When a line is actually paid, as opposed to the date it is booked against. A
@@ -18,6 +19,28 @@ export const DUE_RULES: Record<DueRule, DueRuleSpec> = {
   'previous-working-day': { label: 'the working day before' },
   'last-working-day': { label: 'the last working day of the month' }
 };
+
+/** Cadences that fall due once a month or less, where "the last working day of
+ *  the month" is a meaningful instruction. */
+const MONTHLY_OR_SLOWER: Cadence[] = ['monthly', 'quarterly', 'yearly'];
+
+/**
+ * The rule that actually applies. "The last working day of the month" would
+ * collapse a weekly line onto one day a month — four grocery runs booked
+ * together is a dip that does not exist — so it is ignored there.
+ */
+export function effectiveDueRule(rule: DueRule | undefined, cadence: Cadence): DueRule {
+  if (!rule) return 'exact';
+  if (rule === 'last-working-day' && !MONTHLY_OR_SLOWER.includes(cadence)) return 'exact';
+  return rule;
+}
+
+/** Which rules a picker should offer for this cadence. */
+export function rulesFor(cadence: Cadence): DueRule[] {
+  return (Object.keys(DUE_RULES) as DueRule[]).filter(
+    (rule) => rule !== 'last-working-day' || MONTHLY_OR_SLOWER.includes(cadence)
+  );
+}
 
 /** True when nothing moves that day: a weekend, or a day the scenario calls closed. */
 export type IsHoliday = (date: PlainDate) => boolean;
