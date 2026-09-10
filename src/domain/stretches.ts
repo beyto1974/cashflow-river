@@ -58,3 +58,16 @@ export function tightStretches(banded: BandedForecast, threshold: Cents): Stretc
     threshold
   );
 }
+
+/**
+ * The stretches worth putting on screen: the deepest few, shown in date order.
+ * Thirty months of a tight household can hold dozens, and a wall of them says
+ * less than the worst handful.
+ */
+export function worstFirst(stretches: Stretch[], limit: number): Stretch[] {
+  if (stretches.length <= limit) return stretches;
+  return [...stretches]
+    .sort((a, b) => b.shortfall - a.shortfall)
+    .slice(0, limit)
+    .sort((a, b) => (a.from < b.from ? -1 : 1));
+}

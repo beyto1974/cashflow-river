@@ -3,6 +3,7 @@
   import { formatEUR } from '../domain/money';
   import type { LedgerState } from './state.svelte';
   import { BANDS } from './bands';
+  import { worstFirst } from '../domain/stretches';
   import { distanceFrom, longDate, longMonth, shortDate, shortMonth } from './format';
   import LedgerPanel from './LedgerPanel.svelte';
   import RiverChart from './RiverChart.svelte';
@@ -22,6 +23,7 @@
     ledger.months.find((month) => month.month === ledger.selectedMonth) ?? ledger.months[0]!
   );
   const distance = $derived(distanceFrom(ledger.forecast.asOf, ledger.target));
+  const shown = $derived(worstFirst(ledger.summary.likelyStretches, 6));
 
   /** A date outside the horizon is clamped, so the field is rewritten to match. */
   function pickDate(event: Event): void {
@@ -72,10 +74,18 @@
 
   <p class="verdict" data-tone={ledger.summary.tone}>{ledger.summary.sentence}</p>
 
-  {#if ledger.summary.stretches.length > 0}
+  {#if ledger.summary.risk}
+    <p class="risk">{ledger.summary.risk}</p>
+  {/if}
+
+  {#if ledger.summary.likelyStretches.length > 0}
     <div class="stretches">
-      <span class="eyebrow">Tight stretches</span>
-      {#each ledger.summary.stretches as stretch (stretch.from)}
+      <span class="eyebrow">
+        Tight stretches{ledger.summary.likelyStretches.length > shown.length
+          ? ` · the ${shown.length} worst of ${ledger.summary.likelyStretches.length}`
+          : ''}
+      </span>
+      {#each shown as stretch (stretch.from)}
         <button
           type="button"
           class="stretch"
@@ -204,6 +214,13 @@
   }
   .verdict[data-tone='red'] {
     border-left-color: var(--critical);
+  }
+  .risk {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--ink-2);
+    max-width: 68ch;
+    padding-left: 15px;
   }
   .stretches {
     display: flex;

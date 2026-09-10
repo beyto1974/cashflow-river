@@ -72,3 +72,18 @@ describe('tightStretches', () => {
     expect(tightStretches(projectBand(comfortable), comfortable.buffer)).toEqual([]);
   });
 });
+
+describe('worstFirst', () => {
+  it('keeps the deepest few, in date order', async () => {
+    const { worstFirst } = await import('../src/domain/stretches');
+    const found = stretchesBelow(series(100, 10, 100, 40, 100, 1, 100), euros(50));
+    const kept = worstFirst(found, 2);
+    expect(kept.map((stretch) => stretch.from)).toEqual(['2026-09-02', '2026-09-06']);
+  });
+
+  it('returns everything when there is less than the limit', async () => {
+    const { worstFirst } = await import('../src/domain/stretches');
+    const found = stretchesBelow(series(100, 10, 100), euros(50));
+    expect(worstFirst(found, 5)).toEqual(found);
+  });
+});
