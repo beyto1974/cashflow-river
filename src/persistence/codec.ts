@@ -3,6 +3,7 @@ import {
   CATEGORIES, type Account, type AmountRange, type Category, type Indexation, type Line, type Scenario
 } from '../domain/types';
 import { CADENCES } from '../domain/schedule';
+import { DUE_RULES, type DueRule } from '../domain/dueDates';
 import type { Cadence } from '../domain/types';
 
 export const SCHEMA_VERSION = 1;
@@ -55,6 +56,12 @@ function asCadence(value: unknown, field: string): Cadence {
   const text = asString(value, field);
   if (!Object.prototype.hasOwnProperty.call(CADENCES, text)) fail(field, `is not a known cadence: ${text}`);
   return text as Cadence;
+}
+
+function asDueRule(value: unknown, at: string): DueRule {
+  const text = asString(value, at);
+  if (!Object.prototype.hasOwnProperty.call(DUE_RULES, text)) fail(at, `is not a known payment-day rule: ${text}`);
+  return text as DueRule;
 }
 
 function asIndexation(value: unknown, at: string): Indexation {
@@ -112,7 +119,8 @@ function asLine(value: unknown, index: number): Line {
       anchor: asDate(raw.anchor, `${at}.anchor`),
       ...(raw.from === undefined ? {} : { from: asDate(raw.from, `${at}.from`) }),
       ...(raw.to === undefined ? {} : { to: asDate(raw.to, `${at}.to`) }),
-      ...(raw.indexation === undefined ? {} : { indexation: asIndexation(raw.indexation, `${at}.indexation`) })
+      ...(raw.indexation === undefined ? {} : { indexation: asIndexation(raw.indexation, `${at}.indexation`) }),
+      ...(raw.dueRule === undefined ? {} : { dueRule: asDueRule(raw.dueRule, `${at}.dueRule`) })
     };
   }
   return fail(`${at}.kind`, 'is neither "recurring" nor "planned"');
@@ -136,13 +144,19 @@ export function decodeScenario(document: unknown): Scenario {
   const lines = raw.lines;
   if (!Array.isArray(lines)) fail('lines', 'is not a list');
 
+  const holidays = raw.holidays;
+  if (holidays !== undefined && !Array.isArray(holidays)) fail('holidays', 'is not a list of dates');
+
   return {
     label: asString(raw.label, 'label'),
     asOf: asDate(raw.asOf, 'asOf'),
     horizonMonths: horizon as number,
     buffer: asCents(raw.buffer, 'buffer'),
     accounts: accounts.map(asAccount),
-    lines: lines.map(asLine)
+    lines: lines.map(asLine),
+    ...(holidays === undefined
+      ? {}
+      : { holidays: holidays.map((value, index) => asDate(value, `holidays[${index}]`)) })
   };
 }
 

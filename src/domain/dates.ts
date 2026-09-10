@@ -68,6 +68,11 @@ export function dayOfMonth(date: PlainDate): number {
   return Number(date.slice(8));
 }
 
+/** 0 is Sunday, 6 is Saturday. */
+export function weekday(date: PlainDate): number {
+  return toUTC(date).getUTCDay();
+}
+
 export function today(): PlainDate {
   return fromUTC(new Date());
 }

@@ -23,7 +23,9 @@ export function sampleScenario(): Scenario {
       { id: 'savings', name: 'Savings', balance: euros(9250), inForecast: false }
     ],
     lines: [
-      recurring('salary-1', 'Salary — Alex', 2940, 'salary', 'monthly', '2026-09-27'),
+      recurring('salary-1', 'Salary — Alex', 2940, 'salary', 'monthly', '2026-09-27', {
+        dueRule: 'previous-working-day'
+      }),
       recurring('salary-2', 'Freelance invoices — Sam', 1120, 'salary', 'monthly', '2026-09-15', {
         estimate: true, range: [700, 1500]
       }),
@@ -31,7 +33,9 @@ export function sampleScenario(): Scenario {
       recurring('holiday-pay', 'Holiday pay', 1890, 'salary', 'yearly', '2027-05-22'),
       recurring('bonus', 'Year-end bonus', 2640, 'salary', 'yearly', '2026-12-18'),
 
-      recurring('mortgage', 'Mortgage', -1142, 'housing', 'monthly', '2026-10-01'),
+      recurring('mortgage', 'Mortgage', -1142, 'housing', 'monthly', '2026-10-01', {
+        dueRule: 'next-working-day'
+      }),
       recurring('energy', 'Energy — monthly advance', -214, 'housing', 'monthly', '2026-09-15', {
         indexation: { ratePerYear: 500, from: '2027-01-01' }
       }),
@@ -62,7 +66,9 @@ export function sampleScenario(): Scenario {
       recurring('health', 'Health cover', -62.3, 'insurance', 'monthly', '2026-09-11'),
       recurring('property-tax', 'Property tax', -1284, 'tax', 'yearly', '2026-10-28'),
       recurring('pension', 'Pension contribution', -1050, 'saving', 'yearly', '2026-11-24'),
-      recurring('to-savings', 'Transfer to savings', -400, 'saving', 'monthly', '2026-09-28'),
+      recurring('to-savings', 'Transfer to savings', -400, 'saving', 'monthly', '2026-09-28', {
+        dueRule: 'next-working-day'
+      }),
 
       planned('washing-machine', 'Replace the washing machine', -680, 'living', '2026-10-20'),
       planned('trip-deposit', 'Summer trip — deposit', -750, 'travel', '2026-11-15'),
@@ -71,11 +77,18 @@ export function sampleScenario(): Scenario {
       planned('sell-car', 'Sell the old car', 3400, 'transport', '2027-02-06'),
       planned('trip-balance', 'Summer trip — balance', -1950, 'travel', '2027-03-02'),
       planned('solar', 'Solar panels — own contribution', -4200, 'housing', '2027-06-15')
-    ]
+    ],
+    /* Days the banks are shut, on top of every weekend. */
+    holidays: [
+      '2026-12-25', '2026-12-28', '2027-01-01', '2027-04-02', '2027-04-05', '2027-05-03',
+      '2027-12-27', '2027-12-28', '2028-01-03', '2028-04-14', '2028-04-17', '2028-05-01',
+      '2028-12-25', '2028-12-26', '2029-01-01'
+    ].map(plainDate)
   };
 }
 
 type Extras = {
+  dueRule?: 'exact' | 'next-working-day' | 'previous-working-day' | 'last-working-day';
   estimate?: boolean;
   /** [low, high] in euros, both carrying the sign of the amount. */
   range?: [number, number];
@@ -107,7 +120,8 @@ function recurring(
     ...(extras.to ? { to: plainDate(extras.to) } : {}),
     ...(extras.indexation
       ? { indexation: { ratePerYear: extras.indexation.ratePerYear, from: plainDate(extras.indexation.from) } }
-      : {})
+      : {}),
+    ...(extras.dueRule ? { dueRule: extras.dueRule } : {})
   };
 }
 

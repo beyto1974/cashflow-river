@@ -48,11 +48,14 @@ reads it. **Steps 1–3 are done.**
    leans the band the way it actually leans. The per-occurrence extremes are
    still on every movement, so a literal worst case can be shown later if it
    turns out to be wanted.
-4. **Payment-day rules.** `exact`, `last working day of the month`, and `shift
-   off a weekend or public holiday`. The holiday list comes in through a small
-   port so the calendar is data, not code. *Tests:* a salary anchored to the
-   27th moves when the 27th is a Sunday; a rule that shifts backwards never
-   moves a payment into the past.
+4. **Payment-day rules.** *(done)* Four rules per line — on that date, the next
+   working day, the working day before, the last working day of the month — and
+   a list of closed days on the scenario, so the calendar is data rather than
+   code. The sequence still counts from the anchor and only the day the money
+   moves shifts, so a rule can never make the occurrences drift.
+
+   Still to do here: nothing edits the closed days yet. They validate and load,
+   but a household cannot add its own bank holidays from the interface.
 5. **Ended lines.** A line whose end date has passed is shown as ended in the
    ledger instead of quietly contributing nothing.
 
@@ -114,7 +117,7 @@ reads it. **Steps 1–3 are done.**
 
 ## Next slice
 
-Step 4, the payment-day rules — then M3, which is where the forecast starts
-answering rather than only reporting. Step 15 (debounce, and recompute from the
+Step 5, then M3 — which is where the forecast starts answering rather than only
+reporting. Step 15 (debounce, and recompute from the
 changed month forward) has moved up in importance now that every keystroke
 re-projects and re-bands the whole horizon.

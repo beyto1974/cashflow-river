@@ -4,6 +4,7 @@
   import { CATEGORIES, type Cadence, type Category, type Line, type LinePatch } from '../domain/types';
   import type { Cents } from '../domain/money';
   import { CADENCES, cadenceKeys } from '../domain/schedule';
+  import { DUE_RULES, type DueRule } from '../domain/dueDates';
   import { CATEGORY_LABELS } from './bands';
   import AmountInput from './AmountInput.svelte';
 
@@ -178,6 +179,20 @@
     <label class="field">
       <span>Ends (optional)</span>
       <input type="date" value={line.to ?? ''} onchange={(event) => setDate(event, 'to')} />
+    </label>
+    <label class="field">
+      <span>Money moves</span>
+      <select
+        value={line.dueRule ?? 'exact'}
+        onchange={(event) => {
+          const rule = (event.currentTarget as HTMLSelectElement).value as DueRule;
+          onpatch({ dueRule: rule === 'exact' ? undefined : rule });
+        }}
+      >
+        {#each Object.entries(DUE_RULES) as [rule, spec] (rule)}
+          <option value={rule}>{spec.label}</option>
+        {/each}
+      </select>
     </label>
     <label class="field">
       <span>Rises % a year</span>

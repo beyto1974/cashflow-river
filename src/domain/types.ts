@@ -1,5 +1,6 @@
 import type { Cents } from './money';
 import type { PlainDate } from './dates';
+import type { DueRule } from './dueDates';
 
 export type Cadence = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
 
@@ -55,6 +56,8 @@ export interface RecurringLine extends LineFields {
   from?: PlainDate;
   to?: PlainDate;
   indexation?: Indexation;
+  /** Which working day the money actually moves on. Defaults to the date itself. */
+  dueRule?: DueRule;
 }
 
 export interface PlannedLine extends LineFields {
@@ -87,6 +90,7 @@ export interface LinePatch {
   from?: PlainDate | undefined;
   to?: PlainDate | undefined;
   indexation?: Indexation | undefined;
+  dueRule?: DueRule | undefined;
   date?: PlainDate;
 }
 
@@ -98,6 +102,8 @@ export interface Scenario {
   buffer: Cents;
   accounts: Account[];
   lines: Line[];
+  /** Days the banks are closed, on top of every weekend. */
+  holidays?: PlainDate[];
 }
 
 export interface DateWindow {

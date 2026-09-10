@@ -1,6 +1,7 @@
 import { addDays, addMonths, compareDates, daysBetween, plainDate, type PlainDate } from './dates';
 import { addCents, type Cents } from './money';
 import { occurrenceAmount } from './amounts';
+import { adjustDueDate } from './dueDates';
 import { occurrences } from './schedule';
 import { isRecurring, type Category, type Line, type Scenario } from './types';
 
@@ -135,11 +136,21 @@ export function project(scenario: Scenario): Forecast {
     else booked.set(date, [movement]);
   };
 
+  const closed = new Set(scenario.holidays ?? []);
+  const isHoliday = (date: PlainDate): boolean => closed.has(date);
+  const inside = (date: PlainDate): boolean =>
+    compareDates(date, asOf) >= 0 && compareDates(date, horizon) <= 0;
+
   for (const line of scenario.lines) {
     if (line.muted) continue;
     if (isRecurring(line)) {
-      for (const date of occurrences(line, window)) book(date, line);
-    } else if (compareDates(line.date, asOf) >= 0 && compareDates(line.date, horizon) <= 0) {
+      /* The sequence still counts from the anchor; only the day the money moves
+         shifts, so a rule can never make the occurrences drift. */
+      for (const date of occurrences(line, window)) {
+        const due = adjustDueDate(date, line.dueRule, isHoliday);
+        if (inside(due)) book(due, line);
+      }
+    } else if (inside(line.date)) {
       book(line.date, line);
     }
   }

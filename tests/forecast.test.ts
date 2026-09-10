@@ -108,3 +108,54 @@ describe('project', () => {
     expect(past.low.balance).toBe(euros(1000));
   });
 });
+
+describe('payment days', () => {
+  const salaryScenario = (rule: 'next-working-day' | 'previous-working-day' | 'last-working-day') =>
+    scenario({
+      lines: [
+        {
+          kind: 'recurring', id: 'pay', label: 'Pay', amount: euros(2000), category: 'salary',
+          cadence: 'monthly', anchor: plainDate('2026-09-27'), dueRule: rule
+        }
+      ],
+      holidays: [plainDate('2026-10-26')]
+    });
+
+  it('books a payment on the working day its rule points at', () => {
+    // 27 September 2026 is a Sunday
+    const forward = project(salaryScenario('next-working-day'));
+    expect(forward.dayAt(plainDate('2026-09-27'))?.movements).toEqual([]);
+    expect(forward.dayAt(plainDate('2026-09-28'))?.movements).toHaveLength(1);
+
+    const back = project(salaryScenario('previous-working-day'));
+    expect(back.dayAt(plainDate('2026-09-25'))?.movements).toHaveLength(1);
+  });
+
+  it('keeps counting occurrences from the anchor, so a shift never drifts', () => {
+    const forward = project(salaryScenario('next-working-day'));
+    expect(forward.dayAt(plainDate('2026-10-27'))?.movements).toHaveLength(1); // a Tuesday, unshifted
+    expect(forward.dayAt(plainDate('2026-11-27'))?.movements).toHaveLength(1); // a Friday, unshifted
+  });
+
+  it('honours the scenario holidays', () => {
+    const shifted = project(
+      scenario({
+        lines: [
+          {
+            kind: 'recurring', id: 'rent', label: 'Rent', amount: euros(-500), category: 'housing',
+            cadence: 'monthly', anchor: plainDate('2026-10-26'), dueRule: 'next-working-day'
+          }
+        ],
+        holidays: [plainDate('2026-10-26')]
+      })
+    );
+    expect(shifted.dayAt(plainDate('2026-10-26'))?.movements).toEqual([]);
+    expect(shifted.dayAt(plainDate('2026-10-27'))?.movements).toHaveLength(1);
+  });
+
+  it('pays on the last working day of the month when told to', () => {
+    const last = project(salaryScenario('last-working-day'));
+    expect(last.dayAt(plainDate('2026-09-30'))?.movements).toHaveLength(1);
+    expect(last.dayAt(plainDate('2026-10-30'))?.movements).toHaveLength(1); // the 31st is a Saturday
+  });
+});

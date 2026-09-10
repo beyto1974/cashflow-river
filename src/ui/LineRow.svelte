@@ -1,6 +1,7 @@
 <script lang="ts">
   import { formatEUR, formatSigned } from '../domain/money';
   import { CADENCES } from '../domain/schedule';
+  import { DUE_RULES } from '../domain/dueDates';
   import { isRecurring, type Line, type LinePatch } from '../domain/types';
   import { bandFor } from './bands';
   import { shortDate } from './format';
@@ -21,7 +22,9 @@
   const band = $derived(bandFor(line.category));
   const when = $derived(
     isRecurring(line)
-      ? `${CADENCES[line.cadence].label}${line.to ? `, until ${shortDate(line.to)}` : ''}${
+      ? `${CADENCES[line.cadence].label}${
+          line.dueRule && line.dueRule !== 'exact' ? `, ${DUE_RULES[line.dueRule].label}` : ''
+        }${line.to ? `, until ${shortDate(line.to)}` : ''}${
           line.indexation && line.indexation.ratePerYear > 0
             ? `, +${(line.indexation.ratePerYear / 100).toFixed(line.indexation.ratePerYear % 100 ? 2 : 0)}% a year`
             : ''
