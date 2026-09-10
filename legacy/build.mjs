@@ -2,8 +2,8 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const src = new URL('./src/', import.meta.url).pathname;
-const dist = new URL('./dist/', import.meta.url).pathname;
+const src = new URL('./', import.meta.url).pathname;
+const dist = new URL('../dist/', import.meta.url).pathname;
 
 const templates = readdirSync(src).filter((f) => f.endsWith('.html'));
 for (const file of templates) {
