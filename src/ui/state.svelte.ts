@@ -1,4 +1,4 @@
-import { monthKey, plainDate, type MonthKey, type PlainDate } from '../domain/dates';
+import { addMonths, compareDates, monthKey, plainDate, type MonthKey, type PlainDate } from '../domain/dates';
 import type { Cents } from '../domain/money';
 import { project, type Forecast } from '../domain/forecast';
 import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domain/rollups';
@@ -123,8 +123,10 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario): Ledge
   };
 }
 
+/** Keeps the read-out date inside the forecast without projecting again. */
 function clampToHorizon(scenario: Scenario, date: PlainDate): PlainDate {
-  const forecast = project(scenario);
-  if (forecast.dayAt(date)) return date;
-  return date < forecast.asOf ? forecast.asOf : forecast.horizon;
+  const horizon = addMonths(scenario.asOf, Math.max(1, scenario.horizonMonths));
+  if (compareDates(date, scenario.asOf) < 0) return scenario.asOf;
+  if (compareDates(date, horizon) > 0) return horizon;
+  return date;
 }
