@@ -30,6 +30,7 @@
       <AmountInput
         value={account.balance}
         label={`${account.name} balance`}
+        sign="typed"
         onchange={(balance) => onpatch(account.id, { balance })}
       />
       <label class="count" title="Count this account in the forecast">
@@ -51,7 +52,8 @@
   {/each}
 
   <button type="button" class="button ghost add" onclick={onadd}>Add an account</button>
-  <p class="hint">Untick an account to hold it outside the forecast — a savings pot you are not spending from.</p>
+  <p class="hint">Untick an account to hold it outside the forecast — a savings pot you are not spending from.
+    A balance can be negative: type <span class="mono">-320.50</span> for an account in the red.</p>
 </section>
 
 <style>

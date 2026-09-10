@@ -45,3 +45,21 @@ describe('money is integer cents', () => {
     expect(toEuros(123_456)).toBeCloseTo(1234.56, 10);
   });
 });
+
+describe('sign handling', () => {
+  it('treats negative zero as negative, because a direction control can produce it', async () => {
+    const { isNegative } = await import('../src/domain/money');
+    expect(isNegative(-1)).toBe(true);
+    expect(isNegative(-0)).toBe(true);
+    expect(isNegative(0)).toBe(false);
+    expect(isNegative(1)).toBe(false);
+  });
+
+  it('applies a direction to a magnitude', async () => {
+    const { withSign } = await import('../src/domain/money');
+    expect(withSign(500, 'out')).toBe(-500);
+    expect(withSign(-500, 'out')).toBe(-500);
+    expect(withSign(-500, 'in')).toBe(500);
+    expect(Object.is(withSign(0, 'out'), -0)).toBe(true);
+  });
+});

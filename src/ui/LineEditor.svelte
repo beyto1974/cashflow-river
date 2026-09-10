@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { isPlainDate, plainDate, today } from '../domain/dates';
+  import { isPlainDate, plainDate } from '../domain/dates';
+  import { directionOf, withSign, type Direction } from '../domain/money';
   import { CATEGORIES, type Cadence, type Category, type Line } from '../domain/types';
   import { CADENCES, cadenceKeys } from '../domain/schedule';
   import { CATEGORY_LABELS } from './bands';
@@ -8,36 +9,51 @@
   interface Props {
     line: Line;
     onpatch: (patch: Partial<Line>) => void;
+    onkind: (kind: Line['kind']) => void;
     onremove: () => void;
     onclose: () => void;
   }
-  const { line, onpatch, onremove, onclose }: Props = $props();
+  const { line, onpatch, onkind, onremove, onclose }: Props = $props();
 
-  const direction = $derived(line.amount >= 0 ? 'in' : 'out');
+  const direction = $derived(directionOf(line.amount));
 
   function setDirection(next: string): void {
-    const size = Math.abs(line.amount);
-    onpatch({ amount: next === 'in' ? size : -size });
+    onpatch({ amount: withSign(line.amount, next as Direction) });
   }
-  function setDate(field: 'anchor' | 'date' | 'from' | 'to', value: string): void {
+
+  /**
+   * A refused value has to be written back to the input: the model did not
+   * change, so nothing would re-render it and the field would sit there empty
+   * while the line kept its old date.
+   */
+  function setDate(event: Event, field: 'anchor' | 'date' | 'from' | 'to'): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const value = input.value;
+    const optional = field === 'from' || field === 'to';
+
     if (value === '') {
-      if (field === 'from' || field === 'to') onpatch({ [field]: undefined } as Partial<Line>);
+      if (optional) onpatch({ [field]: undefined } as Partial<Line>);
+      else input.value = current(field);
       return;
     }
-    if (!isPlainDate(value)) return;
+    if (!isPlainDate(value)) {
+      input.value = current(field);
+      return;
+    }
     onpatch({ [field]: plainDate(value) } as Partial<Line>);
+  }
+
+  function current(field: 'anchor' | 'date' | 'from' | 'to'): string {
+    if (field === 'date') return line.kind === 'planned' ? line.date : '';
+    if (line.kind !== 'recurring') return '';
+    return field === 'anchor' ? line.anchor : (line[field] ?? '');
   }
   function setEstimate(isGuess: boolean): void {
     const patch: Partial<Line> = isGuess ? { estimate: true } : {};
     onpatch(isGuess ? patch : ({ estimate: false } as Partial<Line>));
   }
   function setKind(kind: string): void {
-    if (kind === line.kind) return;
-    onpatch(
-      kind === 'planned'
-        ? ({ kind: 'planned', date: line.kind === 'recurring' ? line.anchor : today() } as Partial<Line>)
-        : ({ kind: 'recurring', cadence: 'monthly', anchor: line.kind === 'planned' ? line.date : today() } as Partial<Line>)
-    );
+    if (kind !== line.kind) onkind(kind as Line['kind']);
   }
 </script>
 
@@ -86,20 +102,20 @@
     </label>
     <label class="field">
       <span>Falls due</span>
-      <input type="date" value={line.anchor} onchange={(event) => setDate('anchor', (event.currentTarget as HTMLInputElement).value)} />
+      <input type="date" value={line.anchor} onchange={(event) => setDate(event, 'anchor')} />
     </label>
     <label class="field">
       <span>Starts (optional)</span>
-      <input type="date" value={line.from ?? ''} onchange={(event) => setDate('from', (event.currentTarget as HTMLInputElement).value)} />
+      <input type="date" value={line.from ?? ''} onchange={(event) => setDate(event, 'from')} />
     </label>
     <label class="field">
       <span>Ends (optional)</span>
-      <input type="date" value={line.to ?? ''} onchange={(event) => setDate('to', (event.currentTarget as HTMLInputElement).value)} />
+      <input type="date" value={line.to ?? ''} onchange={(event) => setDate(event, 'to')} />
     </label>
   {:else}
     <label class="field">
       <span>On</span>
-      <input type="date" value={line.date} onchange={(event) => setDate('date', (event.currentTarget as HTMLInputElement).value)} />
+      <input type="date" value={line.date} onchange={(event) => setDate(event, 'date')} />
     </label>
   {/if}
 

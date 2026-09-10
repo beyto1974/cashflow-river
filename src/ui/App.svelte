@@ -20,9 +20,11 @@
   );
   const distance = $derived(distanceFrom(ledger.forecast.asOf, ledger.target));
 
+  /** A date outside the horizon is clamped, so the field is rewritten to match. */
   function pickDate(event: Event): void {
-    const value = (event.currentTarget as HTMLInputElement).value;
-    if (isPlainDate(value)) ledger.setTarget(plainDate(value));
+    const input = event.currentTarget as HTMLInputElement;
+    if (isPlainDate(input.value)) ledger.setTarget(plainDate(input.value));
+    input.value = ledger.target;
   }
   function pickMonth(month: MonthKey): void {
     ledger.selectMonth(month);
@@ -86,7 +88,7 @@
       {ledger.isSample
         ? 'These are example figures — an illustration, not your accounts.'
         : 'Your own figures, kept in this browser only.'}
-      Today is {longDate(ledger.forecast.asOf)}.
+      The forecast starts on {longDate(ledger.forecast.asOf)} and runs {ledger.scenario.horizonMonths} months.
     </span>
     <button type="button" class="button ghost" onclick={() => ledger.reset()}>Back to the example</button>
   </footer>

@@ -12,10 +12,11 @@
     open: boolean;
     onedit: (id: string | null) => void;
     onpatch: (patch: Partial<Line>) => void;
+    onkind: (kind: Line['kind']) => void;
     onremove: () => void;
     ontoggle: () => void;
   }
-  const { line, open, onedit, onpatch, onremove, ontoggle }: Props = $props();
+  const { line, open, onedit, onpatch, onkind, onremove, ontoggle }: Props = $props();
 
   const band = $derived(bandFor(line.category));
   const when = $derived(
@@ -44,7 +45,7 @@
 </div>
 
 {#if open}
-  <LineEditor {line} {onpatch} {onremove} onclose={() => onedit(null)} />
+  <LineEditor {line} {onpatch} {onkind} {onremove} onclose={() => onedit(null)} />
 {/if}
 
 <style>

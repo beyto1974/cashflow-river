@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { formatSigned } from '../domain/money';
+  import { formatSigned, parseAmount } from '../domain/money';
+  import { isPlainDate, plainDate } from '../domain/dates';
   import { perMonth } from '../domain/schedule';
   import { isRecurring, type Line } from '../domain/types';
   import type { LedgerState } from './state.svelte';
@@ -62,6 +63,7 @@
           open={ledger.editing === line.id}
           onedit={(id) => ledger.edit(id)}
           onpatch={(patch) => ledger.updateLine(line.id, patch)}
+          onkind={(kind) => ledger.changeKind(line.id, kind)}
           onremove={() => ledger.removeLine(line.id)}
           ontoggle={() => ledger.toggleMute(line.id)}
         />
@@ -88,8 +90,22 @@
           class="mono"
           value={(ledger.scenario.buffer / 100).toFixed(0)}
           onchange={(event) => {
-            const parsed = Number((event.currentTarget as HTMLInputElement).value.replace(/[^\d.-]/g, ''));
-            if (Number.isFinite(parsed)) ledger.setBuffer(Math.round(parsed * 100));
+            const input = event.currentTarget as HTMLInputElement;
+            const parsed = parseAmount(input.value);
+            if (parsed === null) input.value = (ledger.scenario.buffer / 100).toFixed(0);
+            else ledger.setBuffer(Math.abs(parsed));
+          }}
+        />
+      </label>
+      <label>
+        <span>Starts on</span>
+        <input
+          type="date"
+          value={ledger.scenario.asOf}
+          onchange={(event) => {
+            const input = event.currentTarget as HTMLInputElement;
+            if (isPlainDate(input.value)) ledger.setAsOf(plainDate(input.value));
+            else input.value = ledger.scenario.asOf;
           }}
         />
       </label>
@@ -144,6 +160,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+  }
+  .settings label:first-child {
+    grid-column: 1 / -1;
   }
   .settings label {
     display: flex;

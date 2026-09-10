@@ -17,22 +17,49 @@ function recordingStore(initial: Scenario | null = null): ScenarioStore & { save
 }
 
 describe('ledger state', () => {
+  it('rolls a stored ledger forward to today and saves the roll', () => {
+    const stored = tinyScenario({ label: 'Mine' }); // dated 2026-09-10
+    const store = recordingStore(stored);
+    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-10-05'));
+
+    expect(ledger.scenario.asOf).toBe('2026-10-05');
+    // salary on 27 September and the boiler service on 2 October have happened
+    expect(ledger.forecast.opening).toBe(euros(1500 + 2500 - 190));
+    expect(store.saves[0]?.asOf).toBe('2026-10-05');
+  });
+
+  it('opens with the needle on the lowest point rather than a fixed date', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    expect(ledger.target).toBe(ledger.forecast.low.date);
+  });
+
+  it('changes a line between repeating and one-off without keeping stale fields', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    ledger.updateLine('pay', { to: plainDate('2027-01-01') } as never);
+    ledger.changeKind('pay', 'planned');
+    ledger.changeKind('pay', 'recurring');
+
+    const line = ledger.scenario.lines.find((candidate) => candidate.id === 'pay');
+    expect(line).not.toHaveProperty('to');
+    expect(line).toMatchObject({ kind: 'recurring', cadence: 'monthly' });
+  });
+
   it('opens on the example when nothing is stored, and says so', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario());
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     expect(ledger.isSample).toBe(true);
     expect(ledger.forecast.opening).toBe(euros(1500));
   });
 
   it('prefers what was stored', () => {
     const stored = tinyScenario({ label: 'Mine', buffer: euros(50) });
-    const ledger = createLedgerState(recordingStore(stored), tinyScenario());
+    const ledger = createLedgerState(recordingStore(stored), tinyScenario(), plainDate('2026-09-10'));
     expect(ledger.isSample).toBe(false);
     expect(ledger.scenario.label).toBe('Mine');
   });
 
   it('writes every change through to the store and reprojects', () => {
     const store = recordingStore();
-    const ledger = createLedgerState(store, tinyScenario());
+    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-09-10'));
     const before = ledger.forecast.days.at(-1)!.balance;
 
     ledger.updateLine('pay', { amount: euros(3000) });
@@ -43,7 +70,7 @@ describe('ledger state', () => {
   });
 
   it('keeps the read-out date inside the horizon when the horizon shrinks', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario());
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.setTarget(plainDate('2027-02-01'));
     expect(ledger.target).toBe('2027-02-01');
 
@@ -53,7 +80,7 @@ describe('ledger state', () => {
   });
 
   it('adds, mutes and removes lines', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario());
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.addLine({
       kind: 'planned', id: 'new', label: 'Tyres', amount: euros(-320),
       category: 'transport', date: plainDate('2026-10-10')
@@ -70,13 +97,13 @@ describe('ledger state', () => {
   });
 
   it('will not remove the last account', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario());
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.removeAccount('a');
     expect(ledger.scenario.accounts).toHaveLength(1);
   });
 
   it('goes back to the example on reset', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario());
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.updateLine('pay', { label: 'Wages' });
     ledger.reset();
     expect(ledger.isSample).toBe(true);

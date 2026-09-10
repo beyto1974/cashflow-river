@@ -19,6 +19,23 @@ export function toEuros(cents: Cents): number {
   return cents / CENT_FACTOR;
 }
 
+/** True for -0 as well: a direction control that negates zero produces it. */
+export function isNegative(value: Cents): boolean {
+  return value < 0 || Object.is(value, -0);
+}
+
+export type Direction = 'in' | 'out';
+
+export function directionOf(value: Cents): Direction {
+  return isNegative(value) ? 'out' : 'in';
+}
+
+/** Puts a direction on an amount, whatever sign it arrives with. */
+export function withSign(value: Cents, direction: Direction): Cents {
+  const size = Math.abs(value);
+  return direction === 'out' ? -size : size;
+}
+
 export function addCents(...values: Cents[]): Cents {
   return values.reduce((sum, value) => sum + value, 0);
 }

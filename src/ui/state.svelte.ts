@@ -1,7 +1,8 @@
-import { addMonths, compareDates, monthKey, plainDate, type MonthKey, type PlainDate } from '../domain/dates';
+import { addMonths, compareDates, monthKey, today, type MonthKey, type PlainDate } from '../domain/dates';
 import type { Cents } from '../domain/money';
 import { project, type Forecast } from '../domain/forecast';
 import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domain/rollups';
+import { advanceTo, switchKind } from '../domain/scenarioOps';
 import type { Account, Line, Scenario } from '../domain/types';
 import type { ScenarioStore } from '../persistence/ports';
 
@@ -18,6 +19,7 @@ export interface LedgerState {
   selectMonth(month: MonthKey): void;
   edit(lineId: string | null): void;
   updateLine(id: string, patch: Partial<Line>): void;
+  changeKind(id: string, kind: Line['kind']): void;
   addLine(line: Line): void;
   removeLine(id: string): void;
   toggleMute(id: string): void;
@@ -26,6 +28,7 @@ export interface LedgerState {
   removeAccount(id: string): void;
   setBuffer(buffer: Cents): void;
   setHorizon(months: number): void;
+  setAsOf(date: PlainDate): void;
   reset(): void;
 }
 
@@ -34,11 +37,16 @@ export interface LedgerState {
  * store, and the forecast is derived rather than kept, so nothing can hold a
  * projection that no longer matches the ledger.
  */
-export function createLedgerState(store: ScenarioStore, sample: Scenario): LedgerState {
+export function createLedgerState(store: ScenarioStore, sample: Scenario, now: PlainDate = today()): LedgerState {
   const saved = store.load();
-  let scenario = $state<Scenario>(saved ?? sample);
+  /* A stored ledger is dated the day it was last saved. Roll it forward so the
+     forecast starts today, folding what has happened since into the balance. */
+  const rolled = saved ? advanceTo(saved, now) : null;
+  if (rolled && rolled !== saved) store.save(rolled);
+
+  let scenario = $state<Scenario>(rolled ?? sample);
   let fromSample = $state(saved === null);
-  let target = $state<PlainDate>(clampToHorizon(scenario, plainDate('2027-03-02')));
+  let target = $state<PlainDate>(project(rolled ?? sample).low.date);
   let selected = $state<MonthKey | null>(null);
   let editing = $state<string | null>(null);
 
@@ -76,6 +84,9 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario): Ledge
     updateLine(id, patch) {
       mapLines((line) => (line.id === id ? ({ ...line, ...patch } as Line) : line));
     },
+    changeKind(id, kind) {
+      mapLines((line) => (line.id === id ? switchKind(line, kind, scenario.asOf) : line));
+    },
     addLine(line) {
       commit({ ...scenario, lines: [...scenario.lines, line] });
       editing = line.id;
@@ -112,11 +123,14 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario): Ledge
     setHorizon(horizonMonths) {
       commit({ ...scenario, horizonMonths: Math.min(600, Math.max(1, Math.round(horizonMonths))) });
     },
+    setAsOf(date) {
+      commit({ ...scenario, asOf: date });
+    },
     reset() {
       store.clear();
       scenario = sample;
       fromSample = true;
-      target = clampToHorizon(sample, plainDate('2027-03-02'));
+      target = project(sample).low.date;
       selected = null;
       editing = null;
     }

@@ -16,19 +16,23 @@
   const { forecast, months, target, selectedMonth, onselect }: Props = $props();
 
   let frameWidth = $state(880);
+  let plot = $state<SVGSVGElement | null>(null);
   let hovered = $state<Column | null>(null);
   let tip = $state({ x: 0, y: 0 });
 
   const geometry = $derived(riverGeometry({ forecast, months, width: Math.max(frameWidth - 26, 320), target }));
   const labelEvery = $derived(geometry.width < 620 ? 4 : geometry.width < 900 ? 2 : 1);
 
+  /** Measured against the drawing, not its frame: the frame carries padding and
+      a border, and the viewBox knows nothing about either. */
   function move(event: PointerEvent): void {
     const frame = event.currentTarget as HTMLElement | null;
-    if (!frame) return;
-    const box = frame.getBoundingClientRect();
-    const scale = geometry.width / box.width;
-    hovered = columnAt(geometry, (event.clientX - box.left) * scale) ?? null;
-    tip = { x: event.clientX - box.left, y: event.clientY - box.top };
+    if (!frame || !plot) return;
+    const frameBox = frame.getBoundingClientRect();
+    const plotBox = plot.getBoundingClientRect();
+    const scale = plotBox.width > 0 ? geometry.width / plotBox.width : 1;
+    hovered = columnAt(geometry, (event.clientX - plotBox.left) * scale) ?? null;
+    tip = { x: event.clientX - frameBox.left, y: event.clientY - frameBox.top };
   }
   function step(delta: number): MonthKey | undefined {
     const index = months.findIndex((month) => month.month === selectedMonth);
@@ -59,12 +63,19 @@
   bind:clientWidth={frameWidth}
   use:trackPointer={{ move, leave: () => (hovered = null) }}
 >
+  <p class="sr-only" id="river-summary">
+    Money in and out per month from {horizonLabel}, above and below the axis, with the balance it leaves behind. On
+    {target} the balance is {formatEUR(needleDate.balance)}. Each month is a button: use the left and right arrow keys to
+    walk them.
+  </p>
   <svg
+    bind:this={plot}
     viewBox={`0 0 ${geometry.width} ${geometry.height}`}
     width={geometry.width}
     height={geometry.height}
-    role="img"
-    aria-label={`Money in and out per month from ${horizonLabel}, above and below the axis, with the balance it leaves behind. On ${target} the balance is ${formatEUR(needleDate.balance)}.`}
+    role="group"
+    aria-describedby="river-summary"
+    aria-label="Monthly flow and the balance it leaves"
   >
     <text x={geometry.width - geometry.pad.right} y="13" text-anchor="end" class="caption">
       MONTHLY FLOW — IN ABOVE, OUT BELOW
@@ -198,6 +209,14 @@
     border-radius: 10px;
     padding: 12px 12px 8px;
     position: relative;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .frame:focus-visible {
     outline: 2px solid var(--accent);

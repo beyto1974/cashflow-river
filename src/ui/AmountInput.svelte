@@ -1,17 +1,22 @@
 <script lang="ts">
-  import { formatEUR, parseAmount, type Cents } from '../domain/money';
+  import { formatEUR, isNegative, parseAmount, type Cents } from '../domain/money';
 
   interface Props {
     value: Cents;
     label: string;
-    /** Keeps the sign of the current value; direction is chosen elsewhere. */
     onchange: (value: Cents) => void;
+    /**
+     * 'keep' holds the sign of the current value, because a direction control
+     * owns it. 'typed' takes the sign from what is typed, for a balance that
+     * can genuinely be negative.
+     */
+    sign?: 'keep' | 'typed';
     id?: string;
     align?: 'left' | 'right';
   }
-  const { value, label, onchange, id, align = 'right' }: Props = $props();
+  const { value, label, onchange, sign = 'keep', id, align = 'right' }: Props = $props();
 
-  const text = $derived((Math.abs(value) / 100).toFixed(2));
+  const text = $derived(((sign === 'typed' ? value : Math.abs(value)) / 100).toFixed(2));
   let draft = $state<string | null>(null);
   let invalid = $state(false);
 
@@ -24,7 +29,7 @@
     }
     invalid = false;
     draft = null;
-    onchange(value < 0 ? -Math.abs(cents) : Math.abs(cents));
+    onchange(sign === 'typed' ? cents : isNegative(value) ? -Math.abs(cents) : Math.abs(cents));
   }
 
   /** Leaving the field with something unreadable in it puts the amount back. */
