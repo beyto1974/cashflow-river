@@ -62,12 +62,12 @@ that reads it.
 
 ## M3 — Answer "so what"
 
-6. **Stretches, not days.** Group the days under the buffer into stretches with
-   a start, an end and a depth. *Tests:* two breaches a day apart are one
-   stretch; a single day is a stretch of one.
-7. **A sentence at the top.** "You are fine until 24 October, then €254 short of
-   your buffer for eleven days." Pure function over the projection, so it is
-   tested rather than eyeballed.
+6. **Stretches, not days.** *(done)* The days below a line are grouped into
+   stretches with a start, an end, the deepest day and how far short it goes.
+   The page shows a chip per stretch that moves the read-out to its worst day.
+7. **A sentence at the top.** *(done)* The sentence states the likely reading;
+   what the guesses could do to it is a second, plainly conditional sentence, so
+   a worst case is never dressed as fact.
 8. **Smallest fix.** For each stretch, search for the least disruptive change
    that clears it: move a planned one-off later, pause the transfer to savings
    for a month or two, or split a one-off in half. *Tests:* the search returns
@@ -118,8 +118,8 @@ that reads it.
 
 ## Next slice
 
-M3, which is where the forecast starts answering rather than only reporting:
-stretches, the sentence at the top, then the smallest fix. Step 15 (debounce,
+Step 8, the smallest fix — the stretches and the sentence are in place, so the
+search has something to aim at. Step 15 (debounce,
 and recompute from the changed month forward) has moved up in importance now
 that every keystroke re-projects and re-bands the whole horizon. Step 15 (debounce, and recompute from the
 changed month forward) has moved up in importance now that every keystroke
