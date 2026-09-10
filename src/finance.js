@@ -159,16 +159,23 @@ var MV = (function () {
 
   function money(v, opts) {
     var o = opts || {};
+    /* Belgian format, minus the space after the symbol: in a monospaced face a
+       space takes a full character width and splits the figure in two. */
     return new Intl.NumberFormat('nl-BE', {
       style: 'currency', currency: 'EUR',
       minimumFractionDigits: o.cents === false ? 0 : 2,
       maximumFractionDigits: o.cents === false ? 0 : 2
-    }).format(v);
+    }).format(v).replace(/\u00a0/g, '');
   }
   function signed(v, opts) { return (v > 0 ? '+' : '') + money(v, opts); }
   function longDate(d) {
     return new Intl.DateTimeFormat('en-GB', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+    }).format(typeof d === 'string' ? parseDate(d) : d);
+  }
+  function shortDate(d) {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
     }).format(typeof d === 'string' ? parseDate(d) : d);
   }
   function monthLabel(key) {
@@ -190,7 +197,8 @@ var MV = (function () {
     parseDate: parseDate, iso: iso, addDays: addDays, addMonths: addMonths,
     daysBetween: daysBetween, occurrences: occurrences, project: project,
     monthlyNet: monthlyNet, movements: movements, byMonth: byMonth,
-    money: money, signed: signed, longDate: longDate, monthLabel: monthLabel,
+    money: money, signed: signed, longDate: longDate, shortDate: shortDate,
+    monthLabel: monthLabel,
     distance: distance
   };
 })();
