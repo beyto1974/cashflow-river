@@ -29,6 +29,13 @@ interface LineFields {
   muted?: boolean;
 }
 
+/** A yearly rise, in basis points: 200 is 2.00% a year. */
+export interface Indexation {
+  ratePerYear: number;
+  /** Rises land on the anniversaries of this date, and never before it. */
+  from: PlainDate;
+}
+
 export interface RecurringLine extends LineFields {
   kind: 'recurring';
   cadence: Cadence;
@@ -36,6 +43,7 @@ export interface RecurringLine extends LineFields {
   anchor: PlainDate;
   from?: PlainDate;
   to?: PlainDate;
+  indexation?: Indexation;
 }
 
 export interface PlannedLine extends LineFields {

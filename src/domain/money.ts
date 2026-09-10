@@ -36,6 +36,11 @@ export function withSign(value: Cents, direction: Direction): Cents {
   return direction === 'out' ? -size : size;
 }
 
+/** Multiplies an amount and lands back on whole cents. */
+export function scale(value: Cents, factor: number): Cents {
+  return roundCents(value * factor);
+}
+
 export function addCents(...values: Cents[]): Cents {
   return values.reduce((sum, value) => sum + value, 0);
 }

@@ -21,7 +21,11 @@
   const band = $derived(bandFor(line.category));
   const when = $derived(
     isRecurring(line)
-      ? `${CADENCES[line.cadence].label}${line.to ? `, until ${shortDate(line.to)}` : ''}`
+      ? `${CADENCES[line.cadence].label}${line.to ? `, until ${shortDate(line.to)}` : ''}${
+          line.indexation && line.indexation.ratePerYear > 0
+            ? `, +${(line.indexation.ratePerYear / 100).toFixed(line.indexation.ratePerYear % 100 ? 2 : 0)}% a year`
+            : ''
+        }`
       : shortDate(line.date)
   );
 </script>

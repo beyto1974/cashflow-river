@@ -52,6 +52,42 @@
     const patch: Partial<Line> = isGuess ? { estimate: true } : {};
     onpatch(isGuess ? patch : ({ estimate: false } as Partial<Line>));
   }
+  /** A rate of nought — or an empty field — means the line simply does not rise. */
+  function setRate(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const text = input.value.trim().replace('%', '');
+    if (text === '') {
+      onpatch({ indexation: undefined } as Partial<Line>);
+      return;
+    }
+    const percent = Number(text);
+    if (!Number.isFinite(percent) || percent < 0) {
+      input.value = line.kind === 'recurring' && line.indexation ? (line.indexation.ratePerYear / 100).toString() : '';
+      return;
+    }
+    const ratePerYear = Math.round(percent * 100);
+    if (ratePerYear === 0) {
+      onpatch({ indexation: undefined } as Partial<Line>);
+      return;
+    }
+    const from = line.kind === 'recurring' ? (line.indexation?.from ?? line.anchor) : plainDate(fallback());
+    onpatch({ indexation: { ratePerYear, from } } as Partial<Line>);
+  }
+
+  function setRiseDate(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    if (line.kind !== 'recurring' || !line.indexation) return;
+    if (!isPlainDate(input.value)) {
+      input.value = line.indexation.from;
+      return;
+    }
+    onpatch({ indexation: { ...line.indexation, from: plainDate(input.value) } } as Partial<Line>);
+  }
+
+  function fallback(): string {
+    return line.kind === 'planned' ? line.date : line.anchor;
+  }
+
   function setKind(kind: string): void {
     if (kind !== line.kind) onkind(kind as Line['kind']);
   }
@@ -111,6 +147,26 @@
     <label class="field">
       <span>Ends (optional)</span>
       <input type="date" value={line.to ?? ''} onchange={(event) => setDate(event, 'to')} />
+    </label>
+    <label class="field">
+      <span>Rises % a year</span>
+      <input
+        type="text"
+        inputmode="decimal"
+        class="mono"
+        value={line.indexation ? (line.indexation.ratePerYear / 100).toString() : ''}
+        placeholder="0"
+        onchange={(event) => setRate(event)}
+      />
+    </label>
+    <label class="field">
+      <span>Rising from</span>
+      <input
+        type="date"
+        value={line.indexation?.from ?? ''}
+        disabled={!line.indexation}
+        onchange={(event) => setRiseDate(event)}
+      />
     </label>
   {:else}
     <label class="field">

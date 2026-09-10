@@ -30,7 +30,9 @@ export function sampleScenario(): Scenario {
       recurring('bonus', 'Year-end bonus', 2640, 'salary', 'yearly', '2026-12-18'),
 
       recurring('mortgage', 'Mortgage', -1142, 'housing', 'monthly', '2026-10-01'),
-      recurring('energy', 'Energy — monthly advance', -214, 'housing', 'monthly', '2026-09-15'),
+      recurring('energy', 'Energy — monthly advance', -214, 'housing', 'monthly', '2026-09-15', {
+        indexation: { ratePerYear: 500, from: '2027-01-01' }
+      }),
       recurring('water', 'Water', -128, 'housing', 'quarterly', '2026-10-05'),
       recurring('telecom', 'Internet + mobile', -78.5, 'housing', 'monthly', '2026-09-20'),
       recurring('kitchen', 'Kitchen renovation loan', -276.4, 'housing', 'monthly', '2026-09-14', { to: '2028-04-14' }),
@@ -38,11 +40,15 @@ export function sampleScenario(): Scenario {
       recurring('clubs', 'Music school + sports clubs', -145, 'living', 'monthly', '2026-09-16'),
       recurring('household', 'Household + clothing', -220, 'living', 'monthly', '2026-09-22', { estimate: true }),
       recurring('leisure', 'Eating out + leisure', -260, 'living', 'monthly', '2026-09-24', { estimate: true }),
-      recurring('school', 'School + childcare', -340, 'living', 'quarterly', '2026-09-30'),
+      recurring('school', 'School + childcare', -340, 'living', 'quarterly', '2026-09-30', {
+        indexation: { ratePerYear: 250, from: '2027-09-01' }
+      }),
       recurring('subscriptions', 'Subscriptions + gym', -66.98, 'living', 'monthly', '2026-09-18'),
       recurring('fuel', 'Fuel + car upkeep', -180, 'transport', 'monthly', '2026-09-25', { estimate: true }),
       recurring('car-insurance', 'Car insurance', -612, 'insurance', 'yearly', '2027-03-04'),
-      recurring('home-insurance', 'Home + contents insurance', -486, 'insurance', 'yearly', '2026-11-08'),
+      recurring('home-insurance', 'Home + contents insurance', -486, 'insurance', 'yearly', '2026-11-08', {
+        indexation: { ratePerYear: 300, from: '2026-11-08' }
+      }),
       recurring('health', 'Health cover', -62.3, 'insurance', 'monthly', '2026-09-11'),
       recurring('property-tax', 'Property tax', -1284, 'tax', 'yearly', '2026-10-28'),
       recurring('pension', 'Pension contribution', -1050, 'saving', 'yearly', '2026-11-24'),
@@ -59,7 +65,12 @@ export function sampleScenario(): Scenario {
   };
 }
 
-type Extras = { estimate?: boolean; from?: string; to?: string };
+type Extras = {
+  estimate?: boolean;
+  from?: string;
+  to?: string;
+  indexation?: { ratePerYear: number; from: string };
+};
 
 function recurring(
   id: string,
@@ -80,7 +91,10 @@ function recurring(
     anchor: plainDate(anchor),
     ...(extras.estimate ? { estimate: true } : {}),
     ...(extras.from ? { from: plainDate(extras.from) } : {}),
-    ...(extras.to ? { to: plainDate(extras.to) } : {})
+    ...(extras.to ? { to: plainDate(extras.to) } : {}),
+    ...(extras.indexation
+      ? { indexation: { ratePerYear: extras.indexation.ratePerYear, from: plainDate(extras.indexation.from) } }
+      : {})
   };
 }
 

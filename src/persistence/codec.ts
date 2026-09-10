@@ -1,5 +1,5 @@
 import { isPlainDate, type PlainDate } from '../domain/dates';
-import { CATEGORIES, type Account, type Category, type Line, type Scenario } from '../domain/types';
+import { CATEGORIES, type Account, type Category, type Indexation, type Line, type Scenario } from '../domain/types';
 import { CADENCES } from '../domain/schedule';
 import type { Cadence } from '../domain/types';
 
@@ -55,6 +55,15 @@ function asCadence(value: unknown, field: string): Cadence {
   return text as Cadence;
 }
 
+function asIndexation(value: unknown, at: string): Indexation {
+  const raw = asRecord(value, at);
+  const rate = raw.ratePerYear;
+  if (typeof rate !== 'number' || !Number.isInteger(rate) || rate < 0 || rate > 100_000) {
+    fail(`${at}.ratePerYear`, 'is not a whole number of basis points between 0 and 100000');
+  }
+  return { ratePerYear: rate as number, from: asDate(raw.from, `${at}.from`) };
+}
+
 function asAccount(value: unknown, index: number): Account {
   const raw = asRecord(value, `accounts[${index}]`);
   return {
@@ -88,7 +97,8 @@ function asLine(value: unknown, index: number): Line {
       cadence: asCadence(raw.cadence, `${at}.cadence`),
       anchor: asDate(raw.anchor, `${at}.anchor`),
       ...(raw.from === undefined ? {} : { from: asDate(raw.from, `${at}.from`) }),
-      ...(raw.to === undefined ? {} : { to: asDate(raw.to, `${at}.to`) })
+      ...(raw.to === undefined ? {} : { to: asDate(raw.to, `${at}.to`) }),
+      ...(raw.indexation === undefined ? {} : { indexation: asIndexation(raw.indexation, `${at}.indexation`) })
     };
   }
   return fail(`${at}.kind`, 'is neither "recurring" nor "planned"');
