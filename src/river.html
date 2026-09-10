@@ -1,0 +1,635 @@
+<title>Cashflow River</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --paper: #edf0ec;
+    --sheet: #fbfcfa;
+    --sheet-2: #f3f5f1;
+    --rule: #cfd6cd;
+    --hair: #e0e5dd;
+    --ink: #151a16;
+    --ink-2: #4c574e;
+    --ink-3: #78857a;
+    --accent: #1f5c46;
+    --good: #0ca30c;
+    --warning: #a97706;
+    --critical: #d03b3b;
+    --s-salary: #2a78d6;
+    --s-benefit: #1baf7a;
+    --s-bills: #eb6834;
+    --s-cover: #4a3aa7;
+    --s-daily: #eda100;
+    --s-moving: #e87ba4;
+    --s-plans: #008300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #101310;
+      --sheet: #181d19;
+      --sheet-2: #1e2420;
+      --rule: #2d352f;
+      --hair: #232a25;
+      --ink: #eef2ec;
+      --ink-2: #a8b4a9;
+      --ink-3: #7c8a7e;
+      --accent: #7fd0ae;
+      --good: #0ca30c;
+      --warning: #fab219;
+      --critical: #e06767;
+      --s-salary: #3987e5;
+      --s-benefit: #199e70;
+      --s-bills: #d95926;
+      --s-cover: #9085e9;
+      --s-daily: #c98500;
+      --s-moving: #d55181;
+      --s-plans: #008300;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101310;
+    --sheet: #181d19;
+    --sheet-2: #1e2420;
+    --rule: #2d352f;
+    --hair: #232a25;
+    --ink: #eef2ec;
+    --ink-2: #a8b4a9;
+    --ink-3: #7c8a7e;
+    --accent: #7fd0ae;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --critical: #e06767;
+    --s-salary: #3987e5;
+    --s-benefit: #199e70;
+    --s-bills: #d95926;
+    --s-cover: #9085e9;
+    --s-daily: #c98500;
+    --s-moving: #d55181;
+    --s-plans: #008300;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sheet {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 26px 52px;
+  }
+  .num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow { font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
+
+  /* header */
+  .head { border-bottom: 2px solid var(--ink); padding-bottom: 12px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 26px; }
+  .head h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.9rem, 4.6vw, 2.9rem);
+    line-height: 1;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .head h1 em { font-style: italic; font-weight: 400; color: var(--ink-2); }
+  .head .stand { flex: 1 1 220px; color: var(--ink-2); font-size: 13px; max-width: 46ch; }
+  .askline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 14px 0 0; }
+  .askline .lead { font-family: "Newsreader", Georgia, serif; font-size: clamp(1.05rem, 2.4vw, 1.35rem); }
+  .askline .answer { font-size: clamp(1.35rem, 3.4vw, 1.9rem); font-weight: 600; letter-spacing: -0.02em; }
+  .askline .answer.short { color: var(--critical); }
+  .askline .aside { color: var(--ink-2); font-size: 13px; }
+  input[type="date"], input[type="number"], input[type="text"], select {
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 4px 6px;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* frame */
+  .frame { display: grid; grid-template-columns: minmax(300px, 350px) minmax(0, 1fr); gap: 30px; margin-top: 26px; align-items: start; }
+  @media (max-width: 900px) { .frame { grid-template-columns: 1fr; } }
+
+  /* ledger */
+  .ledger { display: flex; flex-direction: column; gap: 18px; }
+  .ledger h2 { font-family: "Newsreader", Georgia, serif; font-size: 1.15rem; font-weight: 600; margin: 0 0 6px; }
+  .group { border-top: 1px solid var(--ink); padding-top: 8px; }
+  .group .subtotal { float: right; font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+  .row { display: grid; grid-template-columns: 10px minmax(0, 1fr) 86px 22px; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--hair); }
+  .row .swatch { width: 9px; height: 9px; border-radius: 2px; }
+  .row .name { min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .name small { color: var(--ink-3); font-size: 11.5px; }
+  .row input[type="number"] { width: 100%; text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .row .mute { width: 16px; height: 16px; accent-color: var(--accent); }
+  .row.is-off .name, .row.is-off input { opacity: 0.4; }
+  .row.is-off .name { text-decoration: line-through; }
+  .add { display: grid; grid-template-columns: minmax(0, 1fr) 88px; gap: 6px; }
+  .add input[type="text"] { grid-column: 1 / -1; }
+  .add select, .add input[type="date"] { grid-column: 1 / -1; }
+  .add button, .toolbar button {
+    font: inherit; font-size: 13px; font-weight: 500;
+    background: var(--ink); color: var(--paper);
+    border: 1px solid var(--ink); border-radius: 4px; padding: 5px 10px; cursor: pointer;
+    grid-column: 1 / -1;
+  }
+  .toolbar { display: flex; gap: 8px; }
+  .toolbar button { background: none; color: var(--ink-2); border-color: var(--rule); }
+  .hint { font-size: 12px; color: var(--ink-3); }
+
+  /* river */
+  .river { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 12px 8px; position: relative; }
+  .river svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 8px 2px 2px; font-size: 12px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+  .tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 3;
+    background: var(--ink); color: var(--paper); border-radius: 6px; padding: 7px 9px;
+    font-size: 12px; min-width: 150px; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.6);
+  }
+  .tip.on { opacity: 1; }
+  .tip .t-head { font-weight: 600; margin-bottom: 4px; }
+  .tip .t-row { display: flex; justify-content: space-between; gap: 12px; }
+  .tip .t-row b { font-weight: 500; }
+
+  /* month detail */
+  .detail { margin-top: 22px; }
+  .detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; border-bottom: 1px solid var(--ink); padding-bottom: 6px; }
+  .detail-head h3 { font-family: "Newsreader", Georgia, serif; font-size: 1.25rem; margin: 0; font-weight: 600; }
+  .detail-head .sums { font-size: 13px; color: var(--ink-2); display: flex; gap: 14px; flex-wrap: wrap; }
+  .detail-head .sums b { color: var(--ink); font-weight: 600; }
+  .events { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 30px; }
+  @media (max-width: 640px) { .events { columns: 1; } }
+  .events li { display: grid; grid-template-columns: 10px 42px minmax(0, 1fr) 92px; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--hair); font-size: 13px; break-inside: avoid; }
+  .events .when { color: var(--ink-3); font-size: 12px; }
+  .events .amt { text-align: right; font-weight: 500; }
+  .events .amt.in { color: var(--s-benefit); }
+  .events .amt.out { color: var(--ink); }
+  .events i.swatch { width: 9px; height: 9px; border-radius: 2px; }
+  .events .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  details.table-view { margin-top: 26px; border-top: 1px solid var(--rule); padding-top: 12px; }
+  details.table-view summary { cursor: pointer; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .table-scroll { overflow-x: auto; margin-top: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  tbody tr.under td { color: var(--critical); }
+  footer { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--ink-3); font-size: 12.5px; }
+</style>
+
+<div class="sheet">
+  <header class="head">
+    <h1>Cashflow <em>River</em></h1>
+    <p class="stand">Every line you keep sends water into the month it falls in. Edit an
+      amount or mute a line on the left, and the river re-cuts — including the bed it
+      leaves behind, which is your balance.</p>
+  </header>
+
+  <div class="askline">
+    <span class="lead">On</span>
+    <input type="date" id="dateInput" aria-label="Date to read the balance on">
+    <span class="lead">the accounts hold</span>
+    <span class="answer num" id="answer">—</span>
+    <span class="aside" id="answerAside"></span>
+  </div>
+
+  <div class="frame">
+    <aside class="ledger">
+      <div>
+        <h2>The lines</h2>
+        <p class="hint">Amounts are per occurrence. Untick to see the river without a line.</p>
+      </div>
+      <div id="groups"></div>
+      <div class="group">
+        <h2>Add a line</h2>
+        <form class="add" id="addForm">
+          <input type="text" id="addLabel" placeholder="What is it? e.g. Piano lessons" required>
+          <input type="number" id="addAmount" step="0.01" placeholder="Amount" required aria-label="Amount">
+          <select id="addSign" aria-label="Direction"><option value="-1">goes out</option><option value="1">comes in</option></select>
+          <select id="addCadence" aria-label="How often">
+            <option value="monthly">every month</option>
+            <option value="weekly">every week</option>
+            <option value="biweekly">every two weeks</option>
+            <option value="quarterly">every quarter</option>
+            <option value="yearly">every year</option>
+            <option value="once">once only</option>
+          </select>
+          <input type="date" id="addDate" aria-label="First date">
+          <button type="submit">Add it to the river</button>
+        </form>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="reset">Back to the sample</button>
+      </div>
+    </aside>
+
+    <main>
+      <section class="river">
+        <svg id="chart" role="img" aria-label="Money in and out per month, above and below the axis, with the balance it leaves behind"></svg>
+        <div class="tip" id="tip"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="detail">
+        <div class="detail-head">
+          <h3 id="detailTitle">—</h3>
+          <div class="sums" id="detailSums"></div>
+        </div>
+        <ul class="events" id="events"></ul>
+      </section>
+
+      <details class="table-view">
+        <summary>The same river as a table</summary>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Month</th><th>In</th><th>Out</th><th>Net</th><th>Lowest</th><th>Ends at</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </details>
+    </main>
+  </div>
+
+  <footer>Sample household — a mortgaged two-income family in Ghent, not your accounts.
+    Edits stay in this browser and nothing is sent anywhere.</footer>
+</div>
+
+<!-- inline:finance.js -->
+<!-- inline:scenario.js -->
+<script>
+(function () {
+  var KEY = 'moraview.river.v1';
+
+  /* Seven bands. The stacking order is the palette's validated adjacent order,
+     so neighbouring bands stay distinguishable, colour-blind vision included. */
+  var BANDS = [
+    { key: 'salary',  label: 'Pay and invoices', side: 'in',  css: 'var(--s-salary)',  categories: ['salary'] },
+    { key: 'benefit', label: 'Benefits',         side: 'in',  css: 'var(--s-benefit)', categories: ['benefit'] },
+    { key: 'bills',   label: 'House and bills',  side: 'out', css: 'var(--s-bills)',   categories: ['housing'] },
+    { key: 'cover',   label: 'Cover and tax',    side: 'out', css: 'var(--s-cover)',   categories: ['insurance', 'tax'] },
+    { key: 'daily',   label: 'Day to day',       side: 'out', css: 'var(--s-daily)',   categories: ['living'] },
+    { key: 'moving',  label: 'Getting around',   side: 'out', css: 'var(--s-moving)',  categories: ['transport'] },
+    { key: 'plans',   label: 'Saving and plans', side: 'out', css: 'var(--s-plans)',   categories: ['saving', 'travel'] }
+  ];
+  var bandOf = {};
+  BANDS.forEach(function (b) { b.categories.forEach(function (c) { bandOf[c] = b; }); });
+  var CADENCE_WORD = { monthly: 'monthly', weekly: 'weekly', biweekly: 'every 2 weeks', quarterly: 'quarterly', yearly: 'yearly' };
+
+  var state = { target: '2027-03-02', month: null, amounts: {}, off: {}, added: [] };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && saved.target) {
+      state.target = saved.target;
+      state.month = saved.month || null;
+      state.amounts = saved.amounts || {};
+      state.off = saved.off || {};
+      state.added = saved.added || [];
+    }
+  } catch (e) { /* storage blocked — the sample is the state */ }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var el = function (id) { return document.getElementById(id); };
+  var chart = el('chart'), river = chart.parentNode, tip = el('tip');
+  var fc, months, monthIndex;
+
+  function amountOf(line) {
+    return typeof state.amounts[line.id] === 'number' ? state.amounts[line.id] : line.amount;
+  }
+  function lines() {
+    var recurring = SCENARIO.recurring.concat(state.added.filter(function (l) { return l.cadence; }));
+    var planned = SCENARIO.planned.concat(state.added.filter(function (l) { return l.date; }));
+    return { recurring: recurring, planned: planned };
+  }
+  function tuned() {
+    var all = lines();
+    function apply(line) {
+      return Object.assign({}, line, { amount: amountOf(line), off: !!state.off[line.id] });
+    }
+    return Object.assign({}, SCENARIO, {
+      recurring: all.recurring.map(apply),
+      planned: all.planned.map(apply)
+    });
+  }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+  /* ---------- ledger ---------- */
+  function ledger() {
+    var all = lines(), out = '';
+    var order = [
+      { title: 'Coming in', test: function (l) { return amountOf(l) >= 0 && l.cadence; } },
+      { title: 'Going out', test: function (l) { return amountOf(l) < 0 && l.cadence; } }
+    ];
+    order.forEach(function (g) {
+      var rows = all.recurring.filter(g.test);
+      var per = { weekly: 52 / 12, biweekly: 26 / 12, monthly: 1, quarterly: 1 / 3, yearly: 1 / 12 };
+      var subtotal = rows.reduce(function (s, l) {
+        return s + (state.off[l.id] ? 0 : amountOf(l) * per[l.cadence]);
+      }, 0);
+      out += '<div class="group"><span class="subtotal num">' + MV.signed(subtotal, { cents: false }) + ' / month</span>' +
+        '<h2>' + g.title + '</h2>' + rows.map(row).join('') + '</div>';
+    });
+    var planned = all.planned.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var plannedSum = planned.reduce(function (s, l) { return s + (state.off[l.id] ? 0 : amountOf(l)); }, 0);
+    out += '<div class="group"><span class="subtotal num">' + MV.signed(plannedSum, { cents: false }) + ' in total</span>' +
+      '<h2>One-offs you have planned</h2>' + planned.map(row).join('') + '</div>';
+    el('groups').innerHTML = out;
+
+    Array.prototype.forEach.call(el('groups').querySelectorAll('input[type="number"]'), function (input) {
+      input.addEventListener('change', function () {
+        var sign = Number(input.dataset.sign);
+        var v = Math.abs(Number(input.value) || 0) * sign;
+        state.amounts[input.dataset.id] = v;
+        persist(); recompute();
+      });
+    });
+    Array.prototype.forEach.call(el('groups').querySelectorAll('input[type="checkbox"]'), function (box) {
+      box.addEventListener('change', function () {
+        if (box.checked) delete state.off[box.dataset.id]; else state.off[box.dataset.id] = true;
+        persist(); recompute();
+      });
+    });
+  }
+
+  function row(line) {
+    var band = bandOf[line.category] || BANDS[2];
+    var amount = amountOf(line);
+    var when = line.cadence ? CADENCE_WORD[line.cadence] : MV.shortDate(line.date);
+    return '<div class="row' + (state.off[line.id] ? ' is-off' : '') + '">' +
+      '<span class="swatch" style="background:' + band.css + '" title="' + esc(band.label) + '"></span>' +
+      '<span class="name">' + esc(line.label) + (line.estimate ? ' <small>est.</small>' : '') +
+      ' <small>' + esc(when) + '</small></span>' +
+      '<input type="number" step="0.01" value="' + Math.abs(amount).toFixed(2) + '" data-id="' + line.id +
+      '" data-sign="' + (amount >= 0 ? 1 : -1) + '" aria-label="' + esc(line.label) + ' amount">' +
+      '<input type="checkbox" class="mute" data-id="' + line.id + '"' + (state.off[line.id] ? '' : ' checked') +
+      ' aria-label="Keep ' + esc(line.label) + ' in the forecast">' +
+      '</div>';
+  }
+
+  /* ---------- chart ---------- */
+  function monthBands() {
+    return months.map(function (m) {
+      var stack = { month: m.month, inflow: m.inflow, outflow: m.outflow, net: m.net, end: m.end, low: m.low, bands: {} };
+      BANDS.forEach(function (b) { stack.bands[b.key] = 0; });
+      m.events.forEach(function (e) {
+        var b = bandOf[e.category] || BANDS[2];
+        stack.bands[b.key] += e.amount;
+      });
+      return stack;
+    });
+  }
+
+  function niceStep(raw) {
+    var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    return [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; })
+      .find(function (step) { return step >= raw; }) || 10 * mag;
+  }
+
+  function draw() {
+    var data = monthBands();
+    var w = Math.max(river.clientWidth - 24, 320);
+    var flowH = w < 620 ? 168 : 210, bedH = w < 620 ? 92 : 116, axis = 26, gap = 16;
+    var h = flowH + axis + gap + bedH + 18;
+    var pad = { l: w < 620 ? 44 : 58, r: 10 };
+    var iw = w - pad.l - pad.r;
+    var bw = iw / data.length;
+    var barW = Math.max(bw - 4, 3);
+
+    var peak = 1;
+    data.forEach(function (d) { peak = Math.max(peak, d.inflow, -d.outflow); });
+    var midY = 18 + flowH / 2;
+    var flowScale = (flowH / 2 - 20) / peak;
+
+    var lo = Math.min(0, fc.low.balance), hi = fc.days[0].balance;
+    fc.days.forEach(function (d) { if (d.balance > hi) hi = d.balance; });
+    var bedTop = flowH + axis + gap + 8;
+    var bedSpan = (hi - lo) || 1;
+    var bedY = function (v) { return bedTop + (1 - (v - lo) / bedSpan) * (bedH - 8); };
+
+    var svg = '';
+    /* flow panel: bars grow away from the month axis, income up, spending down */
+    svg += '<line x1="' + pad.l + '" x2="' + (w - pad.r) + '" y1="' + midY + '" y2="' + midY + '" stroke="var(--ink)" stroke-width="1"/>';
+    var flowStep = niceStep(peak / 2);
+    for (var v = flowStep; v <= peak; v += flowStep) {
+      [-1, 1].forEach(function (dir) {
+        var y = midY - dir * v * flowScale;
+        svg += '<line x1="' + pad.l + '" x2="' + (w - pad.r) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) +
+          '" stroke="var(--hair)" stroke-width="1"/>' +
+          '<text x="' + (pad.l - 7) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--ink-3)" class="num">' +
+          MV.money(dir * v, { cents: false }) + '</text>';
+      });
+    }
+
+    data.forEach(function (d, i) {
+      var x = pad.l + i * bw + (bw - barW) / 2;
+      var upCursor = midY, downCursor = midY;
+      BANDS.forEach(function (b) {
+        var v = d.bands[b.key];
+        if (!v) return;
+        var height = Math.abs(v) * flowScale;
+        if (height < 0.6) return;
+        var y;
+        if (v > 0) { upCursor -= height; y = upCursor; upCursor -= 2; }
+        else { y = downCursor; downCursor += height + 2; }
+        svg += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) +
+          '" height="' + Math.max(height - 0, 0.8).toFixed(1) + '" rx="1.5" fill="' + b.css + '"/>';
+      });
+      var netY = midY - d.net * flowScale;
+      svg += '<line x1="' + (x - 1.5).toFixed(1) + '" x2="' + (x + barW + 1.5).toFixed(1) + '" y1="' + netY.toFixed(1) +
+        '" y2="' + netY.toFixed(1) + '" stroke="var(--ink)" stroke-width="2"/>';
+      if (state.month === d.month) {
+        svg += '<rect x="' + (x - 2).toFixed(1) + '" y="22" width="' + (barW + 4).toFixed(1) + '" height="' + (flowH - 20) +
+          '" fill="none" stroke="var(--ink)" stroke-width="1" stroke-dasharray="2 3"/>';
+      }
+    });
+
+    /* month labels between the two panels */
+    data.forEach(function (d, i) {
+      var everyN = w < 620 ? 4 : (w < 900 ? 2 : 1);
+      if (i % everyN) return;
+      svg += '<text x="' + (pad.l + i * bw + bw / 2).toFixed(1) + '" y="' + (flowH + 18) +
+        '" text-anchor="middle" font-size="10" fill="' + (state.month === d.month ? 'var(--ink)' : 'var(--ink-3)') + '">' +
+        MV.monthLabel(d.month).split(' ')[0] + (d.month.slice(5) === '01' ? ' ’' + d.month.slice(2, 4) : '') + '</text>';
+    });
+
+    /* bed panel: the balance the river leaves behind */
+    var stepPts = [];
+    fc.days.forEach(function (day, i) {
+      var t = i / (fc.days.length - 1);
+      stepPts.push([pad.l + t * iw, bedY(day.balance)]);
+    });
+    var thin = [];
+    var stride = Math.max(1, Math.ceil(stepPts.length / iw));
+    for (var k = 0; k < stepPts.length; k += stride) thin.push(stepPts[k]);
+    thin.push(stepPts[stepPts.length - 1]);
+    var bedLine = thin.map(function (p, k) { return (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    var zeroY = bedY(Math.max(lo, 0));
+    svg += '<path d="' + bedLine + ' L' + thin[thin.length - 1][0].toFixed(1) + ' ' + zeroY.toFixed(1) +
+      ' L' + thin[0][0].toFixed(1) + ' ' + zeroY.toFixed(1) + ' Z" fill="var(--accent)" fill-opacity="0.13"/>';
+    svg += '<line x1="' + pad.l + '" x2="' + (w - pad.r) + '" y1="' + bedY(fc.buffer).toFixed(1) + '" y2="' + bedY(fc.buffer).toFixed(1) +
+      '" stroke="var(--warning)" stroke-width="1.5" stroke-dasharray="2 4"/>' +
+      '<text x="' + (w - pad.r) + '" y="' + (bedY(fc.buffer) - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--warning)">buffer ' +
+      MV.money(fc.buffer, { cents: false }) + '</text>';
+    if (lo < 0) {
+      svg += '<line x1="' + pad.l + '" x2="' + (w - pad.r) + '" y1="' + bedY(0).toFixed(1) + '" y2="' + bedY(0).toFixed(1) +
+        '" stroke="var(--ink-3)" stroke-width="1"/>';
+    }
+    svg += '<path d="' + bedLine + '" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+    svg += '<text x="' + (w - pad.r) + '" y="' + (bedTop - 7) + '" text-anchor="end" font-size="10" fill="var(--ink-3)" letter-spacing="0.12em">THE BED IT LEAVES — BALANCE</text>' +
+      '<text x="' + (pad.l - 7) + '" y="' + (bedY(hi) + 8).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--ink-3)" class="num">' +
+      MV.money(hi, { cents: false }) + '</text>' +
+      '<text x="' + (pad.l - 7) + '" y="' + (bedY(lo) - 2).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--ink-3)" class="num">' +
+      MV.money(lo, { cents: false }) + '</text>';
+    var lowT = fc.days.indexOf(fc.low) / (fc.days.length - 1);
+    svg += '<circle cx="' + (pad.l + lowT * iw).toFixed(1) + '" cy="' + bedY(fc.low.balance).toFixed(1) +
+      '" r="3.5" fill="var(--critical)"><title>Lowest: ' + MV.money(fc.low.balance) + ' on ' + MV.longDate(fc.low.date) + '</title></circle>';
+    var targetT = fc.days.indexOf(fc.index[state.target]) / (fc.days.length - 1);
+    svg += '<line x1="' + (pad.l + targetT * iw).toFixed(1) + '" x2="' + (pad.l + targetT * iw).toFixed(1) +
+      '" y1="' + bedTop + '" y2="' + (bedTop + bedH - 8).toFixed(1) + '" stroke="var(--ink)" stroke-width="1.5"/>' +
+      '<circle cx="' + (pad.l + targetT * iw).toFixed(1) + '" cy="' + bedY(fc.index[state.target].balance).toFixed(1) +
+      '" r="4.5" fill="var(--ink)"/>';
+    svg += '<text x="' + (w - pad.r) + '" y="13" text-anchor="end" font-size="10" fill="var(--ink-3)" letter-spacing="0.12em">MONTHLY FLOW — IN ABOVE, OUT BELOW</text>';
+
+    /* hover targets, one per month, full height */
+    data.forEach(function (d, i) {
+      svg += '<rect class="hit" x="' + (pad.l + i * bw).toFixed(1) + '" y="4" width="' + bw.toFixed(1) + '" height="' + (h - 8) +
+        '" fill="transparent" data-month="' + d.month + '" data-i="' + i + '"/>';
+    });
+
+    chart.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    chart.innerHTML = svg;
+    chart._geo = { w: w, bw: bw, pad: pad, data: data };
+  }
+
+  function legend() {
+    el('legend').innerHTML = BANDS.map(function (b) {
+      return '<span><i style="background:' + b.css + '"></i>' + b.label + '</span>';
+    }).join('') + '<span><i style="background:var(--ink);height:2px;border-radius:0"></i>net for the month</span>';
+  }
+
+  /* ---------- panels ---------- */
+  function answer() {
+    var day = fc.index[state.target];
+    var a = el('answer');
+    a.textContent = MV.money(day.balance);
+    a.classList.toggle('short', day.balance < 0);
+    el('dateInput').value = state.target;
+    el('answerAside').textContent = '· ' + MV.distance(fc.asOf, state.target) + ', starting from ' + MV.money(fc.opening) +
+      (day.balance < fc.buffer ? ' · under the ' + MV.money(fc.buffer, { cents: false }) + ' buffer' : '');
+  }
+
+  function detail() {
+    var m = monthIndex[state.month] || months[0];
+    state.month = m.month;
+    el('detailTitle').textContent = MV.monthLabel(m.month).replace(/(\d\d)$/, '20$1');
+    el('detailSums').innerHTML =
+      '<span>In <b class="num">' + MV.money(m.inflow, { cents: false }) + '</b></span>' +
+      '<span>Out <b class="num">' + MV.money(m.outflow, { cents: false }) + '</b></span>' +
+      '<span>Net <b class="num">' + MV.signed(m.net, { cents: false }) + '</b></span>' +
+      '<span>Ends at <b class="num">' + MV.money(m.end, { cents: false }) + '</b></span>';
+    var events = m.events.slice().sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : Math.abs(b.amount) - Math.abs(a.amount)); });
+    el('events').innerHTML = events.map(function (e) {
+      var band = bandOf[e.category] || BANDS[2];
+      return '<li><i class="swatch" style="background:' + band.css + '"></i>' +
+        '<span class="when">' + Number(e.date.slice(8)) + ' ' + MV.monthLabel(e.date.slice(0, 7)).split(' ')[0] + '</span>' +
+        '<span class="lbl">' + esc(e.label) + (e.planned ? ' · planned' : '') + '</span>' +
+        '<span class="amt num ' + (e.amount >= 0 ? 'in' : 'out') + '">' + MV.signed(e.amount) + '</span></li>';
+    }).join('');
+  }
+
+  function table() {
+    el('tableBody').innerHTML = months.map(function (m) {
+      return '<tr class="' + (m.low < fc.buffer ? 'under' : '') + '"><td>' + MV.monthLabel(m.month) + '</td>' +
+        '<td class="num">' + MV.money(m.inflow, { cents: false }) + '</td>' +
+        '<td class="num">' + MV.money(m.outflow, { cents: false }) + '</td>' +
+        '<td class="num">' + MV.signed(m.net, { cents: false }) + '</td>' +
+        '<td class="num">' + MV.money(m.low, { cents: false }) + '</td>' +
+        '<td class="num">' + MV.money(m.end, { cents: false }) + '</td></tr>';
+    }).join('');
+  }
+
+  /* ---------- interaction ---------- */
+  chart.addEventListener('pointermove', function (e) {
+    var hit = e.target.closest ? e.target.closest('.hit') : null;
+    if (!hit) { tip.classList.remove('on'); return; }
+    var m = monthIndex[hit.dataset.month];
+    if (!m) return;
+    var stack = chart._geo.data[Number(hit.dataset.i)];
+    var rows = BANDS.filter(function (b) { return stack.bands[b.key]; }).map(function (b) {
+      return '<div class="t-row"><b><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' +
+        b.css + ';margin-right:5px"></i>' + b.label + '</b><span class="num">' + MV.signed(stack.bands[b.key], { cents: false }) + '</span></div>';
+    }).join('');
+    tip.innerHTML = '<div class="t-head">' + MV.monthLabel(m.month).replace(/(\d\d)$/, '20$1') + '</div>' + rows +
+      '<div class="t-row" style="margin-top:4px;border-top:1px solid rgba(255,255,255,.25);padding-top:4px">' +
+      '<b>Ends at</b><span class="num">' + MV.money(m.end, { cents: false }) + '</span></div>';
+    var box = river.getBoundingClientRect();
+    var x = e.clientX - box.left, y = e.clientY - box.top;
+    tip.classList.add('on');
+    tip.style.left = Math.min(Math.max(x + 14, 8), box.width - tip.offsetWidth - 8) + 'px';
+    tip.style.top = Math.min(y + 12, box.height - tip.offsetHeight - 8) + 'px';
+  });
+  chart.addEventListener('pointerleave', function () { tip.classList.remove('on'); });
+  chart.addEventListener('click', function (e) {
+    var hit = e.target.closest ? e.target.closest('.hit') : null;
+    if (!hit) return;
+    state.month = hit.dataset.month;
+    var firstOfMonth = state.month + '-15';
+    if (fc.index[firstOfMonth]) { state.target = firstOfMonth; }
+    persist(); answer(); detail(); draw();
+  });
+  el('dateInput').addEventListener('change', function (e) {
+    var v = e.target.value;
+    if (!fc.index[v]) { e.target.value = state.target; return; }
+    state.target = v; state.month = v.slice(0, 7);
+    persist(); answer(); detail(); draw();
+  });
+  el('addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var cadence = el('addCadence').value;
+    var date = el('addDate').value || SCENARIO.asOf;
+    var amount = Math.abs(Number(el('addAmount').value) || 0) * Number(el('addSign').value);
+    if (!amount) return;
+    var line = {
+      id: 'own-' + Date.now().toString(36),
+      label: el('addLabel').value.trim() || 'Unnamed line',
+      amount: amount,
+      category: amount >= 0 ? 'salary' : 'living'
+    };
+    if (cadence === 'once') line.date = date; else { line.cadence = cadence; line.on = date; }
+    state.added.push(line);
+    persist();
+    e.target.reset();
+    recompute();
+  });
+  el('reset').addEventListener('click', function () {
+    state = { target: '2027-03-02', month: null, amounts: {}, off: {}, added: [] };
+    persist(); recompute();
+  });
+
+  /* ---------- run ---------- */
+  function recompute() {
+    fc = MV.project(tuned());
+    if (!fc.index[state.target]) state.target = fc.days[Math.min(fc.days.length - 1, 173)].date;
+    months = MV.byMonth(fc);
+    monthIndex = months.reduce(function (m, x) { m[x.month] = x; return m; }, {});
+    if (!state.month || !monthIndex[state.month]) state.month = fc.low.date.slice(0, 7);
+    ledger(); answer(); detail(); table(); draw();
+  }
+
+  el('dateInput').min = SCENARIO.asOf;
+  el('addDate').value = MV.iso(MV.addMonths(MV.parseDate(SCENARIO.asOf), 1));
+  legend();
+  recompute();
+  el('dateInput').max = fc.days[fc.days.length - 1].date;
+  if (window.ResizeObserver) new ResizeObserver(function () { draw(); }).observe(river);
+  else window.addEventListener('resize', draw);
+})();
+</script>
