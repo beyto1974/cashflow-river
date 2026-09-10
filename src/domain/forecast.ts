@@ -1,5 +1,6 @@
 import { addDays, addMonths, compareDates, daysBetween, plainDate, type PlainDate } from './dates';
 import { addCents, type Cents } from './money';
+import { occurrenceAmount, type Outlook } from './amounts';
 import { occurrences } from './schedule';
 import { isRecurring, type Category, type Line, type Scenario } from './types';
 
@@ -35,11 +36,11 @@ export interface Forecast {
   firstNegative: ForecastDay | undefined;
 }
 
-function movementOf(line: Line): Movement {
+function movementOf(line: Line, date: PlainDate, outlook: Outlook): Movement {
   return {
     lineId: line.id,
     label: line.label,
-    amount: line.amount,
+    amount: occurrenceAmount(line, date, outlook),
     category: line.category,
     planned: !isRecurring(line),
     estimate: line.estimate === true
@@ -47,16 +48,17 @@ function movementOf(line: Line): Movement {
 }
 
 /** Day-by-day balance from today to the horizon. The one reading everything else derives from. */
-export function project(scenario: Scenario): Forecast {
+export function project(scenario: Scenario, outlook: Outlook = 'likely'): Forecast {
   const asOf = plainDate(scenario.asOf);
   const horizon = addMonths(asOf, Math.max(1, scenario.horizonMonths));
   const window = { from: asOf, to: horizon };
 
   const booked = new Map<PlainDate, Movement[]>();
   const book = (date: PlainDate, line: Line): void => {
+    const movement = movementOf(line, date, outlook);
     const already = booked.get(date);
-    if (already) already.push(movementOf(line));
-    else booked.set(date, [movementOf(line)]);
+    if (already) already.push(movement);
+    else booked.set(date, [movement]);
   };
 
   for (const line of scenario.lines) {
