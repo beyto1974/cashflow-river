@@ -2,7 +2,7 @@
 
 Three ways to ask the same question — *what does my money look like on a given
 future date?* — over one forecast engine (`src/finance.js`) and one sample
-household (`src/scenario.js`). Each is a single self-contained file in `dist/`,
+household. Each is a single self-contained file in `dist/`,
 which is exactly what was published; the screenshots in `docs/screens/` are
 those files rendered at 1180px in both themes.
 
@@ -36,6 +36,9 @@ panels. Clicking a month opens every movement in it.
 
 Identity: editorial ledger. Newsreader for display, IBM Plex Sans and Mono for
 the ledger itself, hairline rules instead of cards.
+
+This is the one now rebuilt as the app (TypeScript, Svelte 5, Vite); the file in
+`legacy/` is the original prototype.
 
 Seven colour bands, stacked in an order that clears the palette validator's
 adjacent-pair gates in both light and dark mode; the legend, the tooltip and the

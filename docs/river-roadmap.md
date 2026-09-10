@@ -1,35 +1,31 @@
-# Cashflow River — roadmap (proposal)
+# Cashflow River — roadmap
 
-Where it stands: the river reads and re-cuts correctly, but only two things can
-be changed per line (its amount, and whether it counts), the household is a
-hard-coded sample, and nothing survives a different browser. The order below
-fixes those in the order that makes the tool usable by a real household.
+Where it stands: the river is rebuilt as an app on a tested domain, and it takes
+real input. What follows makes the number trustworthy, then answers "so what".
 
-## M1 — Get real numbers in
+## M1 — Get real numbers in — **done**
 
-The one thing standing between the prototype and daily use.
+- **Accounts strip.** Rename an account, retype a balance, tick which accounts
+  the forecast counts, add and remove accounts.
+- **Full line editor, in place.** Label, amount, direction, recurring or
+  one-off, cadence, the date it falls due, an optional start and end, category,
+  whether the amount is a guess — plus delete and mute.
+- **Add a line**, set the buffer and the horizon.
+- **Kept in the browser**, written through on every change, with a reset back to
+  the example. Storage sits behind a port so another backing store can be
+  dropped in.
 
-- **Accounts strip.** Edit balances, name accounts, choose which ones the
-  forecast counts (the savings account is already excluded — that should be a
-  switch, not a flag in the source).
-- **Full line editor.** Today only the amount is editable. Needs: label,
-  cadence, anchor day, first and last date, category, delete. Editing a line
-  should open in place, not in a modal — the ledger is the interface.
-- **Statement import.** Paste a bank CSV (or a Belgian CODA/CAMT export) into a
-  textarea; group the rows by counterparty and amount, cluster the intervals,
-  and propose recurring lines to accept or skip. Detection does not have to be
-  clever to beat typing twenty lines by hand.
-- **Export and import as text.** The artifact viewer sandbox blocks downloads a
-  page starts itself, so "save my ledger" has to be copy-to-clipboard JSON and
-  paste-back, not a file link. Worth knowing before designing that flow.
+Left out on purpose: file import and export. Where a saved ledger should live
+beyond this browser is still open — an object store was tried and backed out —
+so the port stays and the decision waits.
 
 ## M2 — Make the number trustworthy
 
 - **Ranges on estimates.** Groceries, fuel, leisure and the freelance invoices
   are estimates. Give them a low/likely/high and draw the bed as a cone; the
   headline answer becomes a range on those dates, which is the honest reading.
-- **Payment-day rules.** "Last working day of the month", weekend and Belgian
-  bank-holiday shifting, quarterly VAT on the 20th. Salary on the 27th is a
+- **Payment-day rules.** "Last working day of the month", and shifting a due
+  date off a weekend or a public holiday. A salary pinned to the 27th is a
   simplification that will drift against the real statement.
 - **Indexation and end dates.** A yearly percentage rise per line (rent,
   insurance, energy) and a visible end date (the kitchen loan already has one,
@@ -39,6 +35,12 @@ The one thing standing between the prototype and daily use.
   is in the past, and the UTC-only arithmetic. Wire it into the build.
 
 ## M3 — Answer "so what"
+
+- **The Horizon Dial's dials, here.** The prototype's what-if sliders — scale
+  everything coming in, the day-to-day spending, the transfer to savings — and
+  its draggable needle, brought into the river. Both are worth having: the
+  sliders answer "what if this changed", the needle answers "what about that
+  day" without going through a date field.
 
 - **Tight-day panel.** List every breach of the buffer, and for each one the
   smallest fix: move a planned one-off three weeks later, or cut the savings
@@ -51,10 +53,11 @@ The one thing standing between the prototype and daily use.
 
 ## M4 — Keep it, share it
 
-- **Cross-device state.** Browser storage is per-viewer and per-browser; a
-  household ledger needs the artifact runtime's own storage (and the viewer
-  identity that goes with it). Check the capability roster before designing
-  this, then keep the local copy as the offline fallback.
+- **Somewhere to keep it.** Browser storage is per-browser: clear the site data
+  and the ledger is gone, and a second person cannot see it. Pick a backing
+  store (a service, an object store, a hosted runtime's own storage) and put it
+  behind the existing `ScenarioStore` port, keeping the local copy as the
+  offline fallback.
 - **A printable one-pager.** Month table, the bed, the tight days — for the
   kitchen-table conversation the tool is really for.
 
@@ -71,8 +74,7 @@ The one thing standing between the prototype and daily use.
 - **Repo shape.** Engine as a real module with tests, templates split into
   partials, `build.mjs` keeping the single-file publish it does now.
 
-## Suggested first slice
+## Next slice
 
-M1's line editor and accounts strip, then the paste import. That turns the
-prototype into something a household can put its own numbers into, which is the
-only way to find out whether the river actually answers the question.
+M2: ranges on the estimated lines and the payment-day rules, both of which the
+engine's cadence registry and the chart's geometry model are already shaped for.

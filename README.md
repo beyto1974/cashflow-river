@@ -1,41 +1,53 @@
 # Moraview
 
-Three takes on the same question: **what does my money look like on a given future
-date?** You describe what comes in and what goes out — recurring lines and planned
-one-offs — and the forecast runs day by day from today to the horizon.
+What does my money look like on a given future date? You describe what comes in
+and what goes out — recurring lines and planned one-offs — and the forecast runs
+day by day from today to the horizon.
 
-All three interfaces share one engine (`src/finance.js`) and one sample household
-(`src/scenario.js`), so they answer identically and differ only in how you ask.
+Three interfaces were prototyped over one engine; the **Cashflow River** is the
+one being built out. See `docs/interfaces.md` for all three and why, and
+`docs/river-roadmap.md` for what is next.
 
-| Interface | The question it is built around | How you steer it |
-|---|---|---|
-| **Horizon Dial** | "How much will I have on *that* day?" | Drag a needle along the timeline |
-| **Cashflow River** | "Which lines are doing this to me?" | Edit and mute lines, watch the river re-cut |
-| **Runway Grid** | "Which days are the tight ones?" | Every day of the next 30 months as a cell |
+## Run it
+
+```bash
+npm install
+npm run dev      # Vite dev server; the port is printed
+npm test         # Vitest over the domain
+npm run check    # svelte-check and tsc
+npm run build    # one self-contained HTML file in dist-app/
+```
+
+The build is a single file on purpose, so it can be published as-is.
 
 ## Layout
 
 ```
-src/finance.js    forecast engine — occurrences, daily projection, rollups, formatting
-src/scenario.js   the sample household (EUR, Belgian household lines)
-src/*.html        one template per interface
-build.mjs         inlines the shared scripts into dist/
-dist/*.html       what gets published
+src/domain/       money in integer cents, calendar dates, cadences,
+                  the day-by-day projection and its rollups — no UI, all tested
+src/persistence/  the ScenarioStore port, its browser adapter and a validating codec
+src/data/         the example household the app opens on
+src/ui/           Svelte components, the colour bands, and the chart's geometry
+                  as a pure model (tested separately from its rendering)
+tests/            Vitest suites, written before the code they cover
+legacy/           the three original single-file prototypes and their inlining build
+dist/             the prototypes as published
+docs/             the interfaces, the decision, the roadmap, screenshots
 ```
 
-## Published
+## How it is put together
 
-| Interface | Link |
-|---|---|
-| Horizon Dial | https://claude.ai/code/artifact/5a9b25e2-b81e-4fe5-9544-a44b9463aed7 |
-| Cashflow River | https://claude.ai/code/artifact/58b00080-b35d-43eb-86ca-46a7d965412f |
-| Runway Grid | https://claude.ai/code/artifact/a4e675e4-e635-45a3-a5d7-c36de199c270 |
+- **Money is integer cents.** Euros exist only where a person types or reads
+  one. The float prototype leaked (a monthly net of `2142.0199999999995`).
+- **Dates are UTC calendar days** held as `YYYY-MM-DD`, so a summer-time change
+  cannot move a payment.
+- **One cadence registry.** Each cadence knows its label, its average rate per
+  month and how to find its nth occurrence; adding one is a new entry, not an
+  edit to the projection.
+- **One projection.** `project(scenario)` is the only place a line becomes
+  money; the month table, the breakdowns and the chart all read it.
+- **Storage is behind a port.** The browser adapter is the only one today; a
+  remote one can be added without the app knowing.
 
-## Build
-
-```bash
-node build.mjs
-```
-
-Each interface keeps your edits in `localStorage` under its own key and offers a
-reset back to the sample. Nothing leaves the page.
+Nothing leaves the browser: the scenario is kept in `localStorage` under
+`moraview.scenario.v1`, and there is a reset back to the example.
