@@ -23,6 +23,14 @@ build.mjs         inlines the shared scripts into dist/
 dist/*.html       what gets published
 ```
 
+## Published
+
+| Interface | Link |
+|---|---|
+| Horizon Dial | https://claude.ai/code/artifact/5a9b25e2-b81e-4fe5-9544-a44b9463aed7 |
+| Cashflow River | https://claude.ai/code/artifact/58b00080-b35d-43eb-86ca-46a7d965412f |
+| Runway Grid | https://claude.ai/code/artifact/a4e675e4-e635-45a3-a5d7-c36de199c270 |
+
 ## Build
 
 ```bash

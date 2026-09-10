@@ -1,0 +1,769 @@
+<title>Runway Grid</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --page: #f7f7f5;
+    --card: #ffffff;
+    --line: #dcdcd8;
+    --hair: #ebebe7;
+    --ink: #101012;
+    --ink-2: #4b4b50;
+    --ink-3: #7c7c82;
+    --accent: #256abf;
+    --b1: #cde2fb;
+    --b2: #9ec5f4;
+    --b3: #5598e7;
+    --b4: #256abf;
+    --b5: #104281;
+    --tight: #fab219;
+    --tight-ink: #6b4a00;
+    --red: #d03b3b;
+    --good: #0ca30c;
+    --on-band: #101012;
+    --on-deep: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0d0d0e;
+      --card: #16161a;
+      --line: #2b2b31;
+      --hair: #222227;
+      --ink: #f2f2f0;
+      --ink-2: #a9a9b0;
+      --ink-3: #7d7d85;
+      --accent: #6da7ec;
+      --b1: #0d366b;
+      --b2: #1c5cab;
+      --b3: #2a78d6;
+      --b4: #5598e7;
+      --b5: #9ec5f4;
+      --tight: #fab219;
+      --tight-ink: #26180a;
+      --red: #e06767;
+      --good: #0ca30c;
+      --on-band: #f2f2f0;
+      --on-deep: #0d0d0e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0e;
+    --card: #16161a;
+    --line: #2b2b31;
+    --hair: #222227;
+    --ink: #f2f2f0;
+    --ink-2: #a9a9b0;
+    --ink-3: #7d7d85;
+    --accent: #6da7ec;
+    --b1: #0d366b;
+    --b2: #1c5cab;
+    --b3: #2a78d6;
+    --b4: #5598e7;
+    --b5: #9ec5f4;
+    --tight: #fab219;
+    --tight-ink: #26180a;
+    --red: #e06767;
+    --good: #0ca30c;
+    --on-band: #f2f2f0;
+    --on-deep: #0d0d0e;
+  }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1320px; margin: 0 auto; padding-inline: 18px; padding-block: 24px 48px; }
+  .mono { font-family: "Azeret Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
+
+  /* masthead: title left, the three numbers that matter as a strip */
+  .masthead { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; border-bottom: 3px solid var(--ink); padding-bottom: 14px; }
+  .masthead h1 {
+    margin: 0;
+    font-size: clamp(1.75rem, 5vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+  .masthead h1 span { color: var(--ink-3); }
+  .masthead p.lede { margin: 6px 0 0; color: var(--ink-2); max-width: 62ch; font-size: 13.5px; }
+  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 14px 24px; }
+  .stat .k { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+  .stat .v { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .v.red { color: var(--red); }
+  .stat .n { font-size: 12px; color: var(--ink-2); }
+
+  /* controls */
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 16px 0 12px; }
+  .controls label { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+  input[type="number"], input[type="text"], input[type="date"] {
+    font: inherit; font-size: 13px; color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px;
+  }
+  input.mono { font-family: "Azeret Mono", monospace; }
+  button { font: inherit; cursor: pointer; }
+  .btn { font-size: 13px; font-weight: 600; background: var(--ink); color: var(--page); border: 0; border-radius: 3px; padding: 6px 12px; }
+  .btn.ghost { background: none; color: var(--ink-2); border: 1px solid var(--line); font-weight: 500; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* the grid */
+  .board { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: 22px; align-items: start; }
+  @media (max-width: 940px) { .board { grid-template-columns: 1fr; } }
+  .grid-frame { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px 12px; }
+  .grid-scroll { overflow-x: auto; }
+  table.grid { border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
+  table.grid th { font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding: 0 0 4px; }
+  table.grid th.year { color: var(--ink); font-size: 10.5px; letter-spacing: 0.1em; text-align: left; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+  table.grid th.dom { width: 22px; text-align: right; padding-right: 5px; color: var(--ink-3); font-family: "Azeret Mono", monospace; letter-spacing: 0; }
+  table.grid td { width: 22px; height: 16px; padding: 0; }
+  table.grid td.blank { background: none; }
+  .cell {
+    display: block; width: 100%; height: 16px; border: 0; border-radius: 2px; padding: 0;
+    background: var(--b3); position: relative;
+  }
+  .cell[data-band="tight"] { background: var(--tight); }
+  .cell[data-band="red"] {
+    background: repeating-linear-gradient(45deg, var(--red) 0 3px, color-mix(in srgb, var(--red) 62%, #000) 3px 6px);
+  }
+  .cell[data-band="1"] { background: var(--b1); }
+  .cell[data-band="2"] { background: var(--b2); }
+  .cell[data-band="3"] { background: var(--b3); }
+  .cell[data-band="4"] { background: var(--b4); }
+  .cell[data-band="5"] { background: var(--b5); }
+  .cell[data-plan="1"]::after {
+    content: ""; position: absolute; inset: auto 2px 2px auto; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--on-band); opacity: 0.85;
+  }
+  .cell[data-band="4"][data-plan="1"]::after,
+  .cell[data-band="5"][data-plan="1"]::after,
+  .cell[data-band="red"][data-plan="1"]::after { background: var(--on-deep); }
+  .cell.is-selected { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 2; }
+  .cell.is-today { box-shadow: inset 0 0 0 2px var(--ink); }
+  .hoverline { margin-top: 8px; font-size: 12px; color: var(--ink-2); min-height: 18px; }
+  .hoverline b { color: var(--ink); }
+
+  /* legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 11.5px; color: var(--ink-2); align-items: center; }
+  .legend .key { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .sw { width: 22px; height: 11px; border-radius: 2px; display: inline-block; }
+  .legend .ramp { display: inline-flex; }
+  .legend .ramp i { width: 22px; height: 11px; display: block; }
+  .legend .ramp i:first-child { border-radius: 2px 0 0 2px; }
+  .legend .ramp i:last-child { border-radius: 0 2px 2px 0; }
+
+  /* day panel */
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 14px 15px 16px; position: sticky; top: 14px; }
+  .panel h2 { margin: 2px 0 0; font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+  .panel .balance { font-size: 27px; font-weight: 700; letter-spacing: -0.03em; margin: 6px 0 2px; }
+  .panel .balance.red { color: var(--red); }
+  .panel .verdict { font-size: 12.5px; color: var(--ink-2); }
+  .panel .verdict.tight { color: var(--tight-ink); background: var(--tight); border-radius: 3px; padding: 1px 6px; display: inline-block; }
+  .panel .verdict.red { color: var(--red); font-weight: 600; }
+  .panel h3 { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); margin: 16px 0 6px; }
+  .moves { list-style: none; margin: 0; padding: 0; }
+  .moves li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--hair); font-size: 13px; }
+  .moves .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .moves .amt { font-weight: 600; }
+  .moves .amt.in { color: var(--good); }
+  .moves .drop { background: none; border: 0; color: var(--ink-3); font-size: 14px; line-height: 1; padding: 0 2px; }
+  .moves .drop:hover { color: var(--red); }
+  .empty { font-size: 13px; color: var(--ink-3); }
+  .plan-form { display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 6px; margin-top: 8px; }
+  .plan-form input[type="text"] { grid-column: 1 / -1; }
+  .plan-form .btn { grid-column: 1 / -1; }
+  .nudge { font-size: 11.5px; color: var(--ink-3); margin: 6px 0 0; }
+
+  details.table-view { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 12px; }
+  details.table-view summary { cursor: pointer; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .table-scroll { overflow-x: auto; margin-top: 10px; }
+  table.months { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.months th, table.months td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+  table.months th:first-child, table.months td:first-child { text-align: left; }
+  table.months thead th { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+  table.months tbody tr.tight td { color: var(--red); }
+  footer { margin-top: 22px; color: var(--ink-3); font-size: 12px; }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <div>
+      <h1>Runway <span>Grid</span></h1>
+      <p class="lede">Every day between today and spring 2029, one cell. Colour is what the
+        accounts close at that evening — pale is thin, dark is comfortable, amber is under the
+        buffer and hatched red is overdrawn. Click a day to see what moves, or park a payment on it.</p>
+    </div>
+    <div class="strip" id="strip"></div>
+  </header>
+
+  <div class="controls">
+    <label for="bufferInput">Buffer</label>
+    <input type="number" class="mono" id="bufferInput" step="100" min="0" style="width:96px" aria-label="Buffer amount in euro">
+    <label for="jump">Jump to</label>
+    <input type="date" id="jump">
+    <button type="button" class="btn ghost" id="toTight">Go to the first tight day</button>
+    <button type="button" class="btn ghost" id="reset">Reset the sample</button>
+  </div>
+
+  <div class="board">
+    <section class="grid-frame">
+      <div class="grid-scroll" id="gridScroll"></div>
+      <p class="hoverline" id="hoverline">Point at a day to read its closing balance.</p>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <aside class="panel">
+      <p class="eyebrow" id="panelEyebrow">Selected day</p>
+      <h2 id="panelDate">—</h2>
+      <p class="balance mono" id="panelBalance">—</p>
+      <p><span id="panelVerdict" class="verdict"></span></p>
+
+      <h3>What moves that day</h3>
+      <ul class="moves" id="panelMoves"></ul>
+      <p class="empty" id="panelEmpty" hidden>Nothing is booked on this day.</p>
+
+      <h3>Park a payment here</h3>
+      <form class="plan-form" id="planForm">
+        <input type="text" id="planLabel" placeholder="What for? e.g. Winter tyres" required>
+        <input type="number" class="mono" id="planAmount" step="0.01" placeholder="Amount" required aria-label="Amount">
+        <select id="planSign" aria-label="Direction" style="font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:3px;background:var(--card);color:var(--ink)">
+          <option value="-1">goes out</option>
+          <option value="1">comes in</option>
+        </select>
+        <button type="submit" class="btn">Park it on this day</button>
+      </form>
+      <p class="nudge">The grid recolours from that day onward, so you can see what it costs the months after it.</p>
+    </aside>
+  </div>
+
+  <details class="table-view">
+    <summary>Month totals as a table</summary>
+    <div class="table-scroll">
+      <table class="months">
+        <thead><tr><th>Month</th><th>In</th><th>Out</th><th>Net</th><th>Lowest</th><th>Days under buffer</th><th>Ends at</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <footer>Sample household — not your accounts. Payments you park and the buffer you set stay in this browser.</footer>
+</div>
+
+<script>
+/* Moraview forecast engine.
+   One scenario in, a day-by-day balance projection out. No dependencies.
+   Amounts are signed: income positive, expense negative. Currency is EUR. */
+var MV = (function () {
+  var DAY = 86400000;
+
+  function parseDate(s) {
+    var p = String(s).split('-').map(Number);
+    return new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  }
+  function iso(d) { return d.toISOString().slice(0, 10); }
+  function addDays(d, n) { return new Date(d.getTime() + n * DAY); }
+  function daysBetween(a, b) { return Math.round((b - a) / DAY); }
+  function lastDom(y, m) { return new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); }
+  function addMonths(d, n) {
+    var y = d.getUTCFullYear(), m = d.getUTCMonth() + n, dom = d.getUTCDate();
+    var ny = y + Math.floor(m / 12), nm = ((m % 12) + 12) % 12;
+    return new Date(Date.UTC(ny, nm, Math.min(dom, lastDom(ny, nm))));
+  }
+
+  var CADENCE = {
+    weekly:    { days: 7 },
+    biweekly:  { days: 14 },
+    monthly:   { months: 1 },
+    quarterly: { months: 3 },
+    yearly:    { months: 12 }
+  };
+
+  /* Every date a recurring line falls due inside [from, to]. */
+  function occurrences(line, from, to) {
+    var step = CADENCE[line.cadence];
+    if (!step) return [];
+    var cursor = parseDate(line.on);
+    var start = line.from ? parseDate(line.from) : null;
+    var end = line.to ? parseDate(line.to) : null;
+    var out = [], guard = 0;
+
+    while (cursor < from && guard++ < 6000) {
+      cursor = step.days ? addDays(cursor, step.days) : addMonths(cursor, step.months);
+    }
+    while (cursor <= to && guard++ < 6000) {
+      if ((!start || cursor >= start) && (!end || cursor <= end)) out.push(cursor);
+      cursor = step.days ? addDays(cursor, step.days) : addMonths(cursor, step.months);
+    }
+    return out;
+  }
+
+  function amountOf(line) {
+    var factor = typeof line.factor === 'number' ? line.factor : 1;
+    return line.amount * factor;
+  }
+
+  /* Day-by-day projection. Returns one entry per day from asOf to the horizon,
+     each carrying the closing balance and the movements booked that day. */
+  function project(scenario, months) {
+    var horizonMonths = months || scenario.horizonMonths || 36;
+    var from = parseDate(scenario.asOf);
+    var to = addMonths(from, horizonMonths);
+    var span = daysBetween(from, to);
+
+    var byDay = {};
+    function book(date, line, amount) {
+      var key = iso(date);
+      (byDay[key] || (byDay[key] = [])).push({
+        id: line.id, label: line.label, category: line.category,
+        amount: amount, planned: !!line.date, estimate: !!line.estimate
+      });
+    }
+
+    (scenario.recurring || []).forEach(function (line) {
+      if (line.off) return;
+      occurrences(line, from, to).forEach(function (d) { book(d, line, amountOf(line)); });
+    });
+    (scenario.planned || []).forEach(function (line) {
+      if (line.off) return;
+      var d = parseDate(line.date);
+      if (d >= from && d <= to) book(d, line, amountOf(line));
+    });
+
+    var balance = (scenario.accounts || []).reduce(function (s, a) {
+      return s + (a.inForecast === false ? 0 : a.balance);
+    }, 0);
+
+    var days = [], low = null;
+    for (var i = 0; i <= span; i++) {
+      var date = addDays(from, i), key = iso(date);
+      var events = byDay[key] || [];
+      var moved = events.reduce(function (s, e) { return s + e.amount; }, 0);
+      balance += moved;
+      var entry = { date: key, day: date, balance: balance, moved: moved, events: events };
+      days.push(entry);
+      if (!low || balance < low.balance) low = entry;
+    }
+
+    var buffer = scenario.buffer || 0;
+    var breach = days.find(function (d) { return d.balance < buffer; }) || null;
+    var negative = days.find(function (d) { return d.balance < 0; }) || null;
+
+    return {
+      asOf: scenario.asOf, from: from, to: to, days: days,
+      opening: days.length ? days[0].balance - days[0].moved : 0,
+      index: days.reduce(function (m, d) { m[d.date] = d; return m; }, {}),
+      low: low, buffer: buffer, breach: breach, negative: negative
+    };
+  }
+
+  /* Averaged monthly rhythm of the recurring lines only. */
+  function monthlyNet(scenario) {
+    var per = { weekly: 52 / 12, biweekly: 26 / 12, monthly: 1, quarterly: 1 / 3, yearly: 1 / 12 };
+    var inflow = 0, outflow = 0;
+    (scenario.recurring || []).forEach(function (line) {
+      if (line.off) return;
+      var m = amountOf(line) * (per[line.cadence] || 0);
+      if (m >= 0) inflow += m; else outflow += m;
+    });
+    return { inflow: inflow, outflow: outflow, net: inflow + outflow };
+  }
+
+  /* Everything that moves between two dates, grouped for a breakdown panel. */
+  function movements(forecast, fromIso, toIso) {
+    var groups = {}, total = 0;
+    forecast.days.forEach(function (d) {
+      if (d.date <= fromIso || d.date > toIso) return;
+      d.events.forEach(function (e) {
+        var g = groups[e.label] || (groups[e.label] = {
+          label: e.label, category: e.category, count: 0, amount: 0, planned: e.planned
+        });
+        g.count++; g.amount += e.amount; total += e.amount;
+      });
+    });
+    var list = Object.keys(groups).map(function (k) { return groups[k]; });
+    list.sort(function (a, b) { return Math.abs(b.amount) - Math.abs(a.amount); });
+    return {
+      lines: list, total: total,
+      inflow: list.reduce(function (s, g) { return s + Math.max(g.amount, 0); }, 0),
+      outflow: list.reduce(function (s, g) { return s + Math.min(g.amount, 0); }, 0)
+    };
+  }
+
+  /* Calendar-month rollup: what came in, what went out, where it ended. */
+  function byMonth(forecast) {
+    var out = [], current = null;
+    forecast.days.forEach(function (d) {
+      var key = d.date.slice(0, 7);
+      if (!current || current.month !== key) {
+        current = { month: key, inflow: 0, outflow: 0, end: d.balance, low: d.balance, events: [] };
+        out.push(current);
+      }
+      d.events.forEach(function (e) {
+        if (e.amount >= 0) current.inflow += e.amount; else current.outflow += e.amount;
+        current.events.push(Object.assign({ date: d.date }, e));
+      });
+      current.end = d.balance;
+      if (d.balance < current.low) current.low = d.balance;
+    });
+    out.forEach(function (m) { m.net = m.inflow + m.outflow; });
+    return out;
+  }
+
+  function money(v, opts) {
+    var o = opts || {};
+    /* Belgian format, minus the space after the symbol: in a monospaced face a
+       space takes a full character width and splits the figure in two. */
+    return new Intl.NumberFormat('nl-BE', {
+      style: 'currency', currency: 'EUR',
+      minimumFractionDigits: o.cents === false ? 0 : 2,
+      maximumFractionDigits: o.cents === false ? 0 : 2
+    }).format(v).replace(/\u00a0/g, '');
+  }
+  function signed(v, opts) { return (v > 0 ? '+' : '') + money(v, opts); }
+  function longDate(d) {
+    return new Intl.DateTimeFormat('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+    }).format(typeof d === 'string' ? parseDate(d) : d);
+  }
+  function shortDate(d) {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
+    }).format(typeof d === 'string' ? parseDate(d) : d);
+  }
+  function monthLabel(key) {
+    return new Intl.DateTimeFormat('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+      .format(parseDate(key + '-01'));
+  }
+  function distance(fromIso, toIso) {
+    var n = daysBetween(parseDate(fromIso), parseDate(toIso));
+    if (n === 0) return 'today';
+    var past = n < 0; n = Math.abs(n);
+    var months = Math.floor(n / 30.44), rest = Math.round(n - months * 30.44);
+    var parts = [];
+    if (months) parts.push(months + (months === 1 ? ' month' : ' months'));
+    if (rest || !months) parts.push(rest + (rest === 1 ? ' day' : ' days'));
+    return (past ? '' : 'in ') + parts.join(', ') + (past ? ' ago' : '');
+  }
+
+  return {
+    parseDate: parseDate, iso: iso, addDays: addDays, addMonths: addMonths,
+    daysBetween: daysBetween, occurrences: occurrences, project: project,
+    monthlyNet: monthlyNet, movements: movements, byMonth: byMonth,
+    money: money, signed: signed, longDate: longDate, shortDate: shortDate,
+    monthLabel: monthLabel,
+    distance: distance
+  };
+})();
+</script>
+<script>
+/* Sample household, marked as an example everywhere it is shown.
+   A two-income Flemish household with a mortgage, one car and two kids.
+   Dates are the day the money actually lands or leaves. */
+var SCENARIO = {
+  label: 'Example household — Ghent, two incomes',
+  asOf: '2026-09-10',
+  horizonMonths: 30,
+  buffer: 2500,
+  accounts: [
+    { name: 'Current account', balance: 2410.40 },
+    { name: 'Joint account', balance: 1180.15 },
+    { name: 'Savings', balance: 9250.00, inForecast: false }
+  ],
+  recurring: [
+    { id: 'sal-1', label: 'Net salary — Hilde', amount: 2940.00, cadence: 'monthly', on: '2026-09-27', category: 'salary' },
+    { id: 'sal-2', label: 'Freelance invoices — Bram', amount: 1120.00, cadence: 'monthly', on: '2026-09-15', category: 'salary', estimate: true },
+    { id: 'grw', label: 'Groeipakket (child benefit)', amount: 356.80, cadence: 'monthly', on: '2026-09-08', category: 'benefit' },
+    { id: 'hol', label: 'Holiday pay', amount: 1890.00, cadence: 'yearly', on: '2027-05-22', category: 'salary' },
+    { id: 'thi', label: 'Year-end bonus', amount: 2640.00, cadence: 'yearly', on: '2026-12-18', category: 'salary' },
+
+    { id: 'mor', label: 'Mortgage — KBC', amount: -1142.00, cadence: 'monthly', on: '2026-10-01', category: 'housing' },
+    { id: 'ene', label: 'Energy advance — Luminus', amount: -214.00, cadence: 'monthly', on: '2026-09-15', category: 'housing' },
+    { id: 'wat', label: 'Water — Farys', amount: -128.00, cadence: 'quarterly', on: '2026-10-05', category: 'housing' },
+    { id: 'tel', label: 'Internet + mobile — Telenet', amount: -78.50, cadence: 'monthly', on: '2026-09-20', category: 'housing' },
+    { id: 'gro', label: 'Groceries', amount: -195.00, cadence: 'weekly', on: '2026-09-12', category: 'living', estimate: true },
+    { id: 'car', label: 'Fuel + car upkeep', amount: -180.00, cadence: 'monthly', on: '2026-09-25', category: 'transport', estimate: true },
+    { id: 'ins', label: 'Car insurance — AG', amount: -612.00, cadence: 'yearly', on: '2027-03-04', category: 'insurance' },
+    { id: 'hom', label: 'Home + liability insurance', amount: -486.00, cadence: 'yearly', on: '2026-11-08', category: 'insurance' },
+    { id: 'hos', label: 'Hospital cover — CM', amount: -62.30, cadence: 'monthly', on: '2026-09-11', category: 'insurance' },
+    { id: 'pri', label: 'Property tax (onroerende voorheffing)', amount: -1284.00, cadence: 'yearly', on: '2026-10-28', category: 'tax' },
+    { id: 'sch', label: 'School + childcare', amount: -340.00, cadence: 'quarterly', on: '2026-09-30', category: 'living' },
+    { id: 'sub', label: 'Subscriptions + gym', amount: -66.98, cadence: 'monthly', on: '2026-09-18', category: 'living' },
+    { id: 'kit', label: 'Kitchen renovation loan', amount: -276.40, cadence: 'monthly', on: '2026-09-14', category: 'housing', to: '2028-04-14' },
+    { id: 'clu', label: 'Music school + sports clubs', amount: -145.00, cadence: 'monthly', on: '2026-09-16', category: 'living' },
+    { id: 'hsh', label: 'Household + clothing', amount: -220.00, cadence: 'monthly', on: '2026-09-22', category: 'living', estimate: true },
+    { id: 'lei', label: 'Eating out + leisure', amount: -260.00, cadence: 'monthly', on: '2026-09-24', category: 'living', estimate: true },
+    { id: 'pen', label: 'Pension saving (pensioensparen)', amount: -1050.00, cadence: 'yearly', on: '2026-11-24', category: 'saving' },
+    { id: 'sav', label: 'Standing transfer to savings', amount: -400.00, cadence: 'monthly', on: '2026-09-28', category: 'saving' }
+  ],
+  planned: [
+    { id: 'p-wash', label: 'Replace washing machine', amount: -680.00, date: '2026-10-20', category: 'living' },
+    { id: 'p-holdep', label: 'Andalusia trip — deposit', amount: -750.00, date: '2026-11-15', category: 'travel' },
+    { id: 'p-refund', label: 'Tax refund', amount: 842.00, date: '2026-12-05', category: 'tax' },
+    { id: 'p-dent', label: 'Dental implant (own share)', amount: -1450.00, date: '2027-01-12', category: 'living' },
+    { id: 'p-carsale', label: 'Sell the old Polo', amount: 3400.00, date: '2027-02-06', category: 'transport' },
+    { id: 'p-holbal', label: 'Andalusia trip — balance', amount: -1950.00, date: '2027-03-02', category: 'travel' },
+    { id: 'p-solar', label: 'Solar panels — own contribution', amount: -4200.00, date: '2027-06-15', category: 'housing' }
+  ],
+  categories: {
+    salary:    { label: 'Income',      slot: 1 },
+    benefit:   { label: 'Benefits',    slot: 3 },
+    housing:   { label: 'House',       slot: 2 },
+    living:    { label: 'Living',      slot: 4 },
+    transport: { label: 'Transport',   slot: 5 },
+    insurance: { label: 'Insurance',   slot: 7 },
+    tax:       { label: 'Tax',         slot: 8 },
+    travel:    { label: 'Travel',      slot: 6 },
+    saving:    { label: 'Saving',      slot: 6 }
+  }
+};
+</script>
+<script>
+(function () {
+  var KEY = 'moraview.grid.v1';
+  var state = { buffer: SCENARIO.buffer, selected: null, added: [] };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) {
+      state.buffer = typeof saved.buffer === 'number' ? saved.buffer : state.buffer;
+      state.selected = saved.selected || null;
+      state.added = saved.added || [];
+    }
+  } catch (e) { /* storage blocked — run on the sample */ }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var el = function (id) { return document.getElementById(id); };
+  var fc, months, monthKeys;
+
+  function tuned() {
+    return Object.assign({}, SCENARIO, {
+      buffer: state.buffer,
+      planned: SCENARIO.planned.concat(state.added)
+    });
+  }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+  /* Five comfort bands above the buffer, plus tight and overdrawn below it.
+     The thresholds are multiples of the buffer, so the grid re-reads itself
+     whenever the buffer changes. */
+  function bandOf(balance) {
+    if (balance < 0) return 'red';
+    if (balance < state.buffer) return 'tight';
+    var over = state.buffer > 0 ? balance / state.buffer : balance / 1000;
+    if (over < 1.6) return '1';
+    if (over < 2.6) return '2';
+    if (over < 4) return '3';
+    if (over < 6) return '4';
+    return '5';
+  }
+  function bandLabel(band) {
+    return { red: 'overdrawn', tight: 'under the buffer', 1: 'only just clear', 2: 'thin',
+             3: 'comfortable', 4: 'roomy', 5: 'well ahead' }[band];
+  }
+
+  function grid() {
+    /* two header rows: the years span their months, the months keep three letters */
+    var years = [];
+    monthKeys.forEach(function (k) {
+      var y = k.slice(0, 4);
+      if (years.length && years[years.length - 1].year === y) years[years.length - 1].span++;
+      else years.push({ year: y, span: 1 });
+    });
+    var head = '<tr><th class="dom"></th>' + years.map(function (y) {
+      return '<th class="year" colspan="' + y.span + '" scope="col">' + y.year + '</th>';
+    }).join('') + '</tr>';
+    head += '<tr><th class="dom"></th>' + monthKeys.map(function (k) {
+      return '<th scope="col">' + MV.monthLabel(k).split(' ')[0].slice(0, 3) + '</th>';
+    }).join('') + '</tr>';
+
+    var body = '';
+    for (var dom = 1; dom <= 31; dom++) {
+      body += '<tr><th class="dom" scope="row">' + dom + '</th>';
+      body += monthKeys.map(function (k) {
+        var date = k + '-' + String(dom).padStart(2, '0');
+        var day = fc.index[date];
+        if (!day) return '<td class="blank"></td>';
+        var band = bandOf(day.balance);
+        var planned = day.events.some(function (e) { return e.planned; });
+        return '<td><button type="button" class="cell' + (state.selected === date ? ' is-selected' : '') +
+          (date === fc.asOf ? ' is-today' : '') + '" data-date="' + date + '" data-band="' + band +
+          '" data-plan="' + (planned ? 1 : 0) + '" tabindex="' + (state.selected === date ? 0 : -1) +
+          '" aria-label="' + MV.shortDate(date) + ': ' + MV.money(day.balance, { cents: false }) + ', ' + bandLabel(band) + '"></button></td>';
+      }).join('');
+      body += '</tr>';
+    }
+    el('gridScroll').innerHTML = '<table class="grid" role="grid" aria-label="Projected closing balance for every day">' +
+      '<thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+  }
+
+  function legend() {
+    var b = state.buffer;
+    var ramp = ['1', '2', '3', '4', '5'].map(function (n) {
+      return '<i style="background:var(--b' + n + ')"></i>';
+    }).join('');
+    el('legend').innerHTML =
+      '<span class="key"><span class="sw" style="background:repeating-linear-gradient(45deg,var(--red) 0 3px,color-mix(in srgb,var(--red) 62%,#000) 3px 6px)"></span>overdrawn</span>' +
+      '<span class="key"><span class="sw" style="background:var(--tight)"></span>under ' + MV.money(b, { cents: false }) + '</span>' +
+      '<span class="key"><span class="ramp">' + ramp + '</span>' + MV.money(b, { cents: false }) + ' → ' +
+      MV.money(b * 6, { cents: false }) + ' and up</span>' +
+      '<span class="key"><span class="sw" style="background:var(--b3);position:relative"><i style="position:absolute;right:2px;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--on-band);display:block"></i></span>a planned one-off falls here</span>';
+  }
+
+  function strip() {
+    var today = fc.days[0], tight = fc.breach, negative = fc.negative;
+    var underDays = fc.days.filter(function (d) { return d.balance < state.buffer; }).length;
+    el('strip').innerHTML = [
+      { k: 'In the accounts today', v: MV.money(fc.opening), n: MV.longDate(fc.asOf).replace(/^\w+, /, '') },
+      { k: 'Lowest point ahead', v: MV.money(fc.low.balance), red: fc.low.balance < state.buffer,
+        n: MV.shortDate(fc.low.date) + ' · ' + MV.distance(fc.asOf, fc.low.date) },
+      { k: 'First tight day', v: tight ? MV.shortDate(tight.date) : 'None',
+        red: !!tight, n: tight ? MV.distance(fc.asOf, tight.date) : 'the buffer holds all the way out' },
+      { k: 'Days under the buffer', v: underDays + ' of ' + fc.days.length, red: underDays > 0,
+        n: negative ? 'overdrawn from ' + MV.shortDate(negative.date) : 'never overdrawn' }
+    ].map(function (s) {
+      return '<div class="stat"><div class="k">' + s.k + '</div><div class="v mono' + (s.red ? ' red' : '') + '">' +
+        s.v + '</div><div class="n">' + esc(s.n) + '</div></div>';
+    }).join('');
+  }
+
+  function panel() {
+    var date = state.selected, day = fc.index[date];
+    if (!day) return;
+    var band = bandOf(day.balance);
+    el('panelEyebrow').textContent = date === fc.asOf ? 'Today' : MV.distance(fc.asOf, date);
+    el('panelDate').textContent = MV.longDate(date);
+    var bal = el('panelBalance');
+    bal.textContent = MV.money(day.balance);
+    bal.classList.toggle('red', day.balance < 0);
+    var v = el('panelVerdict');
+    v.className = 'verdict' + (band === 'red' ? ' red' : (band === 'tight' ? ' tight' : ''));
+    v.textContent = band === 'red' ? 'Overdrawn by ' + MV.money(-day.balance) :
+      band === 'tight' ? 'Under the buffer by ' + MV.money(state.buffer - day.balance) :
+      MV.money(day.balance - state.buffer) + ' clear of the buffer · ' + bandLabel(band);
+
+    var moves = day.events.slice().sort(function (a, b) { return Math.abs(b.amount) - Math.abs(a.amount); });
+    el('panelMoves').innerHTML = moves.map(function (e) {
+      var own = state.added.some(function (a) { return a.id === e.id; });
+      return '<li><span class="lbl">' + esc(e.label) + (e.estimate ? ' · est.' : '') + '</span>' +
+        '<span class="amt mono ' + (e.amount >= 0 ? 'in' : '') + '">' + MV.signed(e.amount) + '</span>' +
+        (own ? '<button type="button" class="drop" data-drop="' + e.id + '" aria-label="Remove ' + esc(e.label) + '">×</button>' : '<span></span>') +
+        '</li>';
+    }).join('');
+    el('panelEmpty').hidden = moves.length > 0;
+    Array.prototype.forEach.call(el('panelMoves').querySelectorAll('.drop'), function (b) {
+      b.addEventListener('click', function () {
+        state.added = state.added.filter(function (a) { return a.id !== b.dataset.drop; });
+        persist(); recompute();
+      });
+    });
+  }
+
+  function table() {
+    el('tableBody').innerHTML = months.map(function (m) {
+      var under = fc.days.filter(function (d) {
+        return d.date.slice(0, 7) === m.month && d.balance < state.buffer;
+      }).length;
+      return '<tr class="' + (under ? 'tight' : '') + '"><td>' + MV.monthLabel(m.month) + '</td>' +
+        '<td class="mono">' + MV.money(m.inflow, { cents: false }) + '</td>' +
+        '<td class="mono">' + MV.money(m.outflow, { cents: false }) + '</td>' +
+        '<td class="mono">' + MV.signed(m.net, { cents: false }) + '</td>' +
+        '<td class="mono">' + MV.money(m.low, { cents: false }) + '</td>' +
+        '<td class="mono">' + (under || '—') + '</td>' +
+        '<td class="mono">' + MV.money(m.end, { cents: false }) + '</td></tr>';
+    }).join('');
+  }
+
+  function select(date, focus) {
+    if (!fc.index[date]) return;
+    var previous = el('gridScroll').querySelector('.cell.is-selected');
+    if (previous) { previous.classList.remove('is-selected'); previous.tabIndex = -1; }
+    state.selected = date;
+    var next = el('gridScroll').querySelector('.cell[data-date="' + date + '"]');
+    if (next) {
+      next.classList.add('is-selected');
+      next.tabIndex = 0;
+      if (focus) next.focus();
+    }
+    el('jump').value = date;
+    persist();
+    panel();
+  }
+
+  /* ---------- interaction ---------- */
+  var scroll = el('gridScroll');
+  scroll.addEventListener('pointerover', function (e) {
+    var cell = e.target.closest && e.target.closest('.cell');
+    if (!cell) return;
+    var day = fc.index[cell.dataset.date];
+    el('hoverline').innerHTML = '<b>' + MV.shortDate(day.date) + '</b> closes at <b class="mono">' +
+      MV.money(day.balance) + '</b>' + (day.events.length ? ' · ' + day.events.length +
+      (day.events.length === 1 ? ' movement' : ' movements') + ' booked' : ' · nothing booked');
+  });
+  scroll.addEventListener('click', function (e) {
+    var cell = e.target.closest && e.target.closest('.cell');
+    if (cell) select(cell.dataset.date, false);
+  });
+  scroll.addEventListener('keydown', function (e) {
+    var cell = e.target.closest && e.target.closest('.cell');
+    if (!cell) return;
+    var moves = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: null, ArrowRight: null };
+    if (!(e.key in moves)) return;
+    e.preventDefault();
+    var date = MV.parseDate(cell.dataset.date), next;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      next = MV.iso(MV.addDays(date, e.key === 'ArrowUp' ? -1 : 1));
+    } else {
+      next = MV.iso(MV.addMonths(date, e.key === 'ArrowLeft' ? -1 : 1));
+    }
+    if (fc.index[next]) select(next, true);
+  });
+  el('bufferInput').addEventListener('change', function (e) {
+    state.buffer = Math.max(0, Number(e.target.value) || 0);
+    persist(); recompute();
+  });
+  el('jump').addEventListener('change', function (e) {
+    if (fc.index[e.target.value]) select(e.target.value, true);
+    else e.target.value = state.selected;
+  });
+  el('toTight').addEventListener('click', function () {
+    select((fc.breach || fc.low).date, true);
+  });
+  el('planForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var amount = Math.abs(Number(el('planAmount').value) || 0) * Number(el('planSign').value);
+    if (!amount) return;
+    state.added.push({
+      id: 'own-' + Date.now().toString(36),
+      label: el('planLabel').value.trim() || 'Parked payment',
+      amount: amount,
+      date: state.selected,
+      category: amount >= 0 ? 'salary' : 'living'
+    });
+    persist();
+    e.target.reset();
+    recompute();
+  });
+  el('reset').addEventListener('click', function () {
+    state = { buffer: SCENARIO.buffer, selected: null, added: [] };
+    persist(); recompute();
+  });
+
+  /* ---------- run ---------- */
+  function recompute() {
+    fc = MV.project(tuned());
+    months = MV.byMonth(fc);
+    monthKeys = months.map(function (m) { return m.month; });
+    if (!state.selected || !fc.index[state.selected]) state.selected = (fc.breach || fc.low).date;
+    el('bufferInput').value = state.buffer;
+    el('jump').min = fc.asOf;
+    el('jump').max = fc.days[fc.days.length - 1].date;
+    el('jump').value = state.selected;
+    grid(); strip(); legend(); panel(); table();
+  }
+
+  recompute();
+})();
+</script>
