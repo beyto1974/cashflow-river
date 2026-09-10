@@ -35,3 +35,16 @@ export function bandFor(category: Category): Band {
   if (!band) throw new Error(`No band covers category ${category}`);
   return band;
 }
+
+/** How the household would name each category in a picker. */
+export const CATEGORY_LABELS: Record<Category, string> = {
+  salary: 'Pay or invoices',
+  benefit: 'Benefit',
+  housing: 'House and bills',
+  insurance: 'Insurance',
+  tax: 'Tax',
+  living: 'Day to day',
+  transport: 'Getting around',
+  travel: 'Travel',
+  saving: 'Saving'
+};
