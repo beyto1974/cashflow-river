@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { plainDate } from '../src/domain/dates';
 import { euros } from '../src/domain/money';
-import { advanceTo, switchKind } from '../src/domain/scenarioOps';
+import { advanceTo, applyPatch, switchKind } from '../src/domain/scenarioOps';
 import type { Scenario } from '../src/domain/types';
 
 function scenario(): Scenario {
@@ -107,5 +107,34 @@ describe('switchKind', () => {
   it('keeps the shared fields', () => {
     const asPlanned = switchKind({ ...recurringLine, estimate: true }, 'planned', plainDate('2026-09-10'));
     expect(asPlanned).toMatchObject({ id: 'pay', label: 'Pay', amount: euros(2000), category: 'salary', estimate: true });
+  });
+});
+
+describe('applyPatch', () => {
+  const line = scenario().lines[0]!;
+
+  it('changes the fields it is given', () => {
+    expect(applyPatch(line, { label: 'Wages', amount: euros(2500) })).toMatchObject({
+      label: 'Wages',
+      amount: euros(2500)
+    });
+  });
+
+  it('clears an optional field when the patch says undefined', () => {
+    const bounded = { ...line, to: plainDate('2028-01-01'), estimate: true as const };
+    const cleared = applyPatch(bounded, { to: undefined, estimate: undefined });
+    expect(cleared).not.toHaveProperty('to');
+    expect(cleared).not.toHaveProperty('estimate');
+  });
+
+  it('leaves the fields it is not given alone', () => {
+    const patched = applyPatch({ ...line, estimate: true as const }, { label: 'Pay day' });
+    expect(patched).toMatchObject({ estimate: true, cadence: 'monthly' });
+  });
+
+  it('does not mutate the line it was given', () => {
+    const before = { ...line };
+    applyPatch(line, { label: 'Changed' });
+    expect(line).toEqual(before);
   });
 });

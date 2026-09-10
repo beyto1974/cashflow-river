@@ -17,14 +17,25 @@ export interface Account {
   inForecast: boolean;
 }
 
+/**
+ * How far a guessed amount could go either way. Both ends carry the sign of the
+ * amount: for spending, `low` is the cheap month and `high` the dear one.
+ */
+export interface AmountRange {
+  low: Cents;
+  high: Cents;
+}
+
 interface LineFields {
   id: string;
   label: string;
-  /** Signed: income positive, spending negative. */
+  /** Signed: income positive, spending negative. The likely figure. */
   amount: Cents;
   category: Category;
   /** The household is guessing at this one — groceries, fuel, leisure. */
   estimate?: boolean;
+  /** How wrong the guess could be. Only meaningful on an estimate. */
+  range?: AmountRange;
   /** Kept in the ledger but left out of the forecast. */
   muted?: boolean;
 }
@@ -58,6 +69,25 @@ export function isRecurring(line: Line): line is RecurringLine {
 }
 export function isPlanned(line: Line): line is PlannedLine {
   return line.kind === 'planned';
+}
+
+/**
+ * A change to one line. An explicit `undefined` clears the field, which is how
+ * an optional one — an end date, a range, a yearly rise — is removed.
+ */
+export interface LinePatch {
+  label?: string;
+  amount?: Cents;
+  category?: Category;
+  estimate?: boolean | undefined;
+  range?: AmountRange | undefined;
+  muted?: boolean | undefined;
+  cadence?: Cadence;
+  anchor?: PlainDate;
+  from?: PlainDate | undefined;
+  to?: PlainDate | undefined;
+  indexation?: Indexation | undefined;
+  date?: PlainDate;
 }
 
 export interface Scenario {

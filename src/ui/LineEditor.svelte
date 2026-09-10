@@ -1,14 +1,15 @@
 <script lang="ts">
   import { isPlainDate, plainDate } from '../domain/dates';
-  import { directionOf, withSign, type Direction } from '../domain/money';
-  import { CATEGORIES, type Cadence, type Category, type Line } from '../domain/types';
+  import { directionOf, isNegative, parseAmount, withSign, type Direction } from '../domain/money';
+  import { CATEGORIES, type Cadence, type Category, type Line, type LinePatch } from '../domain/types';
+  import type { Cents } from '../domain/money';
   import { CADENCES, cadenceKeys } from '../domain/schedule';
   import { CATEGORY_LABELS } from './bands';
   import AmountInput from './AmountInput.svelte';
 
   interface Props {
     line: Line;
-    onpatch: (patch: Partial<Line>) => void;
+    onpatch: (patch: LinePatch) => void;
     onkind: (kind: Line['kind']) => void;
     onremove: () => void;
     onclose: () => void;
@@ -32,7 +33,7 @@
     const optional = field === 'from' || field === 'to';
 
     if (value === '') {
-      if (optional) onpatch({ [field]: undefined } as Partial<Line>);
+      if (optional) onpatch({ [field]: undefined });
       else input.value = current(field);
       return;
     }
@@ -40,7 +41,7 @@
       input.value = current(field);
       return;
     }
-    onpatch({ [field]: plainDate(value) } as Partial<Line>);
+    onpatch({ [field]: plainDate(value) });
   }
 
   function current(field: 'anchor' | 'date' | 'from' | 'to'): string {
@@ -49,15 +50,45 @@
     return field === 'anchor' ? line.anchor : (line[field] ?? '');
   }
   function setEstimate(isGuess: boolean): void {
-    const patch: Partial<Line> = isGuess ? { estimate: true } : {};
-    onpatch(isGuess ? patch : ({ estimate: false } as Partial<Line>));
+    onpatch(
+      isGuess
+        ? { estimate: true, range: line.range ?? suggestedRange() }
+        : { estimate: undefined, range: undefined }
+    );
+  }
+
+  /** A first guess at how wrong the guess might be: a fifth either way. */
+  function suggestedRange(): { low: Cents; high: Cents } {
+    const spread = Math.round(Math.abs(line.amount) * 0.2);
+    return isNegative(line.amount)
+      ? { low: line.amount + spread, high: line.amount - spread }
+      : { low: line.amount - spread, high: line.amount + spread };
+  }
+
+  /** Both ends keep the sign of the amount, and the amount stays between them. */
+  function setRangeEnd(event: Event, end: 'low' | 'high'): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const parsed = parseAmount(input.value);
+    const range = line.range ?? suggestedRange();
+    if (parsed === null) {
+      input.value = (Math.abs(range[end]) / 100).toFixed(2);
+      return;
+    }
+    const signed = withSign(parsed, directionOf(line.amount));
+    const next = { ...range, [end]: signed };
+    const inside = Math.min(next.low, next.high) <= line.amount && line.amount <= Math.max(next.low, next.high);
+    if (!inside) {
+      input.value = (Math.abs(range[end]) / 100).toFixed(2);
+      return;
+    }
+    onpatch({ range: next });
   }
   /** A rate of nought — or an empty field — means the line simply does not rise. */
   function setRate(event: Event): void {
     const input = event.currentTarget as HTMLInputElement;
     const text = input.value.trim().replace('%', '');
     if (text === '') {
-      onpatch({ indexation: undefined } as Partial<Line>);
+      onpatch({ indexation: undefined });
       return;
     }
     const percent = Number(text);
@@ -67,11 +98,11 @@
     }
     const ratePerYear = Math.round(percent * 100);
     if (ratePerYear === 0) {
-      onpatch({ indexation: undefined } as Partial<Line>);
+      onpatch({ indexation: undefined });
       return;
     }
     const from = line.kind === 'recurring' ? (line.indexation?.from ?? line.anchor) : plainDate(fallback());
-    onpatch({ indexation: { ratePerYear, from } } as Partial<Line>);
+    onpatch({ indexation: { ratePerYear, from } });
   }
 
   function setRiseDate(event: Event): void {
@@ -81,7 +112,7 @@
       input.value = line.indexation.from;
       return;
     }
-    onpatch({ indexation: { ...line.indexation, from: plainDate(input.value) } } as Partial<Line>);
+    onpatch({ indexation: { ...line.indexation, from: plainDate(input.value) } });
   }
 
   function fallback(): string {
@@ -196,6 +227,32 @@
     <span>This amount is a guess</span>
   </label>
 
+  {#if line.estimate && line.range}
+    <div class="field">
+      <span>Could be as little as</span>
+      <input
+        type="text"
+        inputmode="decimal"
+        class="mono"
+        value={(Math.abs(line.range.low) / 100).toFixed(2)}
+        onchange={(event) => setRangeEnd(event, 'low')}
+        aria-label="Smallest this could be"
+      />
+    </div>
+    <div class="field">
+      <span>Or as much as</span>
+      <input
+        type="text"
+        inputmode="decimal"
+        class="mono"
+        value={(Math.abs(line.range.high) / 100).toFixed(2)}
+        onchange={(event) => setRangeEnd(event, 'high')}
+        aria-label="Largest this could be"
+      />
+    </div>
+    <p class="note">The forecast draws a band between these two, and warns you from the worse edge.</p>
+  {/if}
+
   <div class="actions">
     <button type="button" class="button ghost" onclick={onclose}>Done</button>
     <button type="button" class="button danger" onclick={onremove}>Delete this line</button>
@@ -238,6 +295,12 @@
     accent-color: var(--accent);
     width: 15px;
     height: 15px;
+  }
+  .note {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--ink-3);
   }
   .actions {
     grid-column: 1 / -1;

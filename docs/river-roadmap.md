@@ -23,23 +23,31 @@ so the port stays and the decision waits.
 
 Each step is one slice: tests first, then the code, then the ledger and chart
 catch up. The first three change the domain, so they come before anything that
-reads it.
+reads it. **Steps 1–3 are done.**
 
-1. **Per-occurrence amounts.** `occurrenceAmount(line, date)` replaces the flat
+1. **Per-occurrence amounts.** *(done)* `occurrenceAmount(line, date)` replaces the flat
    `line.amount` inside the projection, so an amount can depend on when it
    falls. Nothing changes on screen; it is the seam the next two steps need.
    *Tests:* a line with no rules returns its own amount on every occurrence.
-2. **Indexation.** A yearly percentage rise per line from a given date — rent,
+2. **Indexation.** *(done)* A yearly percentage rise per line from a given date — rent,
    insurance, energy. *Tests:* 2% a year lands on the anniversary, not on 1
    January; a rise applied to a month-end line keeps its day; the rise compounds
    over three years.
-3. **Ranges on the estimated lines.** Groceries, fuel, leisure and the freelance
-   invoices carry a low and a high as well as a likely figure. The projection
-   returns three balances per day, the answer becomes a range on the read-out
-   date, and the bed is drawn as a cone with the likely line inside it.
-   *Tests:* the cone never crosses itself; a scenario with no estimates has a
-   cone of zero width; the low band drives the buffer warnings, not the likely
-   one.
+3. **Ranges on the estimated lines.** *(done)* Groceries, fuel, leisure, the
+   household and the freelance invoices carry a low and a high as well as a
+   likely figure; the read-out says what it could be either way, and the bed
+   carries a band around the likely line. The buffer and overdraft warnings read
+   the low edge.
+
+   One thing changed while building it. Reading every guess at its worst for
+   thirty months assumes the groceries are dear every single week for two and a
+   half years, and it drew a band so wide the balance line was a flat smudge in
+   the middle of it. Each guessed occurrence is now an independent wobble, so
+   the spreads add in quadrature and the band grows with the square root of the
+   number of guesses — with each side kept separately, so an off-centre guess
+   leans the band the way it actually leans. The per-occurrence extremes are
+   still on every movement, so a literal worst case can be shown later if it
+   turns out to be wanted.
 4. **Payment-day rules.** `exact`, `last working day of the month`, and `shift
    off a weekend or public holiday`. The holiday list comes in through a small
    port so the calendar is data, not code. *Tests:* a salary anchored to the
@@ -106,5 +114,7 @@ reads it.
 
 ## Next slice
 
-Steps 1–3. They change the domain, everything else reads it, and the ranges are
-what turn a single confident figure into an honest one.
+Step 4, the payment-day rules — then M3, which is where the forecast starts
+answering rather than only reporting. Step 15 (debounce, and recompute from the
+changed month forward) has moved up in importance now that every keystroke
+re-projects and re-bands the whole horizon.

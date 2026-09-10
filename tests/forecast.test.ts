@@ -54,7 +54,10 @@ describe('project', () => {
     expect(forecast.dayAt(plainDate('2026-09-27'))?.balance).toBe(euros(2100));
     expect(forecast.dayAt(plainDate('2026-10-01'))?.balance).toBe(euros(900));
     expect(forecast.dayAt(plainDate('2026-10-01'))?.movements).toEqual([
-      { lineId: 'rent', label: 'Rent', amount: euros(-1200), category: 'housing', planned: false, estimate: false }
+      {
+        lineId: 'rent', label: 'Rent', amount: euros(-1200), worst: euros(-1200), best: euros(-1200),
+        category: 'housing', planned: false, estimate: false
+      }
     ]);
   });
 

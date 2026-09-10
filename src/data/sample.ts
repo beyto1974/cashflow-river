@@ -24,7 +24,9 @@ export function sampleScenario(): Scenario {
     ],
     lines: [
       recurring('salary-1', 'Salary — Alex', 2940, 'salary', 'monthly', '2026-09-27'),
-      recurring('salary-2', 'Freelance invoices — Sam', 1120, 'salary', 'monthly', '2026-09-15', { estimate: true }),
+      recurring('salary-2', 'Freelance invoices — Sam', 1120, 'salary', 'monthly', '2026-09-15', {
+        estimate: true, range: [700, 1500]
+      }),
       recurring('child', 'Child benefit', 356.8, 'benefit', 'monthly', '2026-09-08'),
       recurring('holiday-pay', 'Holiday pay', 1890, 'salary', 'yearly', '2027-05-22'),
       recurring('bonus', 'Year-end bonus', 2640, 'salary', 'yearly', '2026-12-18'),
@@ -36,15 +38,23 @@ export function sampleScenario(): Scenario {
       recurring('water', 'Water', -128, 'housing', 'quarterly', '2026-10-05'),
       recurring('telecom', 'Internet + mobile', -78.5, 'housing', 'monthly', '2026-09-20'),
       recurring('kitchen', 'Kitchen renovation loan', -276.4, 'housing', 'monthly', '2026-09-14', { to: '2028-04-14' }),
-      recurring('groceries', 'Groceries', -195, 'living', 'weekly', '2026-09-12', { estimate: true }),
+      recurring('groceries', 'Groceries', -195, 'living', 'weekly', '2026-09-12', {
+        estimate: true, range: [-165, -235]
+      }),
       recurring('clubs', 'Music school + sports clubs', -145, 'living', 'monthly', '2026-09-16'),
-      recurring('household', 'Household + clothing', -220, 'living', 'monthly', '2026-09-22', { estimate: true }),
-      recurring('leisure', 'Eating out + leisure', -260, 'living', 'monthly', '2026-09-24', { estimate: true }),
+      recurring('household', 'Household + clothing', -220, 'living', 'monthly', '2026-09-22', {
+        estimate: true, range: [-140, -330]
+      }),
+      recurring('leisure', 'Eating out + leisure', -260, 'living', 'monthly', '2026-09-24', {
+        estimate: true, range: [-160, -380]
+      }),
       recurring('school', 'School + childcare', -340, 'living', 'quarterly', '2026-09-30', {
         indexation: { ratePerYear: 250, from: '2027-09-01' }
       }),
       recurring('subscriptions', 'Subscriptions + gym', -66.98, 'living', 'monthly', '2026-09-18'),
-      recurring('fuel', 'Fuel + car upkeep', -180, 'transport', 'monthly', '2026-09-25', { estimate: true }),
+      recurring('fuel', 'Fuel + car upkeep', -180, 'transport', 'monthly', '2026-09-25', {
+        estimate: true, range: [-120, -290]
+      }),
       recurring('car-insurance', 'Car insurance', -612, 'insurance', 'yearly', '2027-03-04'),
       recurring('home-insurance', 'Home + contents insurance', -486, 'insurance', 'yearly', '2026-11-08', {
         indexation: { ratePerYear: 300, from: '2026-11-08' }
@@ -67,6 +77,8 @@ export function sampleScenario(): Scenario {
 
 type Extras = {
   estimate?: boolean;
+  /** [low, high] in euros, both carrying the sign of the amount. */
+  range?: [number, number];
   from?: string;
   to?: string;
   indexation?: { ratePerYear: number; from: string };
@@ -90,6 +102,7 @@ function recurring(
     cadence,
     anchor: plainDate(anchor),
     ...(extras.estimate ? { estimate: true } : {}),
+    ...(extras.range ? { range: { low: euros(extras.range[0]), high: euros(extras.range[1]) } } : {}),
     ...(extras.from ? { from: plainDate(extras.from) } : {}),
     ...(extras.to ? { to: plainDate(extras.to) } : {}),
     ...(extras.indexation

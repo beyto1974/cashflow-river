@@ -1,7 +1,7 @@
 import { compareDates, type PlainDate } from './dates';
 import { addCents } from './money';
 import { project } from './forecast';
-import { isRecurring, type Line, type Scenario } from './types';
+import { isRecurring, type Line, type LinePatch, type Scenario } from './types';
 
 /**
  * Moves the scenario's start date forward to `date`, folding everything that
@@ -58,4 +58,17 @@ export function switchKind(line: Line, kind: Line['kind'], fallbackDate: PlainDa
   return kind === 'planned'
     ? { ...shared, kind: 'planned', date: isRecurring(line) ? line.anchor : fallbackDate }
     : { ...shared, kind: 'recurring', cadence: 'monthly', anchor: isRecurring(line) ? line.anchor : line.date };
+}
+
+/**
+ * Applies a patch to a line, dropping any field the patch sets to undefined so
+ * an optional field can actually be removed rather than stored as undefined.
+ */
+export function applyPatch(line: Line, patch: LinePatch): Line {
+  const merged: Record<string, unknown> = { ...line };
+  for (const [field, value] of Object.entries(patch)) {
+    if (value === undefined) delete merged[field];
+    else merged[field] = value;
+  }
+  return merged as unknown as Line;
 }

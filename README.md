@@ -45,7 +45,12 @@ docs/             the interfaces, the decision, the roadmap, screenshots
   month and how to find its nth occurrence; adding one is a new entry, not an
   edit to the projection.
 - **One projection.** `project(scenario)` is the only place a line becomes
-  money; the month table, the breakdowns and the chart all read it.
+  money; the month table, the breakdowns and the chart all read it. Every
+  movement carries the likely amount and the two ends of its guess.
+- **Guesses add in quadrature.** The band around the balance grows with the
+  square root of the number of guessed occurrences, not their sum: a household
+  does not have a dear grocery week every week for two years. Warnings read the
+  low edge of that band, never the likely line.
 - **Storage is behind a port.** The browser adapter is the only one today; a
   remote one can be added without the app knowing.
 

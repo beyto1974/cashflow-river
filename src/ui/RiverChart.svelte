@@ -1,10 +1,11 @@
 <script lang="ts">
   import { addDays, daysBetween, type MonthKey, type PlainDate } from '../domain/dates';
   import { formatEUR, formatSigned } from '../domain/money';
-  import type { Forecast } from '../domain/forecast';
+  import type { BandDay, Forecast } from '../domain/forecast';
   import type { MonthSummary } from '../domain/rollups';
   import { columnAt, riverGeometry, type Column } from './chart/riverModel';
   import { trackPointer } from './pointerTracking';
+  import { longMonth } from './format';
 
   interface Props {
     forecast: Forecast;
@@ -12,15 +13,25 @@
     target: PlainDate;
     selectedMonth: MonthKey;
     onselect: (month: MonthKey) => void;
+    /** The edges of the guesses, drawn as a band around the likely line. */
+    band?: BandDay[] | undefined;
   }
-  const { forecast, months, target, selectedMonth, onselect }: Props = $props();
+  const { forecast, months, target, selectedMonth, onselect, band }: Props = $props();
 
   let frameWidth = $state(880);
   let plot = $state<SVGSVGElement | null>(null);
   let hovered = $state<Column | null>(null);
   let tip = $state({ x: 0, y: 0 });
 
-  const geometry = $derived(riverGeometry({ forecast, months, width: Math.max(frameWidth - 26, 320), target }));
+  const geometry = $derived(
+    riverGeometry({
+      forecast,
+      months,
+      width: Math.max(frameWidth - 26, 320),
+      target,
+      ...(band ? { band } : {})
+    })
+  );
   const labelEvery = $derived(geometry.width < 620 ? 4 : geometry.width < 900 ? 2 : 1);
 
   /** Measured against the drawing, not its frame: the frame carries padding and
@@ -134,6 +145,23 @@
     </text>
 
     <path d={geometry.bed.areaPath} class="bed-area" />
+    {#if geometry.bed.redZone}
+      <rect
+        x={geometry.pad.left}
+        y={geometry.bed.redZone.y}
+        width={geometry.width - geometry.pad.left - geometry.pad.right}
+        height={geometry.bed.redZone.height}
+        class="red-zone"
+      />
+    {/if}
+    {#if geometry.bed.conePath}
+      <path d={geometry.bed.conePath} class="cone">
+        <title>How far out the guessed lines could put the balance</title>
+      </path>
+    {/if}
+    {#each geometry.bed.negativeAreas as area, index (index)}
+      <path d={area} class="in-the-red" />
+    {/each}
     <line
       x1={geometry.pad.left}
       x2={geometry.width - geometry.pad.right}
@@ -148,6 +176,16 @@
       <line x1={geometry.pad.left} x2={geometry.width - geometry.pad.right} y1={geometry.bed.zeroY} y2={geometry.bed.zeroY} class="zero" />
     {/if}
     <path d={geometry.bed.linePath} class="bed-line" />
+    {#each geometry.bed.negativeLines as stretch, index (index)}
+      <path d={stretch} class="red-line">
+        <title>Overdrawn</title>
+      </path>
+    {/each}
+    {#each geometry.bed.negativeSpans as span, index (index)}
+      <rect x={span.x} y={(geometry.bed.zeroY ?? geometry.bed.top) - 2} width={span.width} height="4" class="red-rug">
+        <title>Overdrawn on these days</title>
+      </rect>
+    {/each}
     <circle cx={geometry.bed.lowPoint.x} cy={geometry.bed.lowPoint.y} r="3.5" class="low">
       <title>{geometry.bed.lowPoint.label}</title>
     </circle>
@@ -179,7 +217,7 @@
         class="hit"
         role="button"
         tabindex={column.month === selectedMonth ? 0 : -1}
-        aria-label={`${column.month}: net ${formatSigned(column.summary.net)}, ends at ${formatEUR(column.summary.end)}`}
+        aria-label={`${longMonth(column.month)}: net ${formatSigned(column.summary.net)}, ends at ${formatEUR(column.summary.end)}`}
         onclick={() => onselect(column.month)}
         onkeydown={(event) => keys(event, column.month)}
       />
@@ -188,7 +226,7 @@
 
   {#if hovered}
     <div class="tip" style:left={`${Math.min(tip.x + 14, frameWidth - 190)}px`} style:top={`${tip.y + 12}px`}>
-      <div class="tip-head">{hovered.month}</div>
+      <div class="tip-head">{longMonth(hovered.month)}</div>
       {#each hovered.segments as segment (segment.bandKey)}
         <div class="tip-row">
           <span><i style:background={segment.color}></i>{segment.label}</span>
@@ -196,6 +234,18 @@
         </div>
       {/each}
       <div class="tip-row total">
+        <span>In</span><span class="mono">{formatEUR(hovered.summary.inflow, { cents: false })}</span>
+      </div>
+      <div class="tip-row">
+        <span>Out</span><span class="mono">{formatEUR(hovered.summary.outflow, { cents: false })}</span>
+      </div>
+      <div class="tip-row">
+        <span><b>{hovered.summary.net >= 0 ? 'Gains' : 'Loses'}</b></span>
+        <span class="mono" class:up={hovered.summary.net >= 0} class:down={hovered.summary.net < 0}>
+          {formatSigned(hovered.summary.net, { cents: false })}
+        </span>
+      </div>
+      <div class="tip-row">
         <span>Ends at</span><span class="mono">{formatEUR(hovered.summary.end, { cents: false })}</span>
       </div>
     </div>
@@ -271,6 +321,26 @@
     stroke: var(--accent);
     stroke-width: 2;
   }
+  .cone {
+    fill: var(--accent);
+    fill-opacity: 0.16;
+  }
+  .in-the-red {
+    fill: var(--critical);
+    fill-opacity: 0.28;
+  }
+  .red-line {
+    fill: none;
+    stroke: var(--critical);
+    stroke-width: 2.5;
+  }
+  .red-rug {
+    fill: var(--critical);
+  }
+  .red-zone {
+    fill: var(--critical);
+    fill-opacity: 0.09;
+  }
   .buffer {
     stroke: var(--warning);
     stroke-width: 1.5;
@@ -333,5 +403,11 @@
     margin-top: 4px;
     padding-top: 4px;
     border-top: 1px solid color-mix(in oklab, var(--tip-ink) 30%, transparent);
+  }
+  .tip-row .up {
+    color: var(--s-benefit);
+  }
+  .tip-row .down {
+    color: var(--s-moving);
   }
 </style>

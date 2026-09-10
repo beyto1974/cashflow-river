@@ -1,5 +1,7 @@
 import { isPlainDate, type PlainDate } from '../domain/dates';
-import { CATEGORIES, type Account, type Category, type Indexation, type Line, type Scenario } from '../domain/types';
+import {
+  CATEGORIES, type Account, type AmountRange, type Category, type Indexation, type Line, type Scenario
+} from '../domain/types';
 import { CADENCES } from '../domain/schedule';
 import type { Cadence } from '../domain/types';
 
@@ -64,6 +66,16 @@ function asIndexation(value: unknown, at: string): Indexation {
   return { ratePerYear: rate as number, from: asDate(raw.from, `${at}.from`) };
 }
 
+function asRange(value: unknown, at: string, amount: number): AmountRange {
+  const raw = asRecord(value, at);
+  const low = asCents(raw.low, `${at}.low`);
+  const high = asCents(raw.high, `${at}.high`);
+  if (Math.min(low, high) > amount || Math.max(low, high) < amount) {
+    fail(at, 'does not contain the line amount');
+  }
+  return { low, high };
+}
+
 function asAccount(value: unknown, index: number): Account {
   const raw = asRecord(value, `accounts[${index}]`);
   return {
@@ -78,12 +90,14 @@ function asAccount(value: unknown, index: number): Account {
 function asLine(value: unknown, index: number): Line {
   const at = `lines[${index}]`;
   const raw = asRecord(value, at);
+  const amount = asCents(raw.amount, `${at}.amount`);
   const shared = {
     id: asString(raw.id, `${at}.id`),
     label: asString(raw.label, `${at}.label`),
-    amount: asCents(raw.amount, `${at}.amount`),
+    amount,
     category: asCategory(raw.category, `${at}.category`),
     ...(raw.estimate === true ? { estimate: true as const } : {}),
+    ...(raw.range === undefined ? {} : { range: asRange(raw.range, `${at}.range`, amount) }),
     ...(raw.muted === true ? { muted: true as const } : {})
   };
 

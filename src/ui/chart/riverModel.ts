@@ -1,6 +1,6 @@
 import { compareDates, daysBetween, monthKey, type MonthKey, type PlainDate } from '../../domain/dates';
 import { formatEUR, type Cents } from '../../domain/money';
-import type { Forecast } from '../../domain/forecast';
+import type { BandDay, Forecast } from '../../domain/forecast';
 import type { MonthSummary } from '../../domain/rollups';
 import { BANDS, bandFor } from '../bands';
 
@@ -10,6 +10,8 @@ export interface RiverInput {
   width: number;
   /** The date the readout is answering for; the needle sits here. */
   target: PlainDate;
+  /** The edges of the guesses, one entry per day, when any line has a range. */
+  band?: BandDay[];
 }
 
 export interface Segment {
@@ -60,6 +62,15 @@ export interface RiverGeometry {
     height: number;
     linePath: string;
     areaPath: string;
+    /** The spread between the pessimistic and optimistic readings. */
+    conePath: string | undefined;
+    /** The stretches that close below zero, drawn apart so they can be red. */
+    negativeAreas: string[];
+    negativeLines: string[];
+    /** A rule along the zero line per stretch, so a short dip is still visible. */
+    negativeSpans: { x: number; width: number }[];
+    /** Everything below zero, for a faint wash that names the red as red. */
+    redZone: { y: number; height: number } | null;
     bufferY: number;
     zeroY: number | null;
     lowPoint: { x: number; y: number; label: string };
@@ -85,7 +96,7 @@ function clamp(value: number, low: number, high: number): number {
  * balance those flows leave behind. Nothing here touches the DOM, so it can be
  * checked on its own.
  */
-export function riverGeometry({ forecast, months, width, target }: RiverInput): RiverGeometry {
+export function riverGeometry({ forecast, months, width, target, band }: RiverInput): RiverGeometry {
   const narrow = width < 620;
   const pad = { left: narrow ? 46 : 60, right: 12, top: 18 };
   const flowHeight = narrow ? 168 : 214;
@@ -159,8 +170,12 @@ export function riverGeometry({ forecast, months, width, target }: RiverInput): 
 
   /* the bed: one point per pixel of width, no more */
   const bedTop = pad.top + flowHeight + axisBand;
-  const low = Math.min(0, forecast.low.balance);
-  const high = Math.max(...forecast.days.map((day) => day.balance), low + 1);
+  const low = Math.min(0, forecast.low.balance, ...(band ? band.map((edge) => edge.low) : []));
+  const high = Math.max(
+    ...forecast.days.map((day) => day.balance),
+    ...(band ? band.map((edge) => edge.high) : []),
+    low + 1
+  );
   const span = high - low;
   const bedY = (balance: Cents): number => bedTop + (1 - (balance - low) / span) * bedHeight;
   const xOfDay = (index: number): number =>
@@ -176,6 +191,58 @@ export function riverGeometry({ forecast, months, width, target }: RiverInput): 
   points.push(`L${xOfDay(lastIndex).toFixed(1)} ${bedY(forecast.days[lastIndex]!.balance).toFixed(1)}`);
   const linePath = points.join(' ');
   const baseY = bedY(Math.max(low, 0));
+
+  /* one sampled point per stride, reused by the cone and the red stretches */
+  const sampled: number[] = [];
+  for (let index = 0; index < forecast.days.length; index += stride) sampled.push(index);
+  if (sampled.at(-1) !== forecast.days.length - 1) sampled.push(forecast.days.length - 1);
+
+  const conePath = band
+    ? [
+        ...sampled.map((index, position) => {
+          const edge = band[index]?.high ?? forecast.days[index]!.balance;
+          return `${position ? 'L' : 'M'}${xOfDay(index).toFixed(1)} ${bedY(edge).toFixed(1)}`;
+        }),
+        ...[...sampled].reverse().map((index) => {
+          const edge = band[index]?.low ?? forecast.days[index]!.balance;
+          return `L${xOfDay(index).toFixed(1)} ${bedY(edge).toFixed(1)}`;
+        }),
+        'Z'
+      ].join(' ')
+    : undefined;
+
+  /* stretches that close below zero: their own paths, so they can be red */
+  const negativeAreas: string[] = [];
+  const negativeLines: string[] = [];
+  const negativeSpans: { x: number; width: number }[] = [];
+  let run: number[] = [];
+  const flushRun = (): void => {
+    if (run.length === 0) return;
+    const startX = xOfDay(run[0]!);
+    const endX = xOfDay(run.at(-1)!);
+    const spanWidth = Math.max(endX - startX, 6);
+    const rightEdge = pad.left + inner;
+    negativeSpans.push({
+      x: Math.max(pad.left, Math.min(startX, rightEdge - spanWidth)),
+      width: spanWidth
+    });
+    const line = run.map(
+      (index, position) =>
+        `${position ? 'L' : 'M'}${xOfDay(index).toFixed(1)} ${bedY(forecast.days[index]!.balance).toFixed(1)}`
+    );
+    const zero = bedY(0).toFixed(1);
+    negativeLines.push(line.join(' '));
+    negativeAreas.push(
+      `${line.join(' ')} L${xOfDay(run.at(-1)!).toFixed(1)} ${zero} L${xOfDay(run[0]!).toFixed(1)} ${zero} Z`
+    );
+    run = [];
+  };
+  for (const index of sampled) {
+    if (forecast.days[index]!.balance < 0) run.push(index);
+    else flushRun();
+  }
+  flushRun();
+
   const areaPath = `${linePath} L${xOfDay(lastIndex).toFixed(1)} ${baseY.toFixed(1)} L${pad.left.toFixed(1)} ${baseY.toFixed(1)} Z`;
 
   const lowIndex = daysBetween(forecast.asOf, forecast.low.date);
@@ -198,8 +265,13 @@ export function riverGeometry({ forecast, months, width, target }: RiverInput): 
       height: bedHeight,
       linePath,
       areaPath,
+      conePath,
+      negativeAreas,
+      negativeLines,
+      negativeSpans,
       bufferY: clamp(bedY(forecast.buffer), bedTop, bedTop + bedHeight),
       zeroY: low < 0 ? bedY(0) : null,
+      redZone: low < 0 ? { y: bedY(0), height: bedTop + bedHeight - bedY(0) } : null,
       lowPoint: {
         x: xOfDay(lowIndex),
         y: bedY(forecast.low.balance),

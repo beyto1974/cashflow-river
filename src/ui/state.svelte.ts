@@ -1,14 +1,16 @@
 import { addMonths, compareDates, monthKey, today, type MonthKey, type PlainDate } from '../domain/dates';
 import type { Cents } from '../domain/money';
-import { project, type Forecast } from '../domain/forecast';
+import { project, projectBand, type BandedForecast, type Forecast } from '../domain/forecast';
 import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domain/rollups';
-import { advanceTo, switchKind } from '../domain/scenarioOps';
-import type { Account, Line, Scenario } from '../domain/types';
+import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
+import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { ScenarioStore } from '../persistence/ports';
 
 export interface LedgerState {
   readonly scenario: Scenario;
+  /** The likely reading; `banded` carries the band around it and the warnings. */
   readonly forecast: Forecast;
+  readonly banded: BandedForecast;
   readonly months: MonthSummary[];
   readonly rhythm: Rhythm;
   readonly target: PlainDate;
@@ -18,7 +20,7 @@ export interface LedgerState {
   setTarget(date: PlainDate): void;
   selectMonth(month: MonthKey): void;
   edit(lineId: string | null): void;
-  updateLine(id: string, patch: Partial<Line>): void;
+  updateLine(id: string, patch: LinePatch): void;
   changeKind(id: string, kind: Line['kind']): void;
   addLine(line: Line): void;
   removeLine(id: string): void;
@@ -50,7 +52,8 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   let selected = $state<MonthKey | null>(null);
   let editing = $state<string | null>(null);
 
-  const forecast = $derived(project(scenario));
+  const banded = $derived(projectBand(scenario));
+  const forecast = $derived(banded.likely);
   const months = $derived(byMonth(forecast));
   const rhythm = $derived(monthlyRhythm(scenario));
 
@@ -67,6 +70,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   return {
     get scenario() { return scenario; },
     get forecast() { return forecast; },
+    get banded() { return banded; },
     get months() { return months; },
     get rhythm() { return rhythm; },
     get target() { return target; },
@@ -82,7 +86,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     edit(lineId) { editing = lineId; },
 
     updateLine(id, patch) {
-      mapLines((line) => (line.id === id ? ({ ...line, ...patch } as Line) : line));
+      mapLines((line) => (line.id === id ? applyPatch(line, patch) : line));
     },
     changeKind(id, kind) {
       mapLines((line) => (line.id === id ? switchKind(line, kind, scenario.asOf) : line));

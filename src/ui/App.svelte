@@ -15,6 +15,9 @@
   const { ledger }: Props = $props();
 
   const day = $derived(ledger.forecast.dayAt(ledger.target) ?? ledger.forecast.days[0]!);
+  const edge = $derived(ledger.banded.band.find((candidate) => candidate.date === ledger.target));
+  const worst = $derived(edge?.low ?? day.balance);
+  const best = $derived(edge?.high ?? day.balance);
   const selected = $derived(
     ledger.months.find((month) => month.month === ledger.selectedMonth) ?? ledger.months[0]!
   );
@@ -52,9 +55,15 @@
     />
     <span class="lead">the accounts hold</span>
     <span class="answer mono" class:short={day.balance < 0}>{formatEUR(day.balance)}</span>
+    {#if ledger.banded.hasRange}
+      <span class="spread">
+        somewhere between <b class="mono">{formatEUR(worst, { cents: false })}</b> and
+        <b class="mono">{formatEUR(best, { cents: false })}</b>
+      </span>
+    {/if}
     <span class="aside">
-      · {distance}, starting from {formatEUR(ledger.forecast.opening)}{day.balance < ledger.forecast.buffer
-        ? ` · under the ${formatEUR(ledger.forecast.buffer, { cents: false })} buffer`
+      · {distance}, starting from {formatEUR(ledger.forecast.opening)}{worst < ledger.forecast.buffer
+        ? ` · could be under the ${formatEUR(ledger.forecast.buffer, { cents: false })} buffer`
         : ''}
     </span>
   </div>
@@ -69,6 +78,7 @@
         target={ledger.target}
         selectedMonth={ledger.selectedMonth}
         onselect={pickMonth}
+        band={ledger.banded.hasRange ? ledger.banded.band : undefined}
       />
 
       <div class="legend">
@@ -76,6 +86,12 @@
           <span><i style:background={band.color}></i>{band.label}</span>
         {/each}
         <span><i class="net-key"></i>net for the month</span>
+        {#if ledger.banded.hasRange}
+          <span><i class="cone-key"></i>where the guesses could put it</span>
+        {/if}
+        {#if ledger.banded.warnings.firstNegative}
+          <span><i class="red-key"></i>overdrawn</span>
+        {/if}
       </div>
 
       <MonthDetail month={selected} monthName={longMonth(selected.month)} />
@@ -187,6 +203,22 @@
     height: 2px;
     border-radius: 0;
     background: var(--ink);
+  }
+  .legend i.cone-key {
+    background: color-mix(in oklab, var(--accent) 30%, transparent);
+    border: 1px solid var(--accent);
+  }
+  .legend i.red-key {
+    background: color-mix(in oklab, var(--critical) 45%, transparent);
+    border: 1px solid var(--critical);
+  }
+  .spread {
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .spread b {
+    color: var(--ink);
+    font-weight: 600;
   }
   footer {
     margin-top: 26px;

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { formatSigned } from '../domain/money';
+  import { formatEUR, formatSigned } from '../domain/money';
   import { CADENCES } from '../domain/schedule';
-  import { isRecurring, type Line } from '../domain/types';
+  import { isRecurring, type Line, type LinePatch } from '../domain/types';
   import { bandFor } from './bands';
   import { shortDate } from './format';
   import AmountInput from './AmountInput.svelte';
@@ -11,7 +11,7 @@
     line: Line;
     open: boolean;
     onedit: (id: string | null) => void;
-    onpatch: (patch: Partial<Line>) => void;
+    onpatch: (patch: LinePatch) => void;
     onkind: (kind: Line['kind']) => void;
     onremove: () => void;
     ontoggle: () => void;
@@ -35,7 +35,11 @@
 
   <button type="button" class="name" onclick={() => onedit(open ? null : line.id)} aria-expanded={open}>
     <span class="label">{line.label}</span>
-    <span class="when">{when}{line.estimate ? ' · est.' : ''}</span>
+    <span class="when">
+      {when}{line.estimate ? ' · est.' : ''}{line.range
+        ? ` · ${formatEUR(Math.min(line.range.low, line.range.high), { cents: false })} to ${formatEUR(Math.max(line.range.low, line.range.high), { cents: false })}`
+        : ''}
+    </span>
   </button>
 
   <span class="amount" title={formatSigned(line.amount)}>

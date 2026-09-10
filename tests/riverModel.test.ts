@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { plainDate } from '../src/domain/dates';
-import { project } from '../src/domain/forecast';
+import { project, projectBand } from '../src/domain/forecast';
 import { byMonth } from '../src/domain/rollups';
 import { sampleScenario } from '../src/data/sample';
+import { euros } from '../src/domain/money';
 import { riverGeometry } from '../src/ui/chart/riverModel';
 
 const forecast = project(sampleScenario());
@@ -66,5 +67,69 @@ describe('river geometry', () => {
     expect(Number.isFinite(flat.flow.midY)).toBe(true);
     expect(flat.flow.columns.every((column) => column.segments.length === 0)).toBe(true);
     expect(Number.isFinite(flat.bed.needle.y)).toBe(true);
+  });
+});
+
+describe('the bed panel shows the guesses and the red', () => {
+  const scenario = sampleScenario();
+  const banded = projectBand(scenario);
+  const withBand = riverGeometry({
+    forecast: banded.likely,
+    months: byMonth(banded.likely),
+    width: 900,
+    target: plainDate('2027-03-02'),
+    band: banded.band
+  });
+
+  it('draws a cone only when there is a band to draw', () => {
+    expect(withBand.bed.conePath).toBeTruthy();
+    expect(withBand.bed.conePath?.endsWith('Z')).toBe(true);
+    expect(geometry.bed.conePath).toBeUndefined();
+  });
+
+  it('fits the cone inside the panel, so the scale covers both edges', () => {
+    const numbers = (withBand.bed.conePath ?? '')
+      .split(/[ML]/)
+      .filter(Boolean)
+      .map((pair) => Number(pair.trim().split(' ')[1]));
+    const bottom = withBand.bed.top + withBand.bed.height;
+    for (const y of numbers) {
+      expect(y).toBeGreaterThanOrEqual(withBand.bed.top - 0.01);
+      expect(y).toBeLessThanOrEqual(bottom + 0.01);
+    }
+  });
+
+  it('marks the stretches that go below zero in their own paths', () => {
+    expect(withBand.bed.negativeAreas.length).toBeGreaterThan(0);
+    expect(withBand.bed.negativeLines.length).toBe(withBand.bed.negativeAreas.length);
+  });
+
+  it('shades the whole area below zero, so the red zone reads at a glance', () => {
+    const zone = withBand.bed.redZone!;
+    expect(zone).not.toBeNull();
+    expect(zone.y).toBe(withBand.bed.zeroY);
+    expect(zone.y + zone.height).toBeCloseTo(withBand.bed.top + withBand.bed.height, 1);
+  });
+
+  it('gives every overdrawn stretch a mark wide enough to see', () => {
+    // A two-day dip on a thirty-month scale is a few pixels of nothing without it.
+    expect(withBand.bed.negativeSpans).toHaveLength(withBand.bed.negativeAreas.length);
+    for (const span of withBand.bed.negativeSpans) {
+      expect(span.width).toBeGreaterThanOrEqual(2);
+      expect(span.x).toBeGreaterThanOrEqual(withBand.pad.left - 0.01);
+      expect(span.x + span.width).toBeLessThanOrEqual(withBand.width - withBand.pad.right + 0.01);
+    }
+  });
+
+  it('has nothing to mark when the balance never goes negative', () => {
+    const healthy = project({
+      ...scenario,
+      accounts: scenario.accounts.map((account) => ({ ...account, balance: euros(40_000), inForecast: true }))
+    });
+    const flush = riverGeometry({ forecast: healthy, months: byMonth(healthy), width: 900, target: healthy.asOf });
+    expect(flush.bed.negativeAreas).toEqual([]);
+    expect(flush.bed.negativeSpans).toEqual([]);
+    expect(flush.bed.zeroY).toBeNull();
+    expect(flush.bed.redZone).toBeNull();
   });
 });

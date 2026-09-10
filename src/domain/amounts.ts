@@ -1,5 +1,6 @@
 import { compareDates, type PlainDate } from './dates';
 import { scale, type Cents } from './money';
+import { isNegative } from './money';
 import { isRecurring, type Indexation, type Line } from './types';
 
 /**
@@ -15,10 +16,23 @@ export type Outlook = 'pessimistic' | 'likely' | 'optimistic';
  * depend on when it happens or on how the guesses are being read; the
  * projection asks this instead of reading `line.amount`.
  */
-export function occurrenceAmount(line: Line, date: PlainDate, _outlook: Outlook = 'likely'): Cents {
-  const base = line.amount;
+export function occurrenceAmount(line: Line, date: PlainDate, outlook: Outlook = 'likely'): Cents {
+  const base = pick(line, outlook);
   if (!isRecurring(line) || !line.indexation) return base;
   return indexed(base, line.indexation, date);
+}
+
+/**
+ * The pessimistic reading is the one that leaves the least in the account:
+ * spending at the dear end of its range, income at the thin end.
+ */
+function pick(line: Line, outlook: Outlook): Cents {
+  if (outlook === 'likely' || !line.range) return line.amount;
+  const { low, high } = line.range;
+  const spending = isNegative(line.amount);
+  const worst = spending ? Math.min(low, high) : Math.min(low, high);
+  const best = spending ? Math.max(low, high) : Math.max(low, high);
+  return outlook === 'pessimistic' ? worst : best;
 }
 
 /**
