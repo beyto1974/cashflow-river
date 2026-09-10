@@ -26,6 +26,15 @@
     draft = null;
     onchange(value < 0 ? -Math.abs(cents) : Math.abs(cents));
   }
+
+  /** Leaving the field with something unreadable in it puts the amount back. */
+  function settle(event: Event): void {
+    commit(event);
+    if (invalid) {
+      invalid = false;
+      draft = null;
+    }
+  }
 </script>
 
 <input
@@ -40,7 +49,7 @@
   value={draft ?? text}
   oninput={(event) => (draft = (event.currentTarget as HTMLInputElement).value)}
   onchange={commit}
-  onblur={commit}
+  onblur={settle}
 />
 
 <style>
