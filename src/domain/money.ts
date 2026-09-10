@@ -24,9 +24,8 @@ export function addCents(...values: Cents[]): Cents {
 }
 
 /**
- * Reads an amount the way it is typed on a Belgian keyboard — "1.234,56" — as
- * well as the plain "1234.56", with or without a currency symbol.
- * Returns null when the text is not an amount at all.
+ * Reads a typed amount: "1,234.56", "1234.56", "-62.30", with or without a
+ * currency symbol or spaces. Returns null when the text is not an amount.
  */
 export function parseAmount(text: string): Cents | null {
   const cleaned = text.replace(/[\s  €]/g, '');
@@ -35,14 +34,12 @@ export function parseAmount(text: string): Cents | null {
   const lastComma = cleaned.lastIndexOf(',');
   const lastDot = cleaned.lastIndexOf('.');
 
-  /* Belgian convention decides: a comma is always a decimal separator, a dot is
-     grouping when it is followed by exactly three digits (1.234), and a decimal
-     separator otherwise (1234.56 as typed on an English keyboard). When both
-     appear, the rightmost one is the decimal separator. */
+  /* A dot is the decimal separator, a comma is grouping — unless both appear, in
+     which case the rightmost one is the decimal separator. */
   let decimalAt = -1;
   if (lastComma > -1 && lastDot > -1) decimalAt = Math.max(lastComma, lastDot);
-  else if (lastComma > -1) decimalAt = lastComma;
-  else if (lastDot > -1 && !/^[+-]?\d{1,3}(\.\d{3})+$/.test(cleaned)) decimalAt = lastDot;
+  else if (lastDot > -1) decimalAt = lastDot;
+  else if (lastComma > -1 && !/^[+-]?\d{1,3}(,\d{3})+$/.test(cleaned)) decimalAt = lastComma;
 
   const normalised =
     decimalAt === -1
@@ -59,7 +56,7 @@ function formatter(cents: boolean): Intl.NumberFormat {
   const key = cents ? 'cents' : 'whole';
   let found = FORMATTERS.get(key);
   if (!found) {
-    found = new Intl.NumberFormat('nl-BE', {
+    found = new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: cents ? 2 : 0,
@@ -75,10 +72,8 @@ export interface FormatOptions {
   cents?: boolean;
 }
 
-/**
- * Belgian format, minus the space after the symbol: in a monospaced face that
- * space takes a full character width and splits the figure in two.
- */
+/** No space between symbol and figure: in a monospaced face it takes a full
+ *  character width and splits the number in two. */
 export function formatEUR(value: Cents, options: FormatOptions = {}): string {
   return formatter(options.cents !== false).format(toEuros(value)).replace(/ /g, '');
 }

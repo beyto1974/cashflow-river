@@ -14,12 +14,13 @@ describe('money is integer cents', () => {
     expect(addCents(...parts)).toBe(euros(2142.02));
   });
 
-  it('reads what a Belgian keyboard types', () => {
-    expect(parseAmount('1.234,56')).toBe(123_456);
+  it('reads a typed amount', () => {
+    expect(parseAmount('1,234.56')).toBe(123_456);
     expect(parseAmount('1234.56')).toBe(123_456);
-    expect(parseAmount('1 234,56')).toBe(123_456);
+    expect(parseAmount('1 234.56')).toBe(123_456);
     expect(parseAmount('€ 195')).toBe(19_500);
-    expect(parseAmount('-62,30')).toBe(-6_230);
+    expect(parseAmount('-62.30')).toBe(-6_230);
+    expect(parseAmount('1,500')).toBe(150_000); // a comma groups
   });
 
   it('refuses what is not an amount', () => {
@@ -28,16 +29,16 @@ describe('money is integer cents', () => {
   });
 
   it('rounds half away from zero, so a cent never vanishes', () => {
-    expect(parseAmount('0,005')).toBe(1);
-    expect(parseAmount('-0,005')).toBe(-1);
+    expect(parseAmount('0.005')).toBe(1);
+    expect(parseAmount('-0.005')).toBe(-1);
   });
 
-  it('formats in Belgian style with no gap after the symbol', () => {
-    expect(formatEUR(294_000)).toBe('€2.940,00');
-    expect(formatEUR(294_000, { cents: false })).toBe('€2.940');
-    expect(formatEUR(-6_230)).toBe('€-62,30');
-    expect(formatSigned(6_230)).toBe('+€62,30');
-    expect(formatSigned(-6_230)).toBe('€-62,30');
+  it('formats with no gap after the symbol', () => {
+    expect(formatEUR(294_000)).toBe('€2,940.00');
+    expect(formatEUR(294_000, { cents: false })).toBe('€2,940');
+    expect(formatEUR(-6_230)).toBe('-€62.30');
+    expect(formatSigned(6_230)).toBe('+€62.30');
+    expect(formatSigned(-6_230)).toBe('-€62.30');
   });
 
   it('converts back to euros for display maths only', () => {
