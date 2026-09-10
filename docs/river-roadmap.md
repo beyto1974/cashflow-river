@@ -95,6 +95,14 @@ reads it.
     a checked-in end-to-end suite, plus a screenshot check of both themes.
 19. **Publish.** `npm run build` already emits one self-contained file; wire it
     to a published page so the household can open it without a dev server.
+20. **Date the example relative to today.** A stored ledger is now rolled
+    forward on load, but the example itself is written with absolute dates
+    (10 September 2026 onwards). Opened much later it still reads correctly —
+    the footer says which day the forecast starts, and the start date is
+    editable — but the story it was built to tell (tight October, short
+    November) drifts out of view. Generate its dates from today so the
+    illustration always shows the same shape, and keep the fixed-date scenario
+    as the tests' fixture.
 
 ## Next slice
 
