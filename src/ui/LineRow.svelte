@@ -3,6 +3,8 @@
   import { CADENCES } from '../domain/schedule';
   import { DUE_RULES } from '../domain/dueDates';
   import { isRecurring, type Line, type LinePatch } from '../domain/types';
+  import type { PlainDate } from '../domain/dates';
+  import { lineStatus } from '../domain/lineStatus';
   import { bandFor } from './bands';
   import { shortDate } from './format';
   import AmountInput from './AmountInput.svelte';
@@ -10,6 +12,8 @@
 
   interface Props {
     line: Line;
+    /** The day the forecast starts, which is what "ended" is measured against. */
+    asOf: PlainDate;
     open: boolean;
     onedit: (id: string | null) => void;
     onpatch: (patch: LinePatch) => void;
@@ -17,7 +21,9 @@
     onremove: () => void;
     ontoggle: () => void;
   }
-  const { line, open, onedit, onpatch, onkind, onremove, ontoggle }: Props = $props();
+  const { line, asOf, open, onedit, onpatch, onkind, onremove, ontoggle }: Props = $props();
+
+  const status = $derived(lineStatus(line, asOf));
 
   const band = $derived(bandFor(line.category));
   const when = $derived(
@@ -33,12 +39,14 @@
   );
 </script>
 
-<div class="row" class:muted={line.muted === true}>
+<div class="row" class:muted={line.muted === true} class:ended={status === 'ended'}>
   <span class="swatch" style:background={band.color} title={band.label}></span>
 
   <button type="button" class="name" onclick={() => onedit(open ? null : line.id)} aria-expanded={open}>
     <span class="label">{line.label}</span>
     <span class="when">
+      {#if status === 'ended'}<b class="badge">ended</b>{/if}
+      {#if status === 'starts-later' && isRecurring(line) && line.from}<b class="badge soon">from {shortDate(line.from)}</b>{/if}
       {when}{line.estimate ? ' · est.' : ''}{line.range
         ? ` · ${formatEUR(Math.min(line.range.low, line.range.high), { cents: false })} to ${formatEUR(Math.max(line.range.low, line.range.high), { cents: false })}`
         : ''}
@@ -111,6 +119,26 @@
   }
   .muted .amount {
     opacity: 0.45;
+  }
+  .ended .label,
+  .ended .amount {
+    opacity: 0.5;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--ink-3);
+    border-radius: 3px;
+    padding: 0 4px;
+    margin-right: 4px;
+    vertical-align: 1px;
+  }
+  .badge.soon {
+    background: var(--accent);
   }
   .sr {
     position: absolute;

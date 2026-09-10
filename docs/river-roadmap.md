@@ -19,11 +19,11 @@ Left out on purpose: file import and export. Where a saved ledger should live
 beyond this browser is still open — an object store was tried and backed out —
 so the port stays and the decision waits.
 
-## M2 — Make the number trustworthy
+## M2 — Make the number trustworthy — **done**
 
-Each step is one slice: tests first, then the code, then the ledger and chart
-catch up. The first three change the domain, so they come before anything that
-reads it. **Steps 1–3 are done.**
+Each step was one slice: tests first, then the code, then the ledger and chart
+catching up. The first three changed the domain, so they came before anything
+that reads it.
 
 1. **Per-occurrence amounts.** *(done)* `occurrenceAmount(line, date)` replaces the flat
    `line.amount` inside the projection, so an amount can depend on when it
@@ -56,8 +56,9 @@ reads it. **Steps 1–3 are done.**
 
    Still to do here: nothing edits the closed days yet. They validate and load,
    but a household cannot add its own bank holidays from the interface.
-5. **Ended lines.** A line whose end date has passed is shown as ended in the
-   ledger instead of quietly contributing nothing.
+5. **Ended lines.** *(done)* A line past its last date is badged as ended, dimmed,
+   and left out of the group subtotals — the subtotals now count exactly what
+   the forecast counts. A line that has not started yet says when it does.
 
 ## M3 — Answer "so what"
 
@@ -117,7 +118,9 @@ reads it. **Steps 1–3 are done.**
 
 ## Next slice
 
-Step 5, then M3 — which is where the forecast starts answering rather than only
-reporting. Step 15 (debounce, and recompute from the
+M3, which is where the forecast starts answering rather than only reporting:
+stretches, the sentence at the top, then the smallest fix. Step 15 (debounce,
+and recompute from the changed month forward) has moved up in importance now
+that every keystroke re-projects and re-bands the whole horizon. Step 15 (debounce, and recompute from the
 changed month forward) has moved up in importance now that every keystroke
 re-projects and re-bands the whole horizon.

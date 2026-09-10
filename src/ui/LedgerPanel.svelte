@@ -3,6 +3,7 @@
   import { isPlainDate, plainDate } from '../domain/dates';
   import { perMonth } from '../domain/schedule';
   import { isRecurring, type Line } from '../domain/types';
+  import { isCounted } from '../domain/lineStatus';
   import type { LedgerState } from './state.svelte';
   import LineRow from './LineRow.svelte';
   import AddLine from './AddLine.svelte';
@@ -19,14 +20,16 @@
     ledger.scenario.lines.filter((line) => !isRecurring(line)).sort((a, b) => (a.kind === 'planned' && b.kind === 'planned' ? a.date.localeCompare(b.date) : 0))
   );
 
+  /* Subtotals count what the forecast counts: nothing muted, nothing ended. */
   function monthlyTotal(lines: Line[]): number {
     return lines.reduce(
-      (sum, line) => (line.muted || !isRecurring(line) ? sum : sum + perMonth(line.amount, line.cadence)),
+      (sum, line) =>
+        !isRecurring(line) || !isCounted(line, ledger.scenario.asOf) ? sum : sum + perMonth(line.amount, line.cadence),
       0
     );
   }
   function plannedTotal(lines: Line[]): number {
-    return lines.reduce((sum, line) => (line.muted ? sum : sum + line.amount), 0);
+    return lines.reduce((sum, line) => (isCounted(line, ledger.scenario.asOf) ? sum + line.amount : sum), 0);
   }
 
   const groups = $derived([
@@ -60,6 +63,7 @@
       {#each group.lines as line (line.id)}
         <LineRow
           {line}
+          asOf={ledger.scenario.asOf}
           open={ledger.editing === line.id}
           onedit={(id) => ledger.edit(id)}
           onpatch={(patch) => ledger.updateLine(line.id, patch)}
