@@ -1,9 +1,10 @@
-import { addDays, compareDates, type PlainDate } from './dates';
+import { addDays, addMonths, compareDates, type PlainDate } from './dates';
 import { formatEUR, type Cents } from './money';
 import { longDate, weeks as weekCount } from './phrasing';
 import { project } from './forecast';
 import { stretchesBelow, type Stretch } from './stretches';
 import { isPlanned, isRecurring, type Line, type Scenario } from './types';
+import { applyPatch } from './scenarioOps';
 
 /** A single change to one line — the smallest thing a household could do. */
 export type Change =
@@ -28,9 +29,11 @@ export function applyChange(scenario: Scenario, change: Change): Scenario {
   if (!target) return scenario;
 
   if (change.type === 'set-amount') {
+    /* Through applyPatch, so a guessed line's range is re-pointed and re-widened
+       around the new amount rather than left describing the old one. */
     return {
       ...scenario,
-      lines: scenario.lines.map((line) => (line.id === change.lineId ? { ...line, amount: change.amount } : line))
+      lines: scenario.lines.map((line) => (line.id === change.lineId ? applyPatch(line, { amount: change.amount }) : line))
     };
   }
 
@@ -44,19 +47,35 @@ export function applyChange(scenario: Scenario, change: Change): Scenario {
     };
   }
 
-  /* Half now, half on the later date. Rounding keeps the total exact. */
+  /* Half now, half on the later date. Rounding keeps the total exact, and the
+     new line takes an id nothing else is using so a second split cannot collide
+     with the first. */
   if (!isPlanned(target)) return scenario;
   const firstHalf = Math.round(target.amount / 2);
   const secondHalf = target.amount - firstHalf;
+  const taken = new Set(scenario.lines.map((line) => line.id));
+  let restId = `${target.id}-rest`;
+  for (let attempt = 2; taken.has(restId); attempt += 1) restId = `${target.id}-rest-${attempt}`;
+
   return {
     ...scenario,
     lines: [
       ...scenario.lines.map((line) =>
-        line.id === change.lineId ? { ...line, amount: firstHalf, label: `${line.label} (first half)` } : line
+        line.id === change.lineId
+          ? applyPatch({ ...line, label: splitLabel(line.label, 'first') }, { amount: firstHalf })
+          : line
       ),
-      { ...target, id: `${target.id}-rest`, label: `${target.label} (second half)`, amount: secondHalf, date: change.date }
+      applyPatch({ ...target, id: restId, label: splitLabel(target.label, 'second'), date: change.date }, {
+        amount: secondHalf
+      })
     ]
   };
+}
+
+/** Splitting a line that has already been split renames rather than accretes. */
+function splitLabel(label: string, half: 'first' | 'second'): string {
+  const base = label.replace(/ \((?:first|second) half\)$/, '');
+  return `${base} (${half} half)`;
 }
 
 const MOVE_WEEKS = [1, 2, 3, 4, 6, 8, 12];
@@ -94,11 +113,19 @@ export function suggestFixes(scenario: Scenario): Fix[] {
   const first = before[0];
   if (!first) return [];
 
+  /* A change that moves spending past the end of the forecast has not fixed
+     anything — it has hidden it. */
+  const horizon = addMonths(scenario.asOf, Math.max(1, scenario.horizonMonths));
+  const inHorizon = (candidate: Omit<Fix, 'clearsFirst' | 'clearsAll'>): boolean => {
+    const change = candidate.change;
+    return change.type === 'set-amount' || compareDates(change.date, horizon) <= 0;
+  };
+
   const candidates = [
     ...moveCandidates(scenario, first),
     ...trimCandidates(scenario),
     ...splitCandidates(scenario, first)
-  ];
+  ].filter(inHorizon);
 
   const fixes: Fix[] = [];
   for (const candidate of candidates) {

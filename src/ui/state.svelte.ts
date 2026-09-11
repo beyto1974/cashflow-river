@@ -10,6 +10,7 @@ import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
 import { freezeScenario } from '../domain/freeze';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { LedgerStore, Revision } from '../persistence/ports';
+import { exportLedgers, importLedgers } from '../persistence/transfer';
 
 export interface LedgerState {
   readonly scenario: Scenario;
@@ -35,6 +36,10 @@ export interface LedgerState {
   saveLedgerAs(name: string): boolean;
   removeLedger(name: string): void;
   restoreRevision(revision: number): void;
+  /** Every ledger in this browser, as one JSON file's worth of text. */
+  exportAll(): string;
+  /** Adds a bundle's ledgers alongside these ones, overwriting nothing. */
+  importAll(text: string): string[];
   /** The pinned baseline to compare against, and the comparison itself. */
   readonly baseline: Scenario | null;
   readonly comparison: Comparison | null;
@@ -60,6 +65,7 @@ export interface LedgerState {
   setAsOf(date: PlainDate): void;
   /** Searched on demand: one projection per candidate change. */
   fixes(): Fix[];
+  /** Applies the change to the figures it was searched against, dials included. */
   applyFix(fix: Fix): void;
   reset(): void;
 }
@@ -111,7 +117,11 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
 
   function openCurrent(): void {
     const saved = store.load();
-    scenario = freezeScenario(saved ?? sample);
+    /* Same roll-forward as on first load: a ledger saved three weeks ago must
+       not open on a forecast that starts three weeks ago. */
+    const rolledSaved = saved ? advanceTo(saved, now) : null;
+    if (rolledSaved && rolledSaved !== saved) store.save(rolledSaved);
+    scenario = freezeScenario(rolledSaved ?? sample);
     fromSample = saved === null;
     target = project(scenario).low.date;
     selected = null;
@@ -160,7 +170,16 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
     },
     restoreRevision(revision) {
       const restored = store.restore(revision);
-      if (restored) commit(restored);
+      if (restored) commit(advanceTo(restored, now));
+    },
+
+    exportAll() {
+      return exportLedgers(store);
+    },
+    importAll(text) {
+      const result = importLedgers(store, text);
+      openCurrent();
+      return result.imported;
     },
 
     get baseline() { return baseline; },
@@ -252,7 +271,12 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
       return suggestFixes(dialled);
     },
     applyFix(fix) {
-      commit(applyChange(scenario, fix.change));
+      /* The search runs on the dialled figures, so the change has to land on
+         them: applying it to the undialled ledger would write an amount derived
+         from a dialled one. Baking the dials in is the honest reading of "do
+         it", and the dials go back to neutral because they are now the ledger. */
+      commit(applyChange(dialled, fix.change));
+      dials = { ...NEUTRAL };
     },
     reset() {
       store.clear();
@@ -261,6 +285,11 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
       target = project(scenario).low.date;
       selected = null;
       editing = null;
+      /* The history keys went with the ledger, and the dials and the pinned
+         baseline belonged to it too. */
+      baseline = null;
+      dials = { ...NEUTRAL };
+      storeVersion += 1;
     }
   };
 }

@@ -1,4 +1,4 @@
-import type { PlainDate, MonthKey } from './dates';
+import type { MonthKey, PlainDate } from './dates';
 import { formatEUR, type Cents } from './money';
 import { project, type Forecast, type ForecastDay } from './forecast';
 import { byMonth } from './rollups';
@@ -21,11 +21,17 @@ export interface ComparedMonth {
 export interface Comparison {
   baseline: Forecast;
   variant: Forecast;
+  /** Only the days both forecasts cover; comparing past that compares nothing. */
   days: ComparedDay[];
   months: ComparedMonth[];
   endDelta: Cents;
   baselineLow: ForecastDay;
   variantLow: ForecastDay;
+  /** The window the comparison is honest over. */
+  from: PlainDate;
+  to: PlainDate;
+  /** True when one side runs longer, so the comparison stops early. */
+  clipped: boolean;
   /** One line on what changing it did. */
   verdict: string;
 }
@@ -39,26 +45,39 @@ export function compare(baselineScenario: Scenario, variantScenario: Scenario): 
   const baseline = project(baselineScenario);
   const variant = project(variantScenario);
 
-  const length = Math.max(baseline.days.length, variant.days.length);
+  /* Paired by date over the window both cover. Holding the shorter forecast flat
+     past its end would credit the change with months it never touched — and the
+     two sides can start on different days as well as end on them. */
+  const variantByDate = new Map(variant.days.map((day) => [day.date, day]));
   const days: ComparedDay[] = [];
-  for (let index = 0; index < length; index += 1) {
-    const left = baseline.days[Math.min(index, baseline.days.length - 1)] as ForecastDay;
-    const right = variant.days[Math.min(index, variant.days.length - 1)] as ForecastDay;
-    const longer = baseline.days.length >= variant.days.length ? left : right;
-    days.push({ date: longer.date, baseline: left.balance, variant: right.balance });
+  for (const day of baseline.days) {
+    const other = variantByDate.get(day.date);
+    if (other) days.push({ date: day.date, baseline: day.balance, variant: other.balance });
   }
 
-  const baselineMonths = byMonth(baseline);
+  const from = days[0]?.date ?? baseline.asOf;
+  const to = days[days.length - 1]?.date ?? baseline.asOf;
+  const clipped = baseline.days.length !== days.length || variant.days.length !== days.length;
+
+  const inWindow = (date: PlainDate): boolean => date >= from && date <= to;
+  const baselineMonths = byMonth(baseline).filter((month) => inWindow(`${month.month}-01` as PlainDate) || inWindow(to));
   const variantMonths = byMonth(variant);
-  const monthKeys = [...new Set([...baselineMonths, ...variantMonths].map((month) => month.month))].sort();
+  const monthKeys = [...new Set(days.map((day) => day.date.slice(0, 7)))].sort();
   const months: ComparedMonth[] = monthKeys.map((month) => {
     const left = baselineMonths.find((candidate) => candidate.month === month)?.end ?? 0;
     const right = variantMonths.find((candidate) => candidate.month === month)?.end ?? 0;
-    return { month, baseline: left, variant: right, delta: right - left };
+    return { month: month as ComparedMonth['month'], baseline: left, variant: right, delta: right - left };
   });
 
-  const endDelta = (days[days.length - 1]?.variant ?? 0) - (days[days.length - 1]?.baseline ?? 0);
-  const lowDelta = variant.low.balance - baseline.low.balance;
+  const last = days[days.length - 1];
+  const endDelta = last ? last.variant - last.baseline : 0;
+
+  const lowOf = (forecast: Forecast): ForecastDay =>
+    forecast.days
+      .filter((day) => inWindow(day.date))
+      .reduce((worst, day) => (day.balance < worst.balance ? day : worst), forecast.days[0] as ForecastDay);
+  const baselineLow = lowOf(baseline);
+  const variantLow = lowOf(variant);
 
   return {
     baseline,
@@ -66,9 +85,12 @@ export function compare(baselineScenario: Scenario, variantScenario: Scenario): 
     days,
     months,
     endDelta,
-    baselineLow: baseline.low,
-    variantLow: variant.low,
-    verdict: verdictFor(endDelta, lowDelta)
+    baselineLow,
+    variantLow,
+    from,
+    to,
+    clipped,
+    verdict: verdictFor(endDelta, variantLow.balance - baselineLow.balance)
   };
 }
 

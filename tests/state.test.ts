@@ -129,6 +129,17 @@ describe('ledger state', () => {
     expect(ledger.forecast.opening).toBe(opening);
   });
 
+  it('carries every ledger out and back in again', () => {
+    const store = recordingStore();
+    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-09-10'));
+    ledger.updateLine('pay', { label: 'Wages' });
+
+    const text = ledger.exportAll();
+    expect(JSON.parse(text).ledgers[0].document.scenario.lines[0].label).toBe('Wages');
+    // the ledger it came from is still here, so the copy arrives beside it
+    expect(ledger.importAll(text)).toEqual(['My ledger (imported)']);
+  });
+
   it('hands out a frozen ledger, so nothing can go stale behind the memo', () => {
     const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     expect(Object.isFrozen(ledger.scenario)).toBe(true);
@@ -145,6 +156,41 @@ describe('ledger state', () => {
     const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.removeAccount('a');
     expect(ledger.scenario.accounts).toHaveLength(1);
+  });
+
+  it('rolls a ledger forward when switching to it, not only on first load', () => {
+    const stored = tinyScenario({ label: 'Mine' }); // dated 2026-09-10
+    const store = recordingStore(stored);
+    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-10-05'));
+
+    ledger.selectLedger('My ledger');
+    expect(ledger.scenario.asOf).toBe('2026-10-05');
+  });
+
+  it('drops the dials, the baseline and the history when it goes back to the example', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    ledger.updateLine('pay', { label: 'Wages' });
+    ledger.setDial('income', 0.8);
+    ledger.pinBaseline();
+
+    ledger.reset();
+
+    expect(ledger.dialsTouched).toBe(false);
+    expect(ledger.baseline).toBeNull();
+    expect(ledger.comparison).toBeNull();
+  });
+
+  it('applies a fix to the figures it was searched against', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    ledger.setDial('income', 0.5);
+    const fixes = ledger.fixes();
+    if (fixes.length > 0) {
+      const promised = fixes[0]!;
+      ledger.applyFix(promised);
+      // the dials are now part of the ledger rather than a layer over it
+      expect(ledger.dialsTouched).toBe(false);
+      expect(ledger.scenario.lines.find((line) => line.id === 'pay')?.amount).toBe(euros(1250));
+    }
   });
 
   it('goes back to the example on reset', () => {

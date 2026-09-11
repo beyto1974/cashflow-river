@@ -43,11 +43,13 @@
 
   /* Baking the dials in or putting them back returns them to neutral. A frame
      queued by the drag's last input event would otherwise fire afterwards and
-     apply the same change a second time, on top of itself. */
+     apply the same change a second time, on top of itself. Cancelling only on
+     the way to neutral leaves a live drag alone — cancelling on every change
+     would swallow the last value of a quick flick. */
   $effect(() => {
     if (!touched) drop();
-    return drop;
   });
+  $effect(() => drop);
 
   function reading(value: number): string {
     if (value === 1) return 'as it is';

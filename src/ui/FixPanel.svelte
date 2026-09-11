@@ -37,7 +37,7 @@
   {:else}
     <p class="eyebrow">Smallest changes that clear it</p>
     <ul>
-      {#each fixes as fix (fix.description)}
+      {#each fixes as fix (`${fix.change.type}:${fix.change.lineId}`)}
         <li>
           <span class="what">
             {fix.description}

@@ -153,3 +153,41 @@ describe('suggestFixes', () => {
     if (pausing) expect(pausing.description).toMatch(/savings/i);
   });
 });
+
+describe('the search stays inside the forecast', () => {
+  it('will not clear a stretch by pushing spending past the horizon', () => {
+    const short = squeezed({ horizonMonths: 1 });
+    const horizon = '2026-10-10';
+    for (const fix of suggestFixes(short)) {
+      if (fix.change.type !== 'set-amount') expect(fix.change.date <= horizon).toBe(true);
+    }
+  });
+});
+
+describe('applyChange keeps a line coherent', () => {
+  const guessed = squeezed({
+    lines: [
+      ...squeezed().lines,
+      {
+        kind: 'recurring', id: 'food', label: 'Groceries', amount: euros(-500),
+        category: 'living', cadence: 'monthly', anchor: plainDate('2026-09-20'),
+        estimate: true, range: { low: euros(-450), high: euros(-600) }
+      }
+    ]
+  });
+
+  it('re-points a guess range when the amount is trimmed under it', () => {
+    const trimmed = applyChange(guessed, { type: 'set-amount', lineId: 'food', amount: euros(-375) });
+    const line = trimmed.lines.find((candidate) => candidate.id === 'food');
+    expect(Math.abs(line!.range!.low)).toBeLessThanOrEqual(Math.abs(line!.amount));
+    expect(Math.abs(line!.range!.high)).toBeGreaterThanOrEqual(Math.abs(line!.amount));
+  });
+
+  it('gives a second split its own id and a sane label', () => {
+    const once = applyChange(guessed, { type: 'split-line', lineId: 'dentist', date: plainDate('2026-11-01') });
+    const twice = applyChange(once, { type: 'split-line', lineId: 'dentist', date: plainDate('2026-12-01') });
+    const ids = twice.lines.map((line) => line.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(twice.lines.filter((line) => line.label.includes('first half first half'))).toEqual([]);
+  });
+});

@@ -93,6 +93,8 @@
     onsaveas={(name) => ledger.saveLedgerAs(name)}
     onremove={(name) => ledger.removeLedger(name)}
     onrestore={(revision) => ledger.restoreRevision(revision)}
+    onexport={() => ledger.exportAll()}
+    onimport={(text) => ledger.importAll(text)}
   />
 
   <Dials

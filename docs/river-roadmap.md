@@ -85,11 +85,15 @@ that reads it.
 
 ## M4 — Keep it, share it
 
-11. **Pick a backing store.** Still open, and still the one decision that needs
-    answering rather than building: a small service with a database, an object
-    store, or a hosted runtime's own storage. Whatever it is implements the
-    `LedgerStore` interface that steps 12 and 13 were built against, with the
-    browser copy kept as the offline fallback.
+11. **Pick a backing store.** *(decided: none)* The browser is the store, and a
+    ledger leaves it as a JSON file — export every ledger to a file or to the
+    clipboard, import from a file or a paste. An import never overwrites: a name
+    that is taken comes in beside the original. No account, no service, nothing
+    to keep running.
+
+    The page also documents the file format, generated from the same constants
+    the importer validates against, so it cannot drift: paste it to a model with
+    your own situation and import what it writes.
 12. **Save, auto-save, restore.** *(done, in the browser)* Every change is
     written through, and a version is kept per save — with a flurry of edits
     inside a minute coalescing into one version rather than twenty, and a cap of

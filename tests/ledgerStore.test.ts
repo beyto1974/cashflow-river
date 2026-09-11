@@ -142,6 +142,43 @@ describe('ledger store', () => {
     expect(ledgers.history()).toEqual([]);
   });
 
+  it('keeps two names apart even when they would slug the same', () => {
+    const ledgers = store();
+    ledgers.save(tinyScenario({ label: 'original' }));
+    expect(ledgers.saveAs('my ledger!', tinyScenario({ label: 'copy' }))).toBe(true);
+
+    expect(ledgers.load()?.label).toBe('copy');
+    ledgers.select('My ledger');
+    expect(ledgers.load()?.label).toBe('original');
+    expect(ledgers.history()).toHaveLength(1);
+  });
+
+  it('adopts a ledger saved by the single-ledger build', () => {
+    const legacy = JSON.stringify({ schemaVersion: 1, scenario: tinyScenario({ label: 'from before' }) });
+    storage.setItem('moraview.scenario.v1', legacy);
+
+    const ledgers = store();
+    expect(ledgers.names()).toEqual(['My ledger']);
+    expect(ledgers.load()?.label).toBe('from before');
+    expect(ledgers.history()).toHaveLength(1);
+  });
+
+  it('leaves the old key alone once it has moved on', () => {
+    storage.setItem('moraview.scenario.v1', JSON.stringify({ schemaVersion: 1, scenario: tinyScenario({ label: 'old' }) }));
+    const first = store();
+    first.save(tinyScenario({ label: 'new' }));
+    expect(store().load()?.label).toBe('new');
+  });
+
+  it('reads an index written before ledgers had ids', () => {
+    storage.setItem('moraview.ledgers.v1', JSON.stringify({ current: 'My ledger', names: ['My ledger'] }));
+    storage.setItem(
+      'moraview.ledger.my-ledger.v1',
+      JSON.stringify({ schemaVersion: 1, scenario: tinyScenario({ label: 'kept' }) })
+    );
+    expect(store().load()?.label).toBe('kept');
+  });
+
   it('stays quiet when the browser blocks storage', () => {
     const blocked = {
       getItem: () => { throw new Error('blocked'); },

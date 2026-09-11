@@ -51,11 +51,27 @@ describe('compare', () => {
     expect(comparison.verdict).toMatch(/worse off/);
   });
 
-  it('lines the two beds up day by day, whichever runs longer', () => {
+  it('compares only the window both forecasts cover', () => {
     const longer = base({ horizonMonths: 8 });
     const comparison = compare(base(), longer);
-    expect(comparison.days).toHaveLength(Math.max(comparison.baseline.days.length, comparison.variant.days.length));
-    expect(comparison.days.every((day) => typeof day.baseline === 'number' && typeof day.variant === 'number')).toBe(true);
+    expect(comparison.days).toHaveLength(comparison.baseline.days.length);
+    expect(comparison.to).toBe(comparison.baseline.days.at(-1)?.date);
+    expect(comparison.clipped).toBe(true);
+  });
+
+  it('does not credit a longer horizon with months the change never touched', () => {
+    const longer = base({ horizonMonths: 30 });
+    const comparison = compare(base(), longer);
+    expect(comparison.endDelta).toBe(0);
+    expect(comparison.verdict).toMatch(/no different/i);
+  });
+
+  it('pairs by date when the two sides start on different days', () => {
+    const later = base({ asOf: plainDate('2026-10-01') });
+    const comparison = compare(base(), later);
+    expect(comparison.from).toBe('2026-10-01');
+    expect(comparison.days.every((day) => day.date >= '2026-10-01')).toBe(true);
+    expect(comparison.clipped).toBe(true);
   });
 
   it('reports the tightest point of each side', () => {

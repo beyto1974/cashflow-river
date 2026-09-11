@@ -24,8 +24,12 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   throw them away.
 - **Two rivers side by side.** Pin a baseline, change something, see what it did
   month by month.
-- **Named ledgers with a version history**, kept in the browser, and a print
-  stylesheet for the kitchen-table conversation.
+- **Named ledgers with a version history**, kept in the browser, exported to a
+  JSON file or the clipboard and imported back — an import never overwrites.
+- **The file format, documented in the page**, generated from the constants the
+  importer checks against: paste it to a model with your own situation and
+  import what it writes.
+- **A print stylesheet** for the kitchen-table conversation.
 
 ## Run it
 
@@ -78,7 +82,6 @@ docs/             the interfaces, the decision, the roadmap, screenshots
 - **Storage is behind a port.** The browser adapter is the only one today; a
   remote one can be added without the app knowing.
 
-Nothing leaves the browser: ledgers and their version histories are kept in
-`localStorage`, and there is a reset back to the example. Where a ledger should
-live beyond one browser is still an open decision — whatever it is implements
-`LedgerStore`, and the browser copy stays as the offline fallback.
+Nothing leaves the browser unless you export it: ledgers and their version
+histories live in `localStorage`, a JSON export is the way to carry one
+elsewhere, and there is a reset back to the example. No account, no service.
