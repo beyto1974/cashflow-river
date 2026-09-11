@@ -1,12 +1,12 @@
 # The three interfaces
 
 Three ways to ask the same question — *what does my money look like on a given
-future date?* — over one forecast engine (`src/finance.js`) and one sample
-household. Each is a single self-contained file in `dist/`,
-which is exactly what was published; the screenshots in `docs/screens/` are
-those files rendered at 1180px in both themes.
+future date?* — over one forecast engine and one sample household. Each was a
+single self-contained file; the sources are in `legacy/` and `node
+legacy/build.mjs` rebuilds exactly what was published. The screenshots in
+`docs/screens/` are those files rendered at 1180px in both themes.
 
-## 1. Horizon Dial — `dist/dial.html`
+## 1. Horizon Dial — `legacy/dial.html`
 
 Published: https://claude.ai/code/artifact/5a9b25e2-b81e-4fe5-9544-a44b9463aed7
 
@@ -24,7 +24,7 @@ signal colour for the trace, status colours only for states that need alarm.
 **Reads best for:** a single date you already have in mind — a completion date,
 a holiday, a school bill.
 
-## 2. Cashflow River — `dist/river.html`  ← chosen direction
+## 2. Cashflow River — `legacy/river.html`  ← chosen direction
 
 Published: https://claude.ai/code/artifact/58b00080-b35d-43eb-86ca-46a7d965412f
 
@@ -37,8 +37,10 @@ panels. Clicking a month opens every movement in it.
 Identity: editorial ledger. Newsreader for display, IBM Plex Sans and Mono for
 the ledger itself, hairline rules instead of cards.
 
-This is the one now rebuilt as the app (TypeScript, Svelte 5, Vite); the file in
-`legacy/` is the original prototype.
+This is the one now rebuilt as the app (TypeScript, Svelte 5, Vite) and
+published at
+https://claude.ai/code/artifact/be300076-7a3c-4cb6-bfe5-660988ab67e6 ; the file
+in `legacy/` is the original prototype.
 
 Seven colour bands, stacked in an order that clears the palette validator's
 adjacent-pair gates in both light and dark mode; the legend, the tooltip and the
@@ -47,7 +49,7 @@ table view carry identity for the two bands that sit under 3:1 on light paper.
 **Reads best for:** finding out *which lines* are doing this to you, and what
 changes if one of them stops.
 
-## 3. Runway Grid — `dist/grid.html`
+## 3. Runway Grid — `legacy/grid.html`
 
 Published: https://claude.ai/code/artifact/a4e675e4-e635-45a3-a5d7-c36de199c270
 

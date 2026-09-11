@@ -1,9 +1,12 @@
 // Inlines src/*.js into the templates so every artifact ships as one file.
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const src = new URL('./', import.meta.url).pathname;
 const dist = new URL('../dist/', import.meta.url).pathname;
+
+/* The built copies are not kept in the repo, so the directory may not exist. */
+mkdirSync(dist, { recursive: true });
 
 const templates = readdirSync(src).filter((f) => f.endsWith('.html'));
 for (const file of templates) {
