@@ -1,4 +1,5 @@
 import { compareDates, type PlainDate } from './dates';
+import { lastOccurrence } from './schedule';
 import { isRecurring, type Line } from './types';
 
 /**
@@ -11,7 +12,8 @@ export type LineStatus = 'muted' | 'ended' | 'starts-later' | 'active';
 export function lineStatus(line: Line, asOf: PlainDate): LineStatus {
   if (line.muted) return 'muted';
   if (isRecurring(line)) {
-    if (line.to && compareDates(line.to, asOf) < 0) return 'ended';
+    const last = lastOccurrence(line);
+    if (last && compareDates(last, asOf) < 0) return 'ended';
     if (line.from && compareDates(line.from, asOf) > 0) return 'starts-later';
     return 'active';
   }

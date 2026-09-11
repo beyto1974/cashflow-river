@@ -69,12 +69,15 @@ export function occurrences(line: RecurringLine, window: DateWindow): PlainDate[
   const to = earlierOf(window.to, line.to);
   if (compareDates(from, to) > 0) return [];
 
+  if (line.times !== undefined && line.times <= 0) return [];
+
   let n = 0;
   const behind = daysBetween(line.anchor, from);
   if (behind > 0) n = Math.max(0, spec.stepsInDays(behind) - 1);
 
   const dates: PlainDate[] = [];
   for (let guard = 0; guard < MAX_OCCURRENCES; guard += 1, n += 1) {
+    if (line.times !== undefined && n >= line.times) break;
     const date = spec.nth(line.anchor, n);
     if (compareDates(date, to) > 0) break;
     if (compareDates(date, from) >= 0) dates.push(date);
@@ -87,4 +90,18 @@ function laterOf(a: PlainDate, b: PlainDate | undefined): PlainDate {
 }
 function earlierOf(a: PlainDate, b: PlainDate | undefined): PlainDate {
   return b && compareDates(b, a) < 0 ? b : a;
+}
+
+/**
+ * The last day a line can fall due, when it has an end at all: a count of
+ * occurrences, an end date, or the earlier of the two. Undefined for a line
+ * that simply keeps going.
+ */
+export function lastOccurrence(line: RecurringLine): PlainDate | undefined {
+  const counted =
+    line.times !== undefined && line.times > 0
+      ? CADENCES[line.cadence].nth(line.anchor, line.times - 1)
+      : undefined;
+  if (counted && line.to) return compareDates(counted, line.to) < 0 ? counted : line.to;
+  return counted ?? line.to;
 }

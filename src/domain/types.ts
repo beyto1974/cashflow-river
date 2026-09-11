@@ -58,6 +58,8 @@ export interface RecurringLine extends LineFields {
   indexation?: Indexation;
   /** Which working day the money actually moves on. Defaults to the date itself. */
   dueRule?: DueRule;
+  /** Stops after this many occurrences, counted from the anchor. */
+  times?: number;
 }
 
 export interface PlannedLine extends LineFields {
@@ -91,6 +93,7 @@ export interface LinePatch {
   to?: PlainDate | undefined;
   indexation?: Indexation | undefined;
   dueRule?: DueRule | undefined;
+  times?: number | undefined;
   date?: PlainDate;
 }
 

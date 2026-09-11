@@ -7,6 +7,7 @@
   import { DUE_RULES, rulesFor, type DueRule } from '../domain/dueDates';
   import { CATEGORY_LABELS } from './bands';
   import AmountInput from './AmountInput.svelte';
+  import ConfirmButton from './ConfirmButton.svelte';
 
   interface Props {
     line: Line;
@@ -177,6 +178,31 @@
       <input type="date" value={line.from ?? ''} onchange={(event) => setDate(event, 'from')} />
     </label>
     <label class="field">
+      <span>How many times</span>
+      <input
+        type="number"
+        min="1"
+        max="600"
+        class="mono"
+        placeholder="for ever"
+        value={line.times ?? ''}
+        onchange={(event) => {
+          const input = event.currentTarget as HTMLInputElement;
+          const text = input.value.trim();
+          if (text === '') {
+            onpatch({ times: undefined });
+            return;
+          }
+          const count = Number(text);
+          if (!Number.isInteger(count) || count < 1) {
+            input.value = line.kind === 'recurring' && line.times ? String(line.times) : '';
+            return;
+          }
+          onpatch({ times: count });
+        }}
+      />
+    </label>
+    <label class="field">
       <span>Ends (optional)</span>
       <input type="date" value={line.to ?? ''} onchange={(event) => setDate(event, 'to')} />
     </label>
@@ -270,7 +296,7 @@
 
   <div class="actions">
     <button type="button" class="button ghost" onclick={onclose}>Done</button>
-    <button type="button" class="button danger" onclick={onremove}>Delete this line</button>
+    <ConfirmButton label="Delete this line" confirm={`Delete ${line.label}`} onconfirm={onremove} />
   </div>
 </div>
 

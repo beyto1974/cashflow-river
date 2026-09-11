@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Revision } from '../persistence/ports';
   import FormatDocs from './FormatDocs.svelte';
+  import ConfirmButton from './ConfirmButton.svelte';
 
   interface Props {
     names: string[];
@@ -106,15 +107,13 @@
         <option value={name}>{name}</option>
       {/each}
     </select>
-    <button
-      type="button"
-      class="button ghost"
-      onclick={() => onremove(current)}
+    <ConfirmButton
+      label="Delete"
+      confirm={`Delete ${current} and its versions`}
+      onconfirm={() => onremove(current)}
       disabled={names.length === 1}
       title={names.length === 1 ? 'The last ledger stays' : `Delete ${current}`}
-    >
-      Delete
-    </button>
+    />
   </div>
 
   <form onsubmit={saveAs}>

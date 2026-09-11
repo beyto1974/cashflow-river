@@ -82,3 +82,58 @@ describe('cadence registry', () => {
     expect(perMonth(euros(-340), 'quarterly')).toBe(euros(-113.33));
   });
 });
+
+describe('a line that repeats a fixed number of times', () => {
+  it('stops after the count, wherever the window is', () => {
+    const sixTimes = line({ times: 6, anchor: plainDate('2026-09-15') });
+    expect(occurrences(sixTimes, window('2026-09-01', '2028-01-01'))).toEqual([
+      '2026-09-15', '2026-10-15', '2026-11-15', '2026-12-15', '2027-01-15', '2027-02-15'
+    ]);
+  });
+
+  it('counts from the anchor, not from the window', () => {
+    const sixTimes = line({ times: 6, anchor: plainDate('2026-09-15') });
+    expect(occurrences(sixTimes, window('2026-12-01', '2028-01-01'))).toEqual([
+      '2026-12-15', '2027-01-15', '2027-02-15'
+    ]);
+  });
+
+  it('is nothing at all for a count of zero', () => {
+    expect(occurrences(line({ times: 0 }), window('2026-09-01', '2027-09-01'))).toEqual([]);
+  });
+
+  it('works with the day-based cadences too', () => {
+    const threeWeeks = line({ cadence: 'weekly', anchor: plainDate('2026-09-12'), times: 3 });
+    expect(occurrences(threeWeeks, window('2026-09-01', '2027-01-01'))).toEqual([
+      '2026-09-12', '2026-09-19', '2026-09-26'
+    ]);
+  });
+
+  it('honours an end date that comes first', () => {
+    const bounded = line({ times: 10, anchor: plainDate('2026-09-15'), to: plainDate('2026-11-30') });
+    expect(occurrences(bounded, window('2026-09-01', '2028-01-01'))).toHaveLength(3);
+  });
+});
+
+describe('lastOccurrence', () => {
+  it('is the last of a counted run', async () => {
+    const { lastOccurrence } = await import('../src/domain/schedule');
+    expect(lastOccurrence(line({ times: 6, anchor: plainDate('2026-09-15') }))).toBe('2027-02-15');
+  });
+
+  it('is the end date when there is one', async () => {
+    const { lastOccurrence } = await import('../src/domain/schedule');
+    expect(lastOccurrence(line({ to: plainDate('2028-04-14') }))).toBe('2028-04-14');
+  });
+
+  it('is the earlier of the two when a line has both', async () => {
+    const { lastOccurrence } = await import('../src/domain/schedule');
+    expect(lastOccurrence(line({ times: 60, anchor: plainDate('2026-09-15'), to: plainDate('2027-01-01') })))
+      .toBe('2027-01-01');
+  });
+
+  it('is nothing for a line that never stops', async () => {
+    const { lastOccurrence } = await import('../src/domain/schedule');
+    expect(lastOccurrence(line())).toBeUndefined();
+  });
+});

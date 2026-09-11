@@ -28,7 +28,7 @@
   const band = $derived(bandFor(line.category));
   const when = $derived(
     isRecurring(line)
-      ? `${CADENCES[line.cadence].label}${
+      ? `${CADENCES[line.cadence].label}${line.times ? `, ${line.times} times` : ''}${
           line.dueRule && line.dueRule !== 'exact' ? `, ${DUE_RULES[line.dueRule].label}` : ''
         }${line.to ? `, until ${shortDate(line.to)}` : ''}${
           line.indexation && line.indexation.ratePerYear > 0

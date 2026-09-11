@@ -59,6 +59,13 @@ function asCadence(value: unknown, field: string): Cadence {
   return text as Cadence;
 }
 
+function asCount(value: unknown, at: string): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 10_000) {
+    fail(at, 'is not a whole number of occurrences between 1 and 10000');
+  }
+  return value as number;
+}
+
 function asDueRule(value: unknown, at: string): DueRule {
   const text = asString(value, at);
   if (!Object.prototype.hasOwnProperty.call(DUE_RULES, text)) fail(at, `is not a known payment-day rule: ${text}`);
@@ -124,7 +131,8 @@ function asLine(value: unknown, index: number): Line {
       ...(raw.from === undefined ? {} : { from: asDate(raw.from, `${at}.from`) }),
       ...(raw.to === undefined ? {} : { to: asDate(raw.to, `${at}.to`) }),
       ...(raw.indexation === undefined ? {} : { indexation: asIndexation(raw.indexation, `${at}.indexation`) }),
-      ...(raw.dueRule === undefined ? {} : { dueRule: asDueRule(raw.dueRule, `${at}.dueRule`) })
+      ...(raw.dueRule === undefined ? {} : { dueRule: asDueRule(raw.dueRule, `${at}.dueRule`) }),
+      ...(raw.times === undefined ? {} : { times: asCount(raw.times, `${at}.times`) })
     };
   }
   return fail(`${at}.kind`, 'is neither "recurring" nor "planned"');

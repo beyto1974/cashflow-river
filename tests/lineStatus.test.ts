@@ -54,3 +54,16 @@ describe('lineStatus', () => {
     expect(isCounted(recurring({ muted: true }), asOf)).toBe(false);
   });
 });
+
+describe('a counted line', () => {
+  it('is ended once its occurrences have run out', () => {
+    const sixTimes = recurring({ anchor: plainDate('2026-01-15'), times: 6 }); // last: 15 June 2026
+    expect(lineStatus(sixTimes, asOf)).toBe('ended');
+    expect(isCounted(sixTimes, asOf)).toBe(false);
+  });
+
+  it('is active while it still has occurrences left', () => {
+    const sixTimes = recurring({ anchor: plainDate('2026-09-14'), times: 6 });
+    expect(lineStatus(sixTimes, asOf)).toBe('active');
+  });
+});

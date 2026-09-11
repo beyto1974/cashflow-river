@@ -12,6 +12,7 @@
   import MonthTable from './MonthTable.svelte';
   import FixPanel from './FixPanel.svelte';
   import Comparison from './Comparison.svelte';
+  import ConfirmButton from './ConfirmButton.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -200,7 +201,13 @@
         : 'Your own figures, kept in this browser only.'}
       The forecast starts on {longDate(ledger.forecast.asOf)} and runs {ledger.scenario.horizonMonths} months.
     </span>
-    <button type="button" class="button ghost no-print" onclick={() => ledger.reset()}>Back to the example</button>
+    <span class="no-print">
+      <ConfirmButton
+        label="Back to the example"
+        confirm="Discard this ledger and its versions"
+        onconfirm={() => ledger.reset()}
+      />
+    </span>
   </footer>
 </div>
 

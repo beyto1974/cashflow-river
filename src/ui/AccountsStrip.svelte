@@ -2,6 +2,7 @@
   import { formatEUR, type Cents } from '../domain/money';
   import type { Account } from '../domain/types';
   import AmountInput from './AmountInput.svelte';
+  import ConfirmButton from './ConfirmButton.svelte';
 
   interface Props {
     accounts: Account[];
@@ -41,13 +42,16 @@
         />
         <span class="sr">Count {account.name} in the forecast</span>
       </label>
-      <button
-        type="button"
-        class="drop no-print"
-        onclick={() => onremove(account.id)}
-        disabled={accounts.length === 1}
-        aria-label={`Remove ${account.name}`}>×</button
-      >
+      <span class="drop no-print">
+        <ConfirmButton
+          label="×"
+          confirm={`Remove ${account.name}`}
+          onconfirm={() => onremove(account.id)}
+          disabled={accounts.length === 1}
+          title={accounts.length === 1 ? 'The last account stays' : `Remove ${account.name}`}
+          small
+        />
+      </span>
     </div>
   {/each}
 
@@ -79,7 +83,7 @@
   }
   .account {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 84px 22px 18px;
+    grid-template-columns: minmax(0, 1fr) 84px 22px auto;
     align-items: center;
     gap: 8px;
     padding: 3px 0;
@@ -94,19 +98,8 @@
     accent-color: var(--accent);
   }
   .drop {
-    background: none;
-    border: 0;
-    color: var(--ink-3);
-    font-size: 15px;
-    line-height: 1;
-    padding: 0;
-  }
-  .drop:hover:not(:disabled) {
-    color: var(--critical);
-  }
-  .drop:disabled {
-    opacity: 0.3;
-    cursor: default;
+    display: inline-flex;
+    justify-content: flex-end;
   }
   .add {
     margin-top: 8px;

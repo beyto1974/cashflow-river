@@ -69,6 +69,7 @@ A recurring line — something that happens again and again:
   "from": "<optional: not before this date>",
   "to": "<optional: not after this date>",
   "dueRule": "<optional, one of: ${rules.join(', ')}>",
+  "times": <optional: stop after this many occurrences, counted from the anchor>,
   "indexation": { "ratePerYear": <basis points, 200 means 2.00% a year>, "from": "<date the rises are counted from>" },
   "estimate": true,
   "range": { "low": <cents, the modest end>, "high": <cents, the far end> }
@@ -89,6 +90,9 @@ Notes that matter:
   usually leaves on the next working day, a salary arrives the working day
   before a weekend. "last-working-day" is ignored on weekly and biweekly lines.
 - "indexation" compounds on whole anniversaries of its "from" date.
+- "times" is for a run with an end in sight — six instalments, a year of
+  lessons. "to" does the same job by date; a line with both stops at whichever
+  comes first.
 - Unknown fields are dropped on import. Anything malformed is refused with the
   name of the field that is wrong.`;
 
@@ -129,6 +133,11 @@ Notes that matter:
             {
               "kind": "recurring", "id": "car-insurance", "label": "Car insurance", "amount": -48000,
               "category": "insurance", "cadence": "yearly", "anchor": "2027-02-14"
+            },
+            {
+              "kind": "recurring", "id": "course", "label": "Evening course, six instalments",
+              "amount": -7500, "category": "living", "cadence": "monthly",
+              "anchor": "2026-10-03", "times": 6
             },
             {
               "kind": "planned", "id": "tyres", "label": "Winter tyres", "amount": -32000,

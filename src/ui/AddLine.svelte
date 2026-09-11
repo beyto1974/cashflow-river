@@ -19,6 +19,9 @@
   let dateDraft = $state<string | null>(null);
   const date = $derived(dateDraft ?? defaultDate);
   let category = $state<Category>('living');
+  /* A number input bound with bind:value hands over a number, or null when the
+     field is empty — not a string. */
+  let times = $state<number | null>(null);
   let error = $state<string | null>(null);
 
   function submit(event: SubmitEvent): void {
@@ -40,13 +43,26 @@
       amount: direction === 'in' ? size : -size,
       category
     };
+    const count = times === null ? undefined : times;
+    if (count !== undefined && (!Number.isInteger(count) || count < 1)) {
+      error = 'How many times must be a whole number, or left empty to repeat for ever';
+      return;
+    }
+
     onadd(
       repeats === 'once'
         ? { ...shared, kind: 'planned', date: plainDate(date) }
-        : { ...shared, kind: 'recurring', cadence: repeats, anchor: plainDate(date) }
+        : {
+            ...shared,
+            kind: 'recurring',
+            cadence: repeats,
+            anchor: plainDate(date),
+            ...(count === undefined ? {} : { times: count })
+          }
     );
     label = '';
     amount = '';
+    times = null;
     dateDraft = null;
   }
 </script>
@@ -70,6 +86,9 @@
     oninput={(event) => (dateDraft = (event.currentTarget as HTMLInputElement).value)}
     aria-label="First date"
   />
+  {#if repeats !== 'once'}
+    <input type="number" min="1" max="600" bind:value={times} placeholder="how many times" aria-label="How many times" class="mono" />
+  {/if}
   <select bind:value={category} aria-label="Counts as">
     {#each CATEGORIES as key (key)}
       <option value={key}>{CATEGORY_LABELS[key]}</option>

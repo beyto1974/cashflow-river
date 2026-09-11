@@ -34,6 +34,10 @@
     return lines.reduce((sum, line) => (isCounted(line, ledger.scenario.asOf) ? sum + line.amount : sum), 0);
   }
 
+  /* Collapsed state per section, so a long ledger can be folded down to the
+     part being worked on. Absent means open. */
+  let open = $state<Record<string, boolean>>({});
+
   const groups = $derived([
     { title: 'Coming in', lines: coming, subtitle: `${formatSigned(monthlyTotal(coming), { cents: false })} / month` },
     { title: 'Going out', lines: going, subtitle: `${formatSigned(monthlyTotal(going), { cents: false })} / month` },
@@ -59,9 +63,19 @@
   {#each groups as group (group.title)}
     <section class="group">
       <div class="head">
-        <h2>{group.title}</h2>
+        <button
+          type="button"
+          class="fold"
+          aria-expanded={open[group.title] !== false}
+          onclick={() => (open = { ...open, [group.title]: open[group.title] === false })}
+        >
+          <span class="chevron" aria-hidden="true">{open[group.title] === false ? '▸' : '▾'}</span>
+          <h2>{group.title}</h2>
+          <span class="count">{group.lines.length}</span>
+        </button>
         <span class="subtotal mono">{group.subtitle}</span>
       </div>
+      {#if open[group.title] !== false}
       {#each group.lines as line (line.id)}
         <LineRow
           {line}
@@ -76,6 +90,7 @@
       {/each}
       {#if group.lines.length === 0}
         <p class="hint">Nothing here yet.</p>
+      {/if}
       {/if}
     </section>
   {/each}
@@ -172,6 +187,27 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 10px;
+  }
+  .fold {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    text-align: left;
+  }
+  .fold:hover h2 {
+    text-decoration: underline;
+  }
+  .chevron {
+    color: var(--ink-3);
+    font-size: 11px;
+  }
+  .count {
+    font-size: 11.5px;
+    color: var(--ink-3);
   }
   .subtotal {
     font-size: 12.5px;
