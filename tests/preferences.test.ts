@@ -28,6 +28,7 @@ describe('preference store', () => {
   it('remembers the view, the row order, the folded sections and the panels left open', () => {
     store().save({
       view: 'grid',
+      theme: 'dark',
       movementOrder: 'desc',
       greeted: true,
       collapsed: ['Going out'],
@@ -35,11 +36,21 @@ describe('preference store', () => {
     });
     expect(store().load()).toEqual({
       view: 'grid',
+      theme: 'dark',
       movementOrder: 'desc',
       greeted: true,
       collapsed: ['Going out'],
       opened: ['The same river as a table']
     });
+  });
+
+  it('follows the reader\'s system until told otherwise', () => {
+    expect(store().load().theme).toBe('auto');
+    store().save({ ...DEFAULT_PREFERENCES, theme: 'dark' });
+    expect(store().load().theme).toBe('dark');
+
+    storage.setItem('moraview.view.v1', JSON.stringify({ view: 'river', theme: 'sepia' }));
+    expect(store().load().theme).toBe('auto');
   });
 
   it('has not greeted anybody until it says so', () => {
@@ -66,6 +77,7 @@ describe('preference store', () => {
     );
     expect(store().load()).toEqual({
       view: 'grid',
+      theme: 'auto',
       movementOrder: 'date',
       greeted: false,
       collapsed: ['Going out'],

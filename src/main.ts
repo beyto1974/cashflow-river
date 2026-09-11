@@ -6,6 +6,7 @@ import { createPreferenceStore } from './persistence/preferences';
 import { emptyScenario, sampleScenario } from './data/sample';
 import { today } from './domain/dates';
 import { createLedgerState } from './ui/state.svelte';
+import { applyTheme } from './ui/theme';
 
 const storage = ((): Storage | undefined => {
   try {
@@ -15,12 +16,17 @@ const storage = ((): Storage | undefined => {
   }
 })();
 
+const preferences = createPreferenceStore(storage);
+
+/* Before the first paint, so a chosen theme never flashes the other one. */
+applyTheme(preferences.load().theme);
+
 const ledger = createLedgerState(
   createLedgerStore(storage),
   sampleScenario(today()),
   emptyScenario(today()),
   today(),
-  createPreferenceStore(storage)
+  preferences
 );
 
 export default mount(App, {

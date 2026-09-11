@@ -7,6 +7,11 @@ export type ForecastView = 'river' | 'balance' | 'ends' | 'grid' | 'flow';
 
 const VIEWS: ForecastView[] = ['river', 'balance', 'ends', 'grid', 'flow'];
 
+/** Which theme the page is painted in. 'auto' follows the reader's system. */
+export type Theme = 'auto' | 'light' | 'dark';
+
+const THEMES: Theme[] = ['auto', 'light', 'dark'];
+
 /** How the month detail lists what moved: in date order, or by size. */
 export type MovementOrder = 'date' | 'desc' | 'asc';
 
@@ -14,6 +19,7 @@ const ORDERS: MovementOrder[] = ['date', 'desc', 'asc'];
 
 export interface Preferences {
   view: ForecastView;
+  theme: Theme;
   movementOrder: MovementOrder;
   /** True once the note about where the ledger is kept has been read. */
   greeted: boolean;
@@ -26,6 +32,7 @@ export interface Preferences {
 export const PREFERENCES_KEY = 'moraview.view.v1';
 export const DEFAULT_PREFERENCES: Preferences = {
   view: 'river',
+  theme: 'auto',
   movementOrder: 'date',
   greeted: false,
   collapsed: [],
@@ -51,6 +58,7 @@ export function createPreferenceStore(storage: Storage | undefined): PreferenceS
         const parsed = JSON.parse(raw) as Partial<Preferences>;
         return {
           view: VIEWS.includes(parsed.view as ForecastView) ? (parsed.view as ForecastView) : 'river',
+          theme: THEMES.includes(parsed.theme as Theme) ? (parsed.theme as Theme) : 'auto',
           movementOrder: ORDERS.includes(parsed.movementOrder as MovementOrder)
             ? (parsed.movementOrder as MovementOrder)
             : 'date',

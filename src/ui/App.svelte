@@ -19,6 +19,7 @@
   import Settings from './Settings.svelte';
   import FirstRun from './FirstRun.svelte';
   import SampleBar from './SampleBar.svelte';
+  import ThemeToggle from './ThemeToggle.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -111,6 +112,7 @@
       ahead · buffer {formatEUR(ledger.forecast.buffer, { cents: false })}
     </p>
     <div class="tools no-print">
+      <ThemeToggle theme={ledger.theme} onset={(theme) => ledger.setTheme(theme)} />
       <button type="button" class="button ghost" onclick={() => window.print()}>Print this</button>
       <Settings
         buffer={ledger.scenario.buffer}
