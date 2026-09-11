@@ -149,8 +149,16 @@ that reads it.
     chart that stays put, instead of forty rows above it.
 17. **Spoken detail.** A summary sentence per month column for screen readers,
     and focus that lands where the eye does after a change.
-18. **Tests at the edges.** The Playwright drive used by hand during M1 becomes
-    a checked-in end-to-end suite, plus a screenshot check of both themes.
+18. **Tests at the edges.** *(done)* Thirty-seven Playwright specs across four
+    files: the answer and what moves it, the ledger and its editors, the two
+    readings and their pointer and keyboard handling, the settings sheet with
+    export, import, copies, versions and the format documentation, and the print
+    view. A separate phone project runs only the layout specs.
+
+    Deliberately not a screenshot check: baselines rendered on one machine fail
+    on the next for font reasons alone, and a suite that cries wolf gets
+    ignored. The layout is asserted instead — no sideways scroll, the answer in
+    view, the chart inside the viewport, the grid scrolling in its own box.
 19. **Publish.** `npm run build` already emits one self-contained file; wire it
     to a published page so the household can open it without a dev server.
 20. **Date the example relative to today.** *(done)* `sampleScenario(today)`

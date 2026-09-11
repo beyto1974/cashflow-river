@@ -17,7 +17,7 @@
   );
 </script>
 
-<section>
+<section class="month-detail">
   <div class="head">
     <h3>{monthName}</h3>
     <div class="sums">

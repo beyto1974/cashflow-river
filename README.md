@@ -41,7 +41,18 @@ npm run dev      # Vite dev server; the port is printed
 npm test         # Vitest over the domain
 npm run check    # svelte-check and tsc
 npm run bench    # what a change costs
+npm run e2e      # Playwright against a real browser
+npm run verify   # all three checks, in order
 npm run build    # one self-contained HTML file in dist-app/
+```
+
+The end-to-end suite starts its own dev server. Two environment variables:
+`E2E_PORT` picks the port (this machine runs several dev servers at once), and
+`MORAVIEW_CHROME` points at a Chrome already installed instead of running
+`npx playwright install chromium`:
+
+```bash
+E2E_PORT=$(freeport -r 4300-4399) npm run e2e
 ```
 
 The build is a single file on purpose, so it can be published as-is.
@@ -59,6 +70,8 @@ src/data/         the example household the app opens on
 src/ui/           Svelte components, the colour bands, and the chart's geometry
                   as a pure model (tested separately from its rendering)
 tests/            Vitest suites, written before the code they cover
+e2e/              Playwright specs: the state container, storage, pointer and
+                  keyboard handling and printing, in a real browser
 scripts/bench.mjs what a change costs, so performance claims stay honest
 legacy/           the three original single-file prototypes and their inlining build
 dist/             the prototypes as published
