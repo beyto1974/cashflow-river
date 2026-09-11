@@ -12,8 +12,7 @@
 
   const SLIDERS: { key: keyof WhatIf; label: string; min: number; max: number }[] = [
     { key: 'income', label: 'Everything coming in', min: 60, max: 130 },
-    { key: 'daily', label: 'Day to day and the car', min: 60, max: 150 },
-    { key: 'saving', label: 'Transfers to savings', min: 0, max: 150 }
+    { key: 'daily', label: 'Day to day and the car', min: 60, max: 150 }
   ];
 
   /* A drag fires an input event per pixel. One recompute per frame is plenty,

@@ -57,25 +57,20 @@ describe('applyWhatIf', () => {
     expect(food?.range).toEqual({ low: euros(-200), high: euros(-325) });
   });
 
-  it('sets the transfer to savings to a share of itself', () => {
-    // Zeroed to negative zero, which keeps the line pointing outwards: the
-    // direction control reads -0 as "goes out", so the line stays a payment.
-    const paused = applyWhatIf(scenario(), dials({ saving: 0 })).lines.find((line) => line.id === 'save');
-    expect(Object.is(paused?.amount, -0)).toBe(true);
-    expect(applyWhatIf(scenario(), dials({ saving: 0.5 })).lines.find((line) => line.id === 'save')?.amount).toBe(
-      euros(-200)
-    );
+  it('leaves the transfers to savings alone: they are a field, not a dial', () => {
+    const dialled = applyWhatIf(scenario(), dials({ income: 0.5, daily: 2 }));
+    expect(dialled.lines.find((line) => line.id === 'save')?.amount).toBe(euros(-400));
   });
 
   it('leaves the housing, insurance and tax lines where they are', () => {
-    const scaled = applyWhatIf(scenario(), dials({ income: 0.5, daily: 2, saving: 0 }));
+    const scaled = applyWhatIf(scenario(), dials({ income: 0.5, daily: 2 }));
     expect(scaled.lines.find((line) => line.id === 'rent')?.amount).toBe(euros(-900));
   });
 
   it('moves the forecast the way the dials point', () => {
     const base = project(scenario()).days.at(-1)!.balance;
     const worse = project(applyWhatIf(scenario(), dials({ income: 0.8 }))).days.at(-1)!.balance;
-    const better = project(applyWhatIf(scenario(), dials({ saving: 0 }))).days.at(-1)!.balance;
+    const better = project(applyWhatIf(scenario(), dials({ daily: 0.6 }))).days.at(-1)!.balance;
     expect(worse).toBeLessThan(base);
     expect(better).toBeGreaterThan(base);
   });

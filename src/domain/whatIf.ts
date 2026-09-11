@@ -12,20 +12,17 @@ export interface WhatIf {
   income: number;
   /** Day-to-day spending, scaled. */
   daily: number;
-  /** What is left of the transfers to savings. */
-  saving: number;
 }
 
-export const NEUTRAL: WhatIf = { income: 1, daily: 1, saving: 1 };
+export const NEUTRAL: WhatIf = { income: 1, daily: 1 };
 
 export function isNeutral(dials: WhatIf): boolean {
-  return dials.income === 1 && dials.daily === 1 && dials.saving === 1;
+  return dials.income === 1 && dials.daily === 1;
 }
 
 const GROUPS: Record<keyof WhatIf, Category[]> = {
   income: ['salary', 'benefit'],
-  daily: ['living', 'transport'],
-  saving: ['saving']
+  daily: ['living', 'transport']
 };
 
 function factorFor(category: Category, dials: WhatIf): number {
@@ -35,7 +32,12 @@ function factorFor(category: Category, dials: WhatIf): number {
   return 1;
 }
 
-/** Housing, insurance, tax and travel are left alone: they are not dials. */
+/**
+ * Housing, insurance, tax, travel and saving are left alone. The first four are
+ * not dials a household can turn; the transfers to savings are one field away in
+ * the ledger, and the fix search already offers pausing them where that is what
+ * would clear a tight patch.
+ */
 export function applyWhatIf(scenario: Scenario, dials: WhatIf): Scenario {
   if (isNeutral(dials)) return scenario;
 

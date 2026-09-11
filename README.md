@@ -19,9 +19,8 @@ one being built out. See `docs/interfaces.md` for all three and why, and
 - **The smallest fix.** On demand, a search for the least disruptive single
   change that clears the first tight stretch — put off a one-off, trim a line,
   split a payment — with the ones that clear everything marked.
-- **Dials over the ledger.** Scale what comes in, day-to-day spending, or the
-  transfers to savings without touching what you typed; keep the figures or
-  throw them away.
+- **Dials over the ledger.** Scale what comes in, or day-to-day spending,
+  without touching what you typed; keep the figures or throw them away.
 - **Two rivers side by side.** Pin a baseline, change something, see what it did
   month by month.
 - **Five readings of the same forecast.** The river (monthly flow over the
