@@ -111,9 +111,12 @@ export function createLedgerState(
      object's identity, so the only way the ledger changes is by being replaced
      in commit(). A write through it now throws instead of leaving a forecast
      that never updates again. */
-  let scenario = $state.raw<Scenario>(freezeScenario(rolled ?? sample));
+  const opening = freezeScenario(rolled ?? sample);
+  let scenario = $state.raw<Scenario>(opening);
   let fromSample = $state(saved === null);
-  let target = $state<PlainDate>(project(scenario).low.date);
+  /* From the plain value rather than from the state, which is the same object
+     and keeps the compiler from warning about a captured initial read. */
+  let target = $state<PlainDate>(project(opening).low.date);
   let selected = $state<MonthKey | null>(null);
   let editing = $state<string | null>(null);
   let dials = $state<WhatIf>({ ...NEUTRAL });
