@@ -3,6 +3,7 @@ import type { Cents } from '../domain/money';
 import { project, projectBand, type BandedForecast, type Forecast } from '../domain/forecast';
 import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domain/rollups';
 import { summarise, type Summary } from '../domain/summary';
+import { applyChange, suggestFixes, type Fix } from '../domain/fixes';
 import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { ScenarioStore } from '../persistence/ports';
@@ -34,6 +35,9 @@ export interface LedgerState {
   setBuffer(buffer: Cents): void;
   setHorizon(months: number): void;
   setAsOf(date: PlainDate): void;
+  /** Searched on demand: one projection per candidate change. */
+  fixes(): Fix[];
+  applyFix(fix: Fix): void;
   reset(): void;
 }
 
@@ -140,6 +144,12 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
      */
     setAsOf(date) {
       commit(compareDates(date, scenario.asOf) > 0 ? advanceTo(scenario, date) : { ...scenario, asOf: date });
+    },
+    fixes() {
+      return suggestFixes(scenario);
+    },
+    applyFix(fix) {
+      commit(applyChange(scenario, fix.change));
     },
     reset() {
       store.clear();

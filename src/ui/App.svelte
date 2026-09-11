@@ -9,6 +9,7 @@
   import RiverChart from './RiverChart.svelte';
   import MonthDetail from './MonthDetail.svelte';
   import MonthTable from './MonthTable.svelte';
+  import FixPanel from './FixPanel.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -98,6 +99,14 @@
         </button>
       {/each}
     </div>
+  {/if}
+
+  {#if ledger.summary.likelyStretches.length > 0}
+    <FixPanel
+      find={() => ledger.fixes()}
+      apply={(fix) => ledger.applyFix(fix)}
+      stretches={ledger.summary.likelyStretches.length}
+    />
   {/if}
 
   <div class="board">

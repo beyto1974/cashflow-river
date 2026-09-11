@@ -2,6 +2,7 @@ import { compareDates, type PlainDate } from './dates';
 import { formatEUR, type Cents } from './money';
 import type { BandedForecast } from './forecast';
 import { stretchesBelow, tightStretches, type Stretch } from './stretches';
+import { days, longDate } from './phrasing';
 
 export type Tone = 'clear' | 'tight' | 'red';
 
@@ -17,18 +18,6 @@ export interface Summary {
   likelyStretches: Stretch[];
   /** What the read-out date itself looks like, when one was given. */
   onTarget: string | undefined;
-}
-
-const LONG_DATE = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
-});
-
-function longDate(date: PlainDate): string {
-  return LONG_DATE.format(new Date(`${date}T00:00:00Z`));
-}
-
-function days(count: number): string {
-  return `${count} ${count === 1 ? 'day' : 'days'}`;
 }
 
 /**
