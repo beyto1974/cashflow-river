@@ -3,6 +3,7 @@ import { mount } from 'svelte';
 import App from './ui/App.svelte';
 import { createLocalStore } from './persistence/localStore';
 import { sampleScenario } from './data/sample';
+import { today } from './domain/dates';
 import { createLedgerState } from './ui/state.svelte';
 
 const storage = ((): Storage | undefined => {
@@ -13,7 +14,7 @@ const storage = ((): Storage | undefined => {
   }
 })();
 
-const ledger = createLedgerState(createLocalStore(storage), sampleScenario());
+const ledger = createLedgerState(createLocalStore(storage), sampleScenario(today()));
 
 export default mount(App, {
   target: document.getElementById('app') as HTMLElement,

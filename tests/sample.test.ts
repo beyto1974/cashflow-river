@@ -1,52 +1,69 @@
 import { describe, expect, it } from 'vitest';
 import { sampleScenario } from '../src/data/sample';
 import { decodeScenario, encodeScenario } from '../src/persistence/codec';
-import { project } from '../src/domain/forecast';
+import { project, projectBand } from '../src/domain/forecast';
 import { byMonth } from '../src/domain/rollups';
-import { euros, formatEUR } from '../src/domain/money';
-import { plainDate } from '../src/domain/dates';
+import { daysBetween, plainDate, type PlainDate } from '../src/domain/dates';
+import { euros } from '../src/domain/money';
+
+/* The example is dated from whatever day it is opened, so the story it tells —
+   a tight autumn about six weeks out — holds whenever someone looks at it. */
+const openedOn = ['2026-09-10', '2027-02-17', '2028-12-29'].map(plainDate);
 
 describe('the sample household', () => {
-  const scenario = sampleScenario();
-  const forecast = project(scenario);
+  for (const today of openedOn) {
+    describe(`opened on ${today}`, () => {
+      const scenario = sampleScenario(today);
+      const forecast = project(scenario);
 
-  it('is a valid scenario by its own codec', () => {
-    expect(decodeScenario(JSON.parse(encodeScenario(scenario)))).toEqual(scenario);
-  });
+      it('starts today', () => {
+        expect(scenario.asOf).toBe(today);
+        expect(forecast.days[0]?.date).toBe(today);
+      });
 
-  it('opens on the two current accounts, not the savings', () => {
-    expect(forecast.opening).toBe(euros(3590.55));
-  });
+      it('is a valid scenario by its own codec', () => {
+        expect(decodeScenario(JSON.parse(encodeScenario(scenario)))).toEqual(scenario);
+      });
 
-  it('has the tension the interface is built to show', () => {
-    expect(forecast.firstUnderBuffer?.date).toBe('2026-10-24');
-    expect(forecast.firstNegative?.date).toBe('2026-11-24');
-    expect(formatEUR(forecast.low.balance)).toBe('-€912.39');
-    expect(forecast.low.date).toBe('2026-11-25');
-  });
+      it('opens on the two current accounts, not the savings', () => {
+        expect(forecast.opening).toBe(euros(3590.55));
+      });
 
-  it('covers 30 months of calendar months', () => {
-    expect(byMonth(forecast)).toHaveLength(31); // 30 whole months plus the closing part-month
-  });
-});
+      it('runs out of buffer within a couple of months, and goes overdrawn after that', () => {
+        const untilTight = daysBetween(today, forecast.firstUnderBuffer?.date as PlainDate);
+        const untilRed = daysBetween(today, forecast.firstNegative?.date as PlainDate);
+        // Opened late in a month the tight patch arrives sooner, which is true to
+        // life: the rent is days away and the salary a month off.
+        expect(untilTight).toBeGreaterThan(0);
+        expect(untilTight).toBeLessThan(70);
+        expect(untilRed).toBeGreaterThan(untilTight);
+        expect(untilRed).toBeLessThan(115);
+        expect(forecast.low.balance).toBeLessThan(0);
+      });
 
-describe('the sample household pays on working days', () => {
-  const forecast = project(sampleScenario());
+      it('recovers later in the forecast, so it is not merely a disaster', () => {
+        expect(forecast.days.at(-1)!.balance).toBeGreaterThan(forecast.opening);
+      });
 
-  it('pays the salary before the weekend when the 27th falls on one', () => {
-    // 27 September 2026 is a Sunday
-    expect(forecast.dayAt(plainDate('2026-09-27'))?.movements.some((m) => m.lineId === 'salary-1')).toBe(false);
+      it('covers 30 months of calendar months', () => {
+        expect(byMonth(forecast)).toHaveLength(31); // 30 whole months plus the closing part-month
+      });
+
+      it('carries guesses, so the band has width', () => {
+        expect(projectBand(scenario).hasRange).toBe(true);
+      });
+
+      it('closes the banks on days inside the forecast', () => {
+        expect(scenario.holidays?.length).toBeGreaterThan(0);
+        expect(scenario.holidays?.every((date) => date >= today)).toBe(true);
+      });
+    });
+  }
+
+  it('pays the salary on a working day', () => {
+    // 27 September 2026 is a Sunday, and the salary is paid the working day before
+    const forecast = project(sampleScenario(plainDate('2026-09-10')));
     expect(forecast.dayAt(plainDate('2026-09-25'))?.movements.some((m) => m.lineId === 'salary-1')).toBe(true);
-  });
-
-  it('takes the mortgage on the next working day when the 1st is a holiday', () => {
-    // 1 January 2027 is in the scenario's closed days, and the 2nd and 3rd are a weekend
-    expect(forecast.dayAt(plainDate('2027-01-01'))?.movements.some((m) => m.lineId === 'mortgage')).toBe(false);
-    expect(forecast.dayAt(plainDate('2027-01-04'))?.movements.some((m) => m.lineId === 'mortgage')).toBe(true);
-  });
-
-  it('still has the tension the interface is built to show', () => {
-    expect(forecast.firstNegative).toBeDefined();
-    expect(forecast.low.balance).toBeLessThan(0);
+    expect(forecast.dayAt(plainDate('2026-09-27'))?.movements.some((m) => m.lineId === 'salary-1')).toBe(false);
   });
 });
