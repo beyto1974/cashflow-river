@@ -29,6 +29,7 @@
   );
   const distance = $derived(distanceFrom(ledger.forecast.asOf, ledger.target));
   const shown = $derived(worstFirst(ledger.summary.likelyStretches, 6));
+  let verdictEl = $state<HTMLElement | null>(null);
 
 
 
@@ -66,6 +67,8 @@
 </script>
 
 <div class="sheet">
+  <p class="sr-only" role="status" aria-live="polite">{ledger.announcement}</p>
+
   <header>
     <h1>Cashflow <em>River</em></h1>
     <p class="stand no-print">Every line you keep sends water into the month it falls in. Edit a line on the left and
@@ -125,7 +128,15 @@
     </span>
   </div>
 
-  <p class="verdict" data-tone={ledger.summary.tone}>{ledger.summary.sentence}</p>
+  <p class="sr-only" aria-live="polite">
+    On {longDate(ledger.target)} the accounts hold {formatEUR(day.balance)}{ledger.banded.hasRange
+      ? `, somewhere between ${formatEUR(worst)} and ${formatEUR(best)}`
+      : ''}.
+  </p>
+
+  <p class="verdict" data-tone={ledger.summary.tone} tabindex="-1" bind:this={verdictEl}>
+    {ledger.summary.sentence}
+  </p>
 
   {#if ledger.summary.risk}
     <p class="risk">{ledger.summary.risk}</p>
@@ -156,7 +167,11 @@
   {#if ledger.summary.likelyStretches.length > 0}
     <FixPanel
       find={() => ledger.fixes()}
-      apply={(fix) => ledger.applyFix(fix)}
+      apply={(fix) => {
+        ledger.applyFix(fix);
+        /* The outcome is a changed sentence, so put the reader on it. */
+        verdictEl?.focus();
+      }}
       stretches={ledger.summary.likelyStretches.length}
     />
   {/if}
@@ -184,6 +199,7 @@
         </button>
       </div>
 
+      <div class="chart-hold">
       {#if ledger.view === 'grid'}
         <GridChart forecast={ledger.forecast} target={ledger.target} onpick={(date) => ledger.setTarget(date)} />
       {:else}
@@ -211,6 +227,7 @@
         {/if}
       </div>
       {/if}
+      </div>
 
       <Comparison
         comparison={ledger.comparison}
@@ -310,6 +327,14 @@
     color: var(--ink-2);
     font-size: 13px;
   }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
   .verdict {
     margin: 14px 0 0;
     font-family: 'Newsreader', Georgia, serif;
@@ -324,6 +349,10 @@
   }
   .verdict[data-tone='red'] {
     border-left-color: var(--critical);
+  }
+  .verdict:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
   }
   .risk {
     margin: 8px 0 0;
@@ -371,9 +400,32 @@
     margin-top: 26px;
     align-items: start;
   }
+  /* Both tracks must be allowed to be narrower than their content, or a wide
+     table inside one pushes the whole page sideways. */
+  .board > :global(*) {
+    min-width: 0;
+    max-width: 100%;
+  }
   @media (max-width: 900px) {
     .board {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+    /* The forecast comes first on a narrow screen: it is the answer, and the
+       ledger below it is the working surface. */
+    .board main {
+      order: -1;
+    }
+  }
+  /* On a narrow screen the chart stays put while the ledger scrolls under it. */
+  @media (max-width: 900px) {
+    .chart-hold {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--paper);
+      padding-bottom: 6px;
+      margin-bottom: 4px;
     }
   }
   .views {

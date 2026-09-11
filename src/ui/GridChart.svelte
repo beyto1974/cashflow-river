@@ -132,6 +132,18 @@
   }
   .scroll {
     overflow-x: auto;
+    max-width: 100%;
+  }
+  @media (max-width: 620px) {
+    /* Shorter rows so a phone shows more months without scrolling. */
+    td,
+    .cell {
+      height: 13px;
+    }
+    td,
+    th.dom {
+      width: 17px;
+    }
   }
   table {
     border-collapse: separate;

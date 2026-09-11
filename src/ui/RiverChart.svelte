@@ -287,6 +287,7 @@
 
 <style>
   .frame {
+    max-width: 100%;
     touch-action: pan-y;
     background: var(--sheet);
     border: 1px solid var(--rule);

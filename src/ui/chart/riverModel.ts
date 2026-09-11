@@ -98,9 +98,10 @@ function clamp(value: number, low: number, high: number): number {
  */
 export function riverGeometry({ forecast, months, width, target, band }: RiverInput): RiverGeometry {
   const narrow = width < 620;
+  const tiny = width < 420;
   const pad = { left: narrow ? 46 : 60, right: 12, top: 18 };
-  const flowHeight = narrow ? 168 : 214;
-  const bedHeight = narrow ? 92 : 116;
+  const flowHeight = tiny ? 120 : narrow ? 168 : 214;
+  const bedHeight = tiny ? 76 : narrow ? 92 : 116;
   const axisBand = 42;
 
   const inner = Math.max(width - pad.left - pad.right, 40);

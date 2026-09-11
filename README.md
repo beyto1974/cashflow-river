@@ -32,6 +32,9 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   importer checks against: paste it to a model with your own situation and
   import what it writes.
 - **A print stylesheet** for the kitchen-table conversation.
+- **Readable with a screen reader**: the answer as a sentence, one status region
+  for what the app did on its own, headings for the sections, named controls,
+  and keyboard walks through both the month columns and the grid's days.
 
 ## Run it
 

@@ -37,6 +37,8 @@ export interface LedgerState {
   saveLedgerAs(name: string): boolean;
   removeLedger(name: string): void;
   restoreRevision(revision: number): void;
+  /** The last thing worth saying out loud, for a screen reader. */
+  readonly announcement: string;
   /** Which reading of the forecast is on screen, and which sections are folded. */
   readonly view: ForecastView;
   setView(view: ForecastView): void;
@@ -108,6 +110,7 @@ export function createLedgerState(
   /* Bumped whenever storage changes under us, so the ledger list and the
      version history are read again rather than cached stale. */
   let storeVersion = $state(0);
+  let announcement = $state('');
   let view = $state<ForecastView>(saved0.view);
   let folded = $state<string[]>(saved0.collapsed);
 
@@ -133,6 +136,13 @@ export function createLedgerState(
     target = clampToHorizon(scenario, target);
   }
 
+  /* Discrete actions only. Typing in a field announces itself by being typed;
+     what needs saying is what the app did on its own — applied a fix, switched
+     ledger, restored a version. */
+  function announce(what: string): void {
+    announcement = what;
+  }
+
   function openCurrent(): void {
     const saved = store.load();
     /* Same roll-forward as on first load: a ledger saved three weeks ago must
@@ -154,6 +164,7 @@ export function createLedgerState(
 
   return {
     get scenario() { return scenario; },
+    get announcement() { return announcement; },
     get forecast() { return forecast; },
     get banded() { return banded; },
     get months() { return months; },
@@ -176,19 +187,27 @@ export function createLedgerState(
     selectLedger(name) {
       store.select(name);
       openCurrent();
+      announce(`Opened ${name}.`);
     },
     saveLedgerAs(name) {
       const saved = store.saveAs(name, scenario);
-      if (saved) storeVersion += 1;
+      if (saved) {
+        storeVersion += 1;
+        announce(`Saved a copy as ${name}.`);
+      }
       return saved;
     },
     removeLedger(name) {
       store.remove(name);
       openCurrent();
+      announce(`${name} deleted. Now on ${store.current()}.`);
     },
     restoreRevision(revision) {
       const restored = store.restore(revision);
-      if (restored) commit(advanceTo(restored, now));
+      if (restored) {
+        commit(advanceTo(restored, now));
+        announce(`Restored version ${revision}.`);
+      }
     },
 
     get view() { return view; },
@@ -210,6 +229,7 @@ export function createLedgerState(
     importAll(text) {
       const result = importLedgers(store, text);
       openCurrent();
+      announce(`Imported ${result.imported.join(', ')}.`);
       return result.imported;
     },
 
@@ -234,6 +254,7 @@ export function createLedgerState(
       if (isNeutral(dials)) return;
       commit(applyWhatIf(scenario, dials));
       dials = { ...NEUTRAL };
+      announce('The dials are part of the ledger now.');
     },
     get target() { return target; },
     get selectedMonth() { return selected ?? monthKey(forecast.low.date); },
@@ -258,8 +279,10 @@ export function createLedgerState(
       editing = line.id;
     },
     removeLine(id) {
+      const gone = scenario.lines.find((line) => line.id === id);
       commit({ ...scenario, lines: scenario.lines.filter((line) => line.id !== id) });
       if (editing === id) editing = null;
+      if (gone) announce(`${gone.label} deleted.`);
     },
     toggleMute(id) {
       mapLines((line) => (line.id === id ? { ...line, muted: !line.muted } : line));
@@ -302,6 +325,7 @@ export function createLedgerState(
       return suggestFixes(dialled);
     },
     applyFix(fix) {
+      announce(`${fix.description}. ${summary.sentence}`);
       /* The search runs on the dialled figures, so the change has to land on
          them: applying it to the undialled ledger would write an amount derived
          from a dialled one. Baking the dials in is the honest reading of "do
@@ -321,6 +345,7 @@ export function createLedgerState(
       baseline = null;
       dials = { ...NEUTRAL };
       storeVersion += 1;
+      announce('Back to the example household.');
     }
   };
 }

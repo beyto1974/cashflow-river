@@ -145,10 +145,21 @@ that reads it.
     every component after the first reads the same projection for nothing. The
     fix search is the only expensive thing, and it already sits behind a button.
     Revisit if a horizon of many years or a ledger of hundreds of lines turns up.
-16. **Phone layout.** At 400px the ledger becomes a sheet you pull up over a
-    chart that stays put, instead of forty rows above it.
-17. **Spoken detail.** A summary sentence per month column for screen readers,
-    and focus that lands where the eye does after a change.
+16. **Phone layout.** *(done)* The forecast comes first on a narrow screen and
+    stays put while the ledger scrolls under it; the chart shortens, the grid
+    keeps its cells small and scrolls inside its own box.
+
+    The end-to-end suite caught the actual bug on the way in: both tracks of the
+    board grid defaulted to `min-width: auto`, so the wide grid table pushed the
+    whole page sideways — 758px of scroll on a 400px screen. A phone spec now
+    asserts the page never scrolls sideways.
+17. **Spoken detail.** *(done)* The answer is a spoken sentence — "On Wednesday
+    25 November 2026 the accounts hold −€912.39, somewhere between −€1,726.39
+    and −€203.09" — rather than scattered numbers. What the app does on its own
+    is announced in one status region: a line deleted, a fix applied, a ledger
+    opened or copied, a version restored, an import. Typing in a field says
+    nothing, because typing announces itself. Applying a fix moves focus to the
+    sentence, which is the outcome.
 18. **Tests at the edges.** *(done)* Thirty-seven Playwright specs across four
     files: the answer and what moves it, the ledger and its editors, the two
     readings and their pointer and keyboard handling, the settings sheet with
