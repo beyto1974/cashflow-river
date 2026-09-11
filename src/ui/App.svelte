@@ -7,6 +7,7 @@
   import { distanceFrom, longDate, longMonth, shortDate, shortMonth } from './format';
   import LedgerPanel from './LedgerPanel.svelte';
   import RiverChart from './RiverChart.svelte';
+  import GridChart from './GridChart.svelte';
   import MonthDetail from './MonthDetail.svelte';
   import MonthTable from './MonthTable.svelte';
   import FixPanel from './FixPanel.svelte';
@@ -26,6 +27,9 @@
   );
   const distance = $derived(distanceFrom(ledger.forecast.asOf, ledger.target));
   const shown = $derived(worstFirst(ledger.summary.likelyStretches, 6));
+
+  /* Two readings of the same projection: the river, and every day as a cell. */
+  let view = $state<'river' | 'grid'>('river');
 
   /** A date outside the horizon is clamped, so the field is rewritten to match. */
   function pickDate(event: Event): void {
@@ -141,6 +145,18 @@
     <LedgerPanel {ledger} />
 
     <main>
+      <div class="views no-print" role="group" aria-label="How to read the forecast">
+        <button type="button" class:on={view === 'river'} aria-pressed={view === 'river'} onclick={() => (view = 'river')}>
+          River
+        </button>
+        <button type="button" class:on={view === 'grid'} aria-pressed={view === 'grid'} onclick={() => (view = 'grid')}>
+          Grid
+        </button>
+      </div>
+
+      {#if view === 'grid'}
+        <GridChart forecast={ledger.forecast} target={ledger.target} onpick={(date) => ledger.setTarget(date)} />
+      {:else}
       <RiverChart
         forecast={ledger.forecast}
         months={ledger.months}
@@ -164,6 +180,7 @@
           <span><i class="red-key"></i>overdrawn</span>
         {/if}
       </div>
+      {/if}
 
       <Comparison
         comparison={ledger.comparison}
@@ -319,6 +336,29 @@
     .board {
       grid-template-columns: 1fr;
     }
+  }
+  .views {
+    display: inline-flex;
+    gap: 2px;
+    margin-bottom: 8px;
+    padding: 2px;
+    background: var(--sheet-2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+  }
+  .views button {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 3px 14px;
+  }
+  .views button.on {
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 600;
   }
   .legend {
     display: flex;
