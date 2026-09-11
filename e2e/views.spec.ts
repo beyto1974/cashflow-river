@@ -157,3 +157,33 @@ test.describe('the balance-only reading', () => {
     await expect(page.locator('.views button.on')).toHaveText('Balance');
   });
 });
+
+test.describe('the month detail', () => {
+  test('steps a month at a time, and stops at both ends', async ({ page }) => {
+    await openFresh(page);
+    const heading = page.locator('.month-detail h3');
+    const first = await heading.innerText();
+
+    await page.getByRole('button', { name: /^The month after/ }).click();
+    await expect(heading).not.toHaveText(first);
+    await page.getByRole('button', { name: /^The month before/ }).click();
+    await expect(heading).toHaveText(first);
+
+    /* The first month of the forecast has nothing before it. */
+    for (let step = 0; step < 40; step += 1) {
+      const back = page.getByRole('button', { name: /^The month before/ });
+      if (await back.isDisabled()) break;
+      await back.click();
+    }
+    await expect(page.getByRole('button', { name: /^The month before/ })).toBeDisabled();
+    await expect(heading).toHaveText(/September 2026|October 2026/);
+  });
+
+  test('stepping moves the chart selection and the read-out with it', async ({ page }) => {
+    await openFresh(page);
+    const before = await page.getByLabel('Date to read the balance on').inputValue();
+    await page.getByRole('button', { name: /^The month after/ }).click();
+    await expect(page.getByLabel('Date to read the balance on')).not.toHaveValue(before);
+    await expect(page.locator('.month-detail .sums')).toContainText('Ends at');
+  });
+});

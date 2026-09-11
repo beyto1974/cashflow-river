@@ -59,6 +59,13 @@
     };
   });
 
+  const monthIndex = $derived(ledger.months.findIndex((month) => month.month === ledger.selectedMonth));
+
+  function stepMonth(delta: number): void {
+    const next = ledger.months[monthIndex + delta];
+    if (next) pickMonth(next.month);
+  }
+
   function pickMonth(month: MonthKey): void {
     ledger.selectMonth(month);
     const middle = `${month}-15`;
@@ -234,7 +241,14 @@
         onclear={() => ledger.clearBaseline()}
       />
 
-      <MonthDetail month={selected} monthName={longMonth(selected.month)} />
+      <MonthDetail
+        month={selected}
+        monthName={longMonth(selected.month)}
+        onprev={() => stepMonth(-1)}
+        onnext={() => stepMonth(1)}
+        hasPrev={monthIndex > 0}
+        hasNext={monthIndex >= 0 && monthIndex < ledger.months.length - 1}
+      />
       <MonthTable months={ledger.months} monthName={shortMonth} />
     </main>
   </div>

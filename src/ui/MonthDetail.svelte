@@ -7,8 +7,13 @@
   interface Props {
     month: MonthSummary;
     monthName: string;
+    /** Stepping the selection a month at a time, without going via the chart. */
+    onprev: () => void;
+    onnext: () => void;
+    hasPrev: boolean;
+    hasNext: boolean;
   }
-  const { month, monthName }: Props = $props();
+  const { month, monthName, onprev, onnext, hasPrev, hasNext }: Props = $props();
 
   const movements = $derived(
     [...month.movements].sort((a, b) =>
@@ -19,7 +24,29 @@
 
 <section class="month-detail">
   <div class="head">
-    <h3>{monthName}</h3>
+    <div class="stepper">
+      <button
+        type="button"
+        class="step no-print"
+        onclick={onprev}
+        disabled={!hasPrev}
+        aria-label="The month before {monthName}"
+        title="The month before"
+      >
+        ‹
+      </button>
+      <h3>{monthName}</h3>
+      <button
+        type="button"
+        class="step no-print"
+        onclick={onnext}
+        disabled={!hasNext}
+        aria-label="The month after {monthName}"
+        title="The month after"
+      >
+        ›
+      </button>
+    </div>
     <div class="sums">
       <span>In <b class="mono">{formatEUR(month.inflow, { cents: false })}</b></span>
       <span>Out <b class="mono">{formatEUR(month.outflow, { cents: false })}</b></span>
@@ -56,11 +83,37 @@
     border-bottom: 1px solid var(--ink);
     padding-bottom: 6px;
   }
+  .stepper {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
   h3 {
     font-family: 'Newsreader', Georgia, serif;
     font-size: 1.25rem;
     margin: 0;
     font-weight: 600;
+    min-width: 9ch;
+  }
+  .step {
+    font-size: 17px;
+    line-height: 1;
+    color: var(--ink-2);
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    align-self: center;
+  }
+  .step:hover:not(:disabled) {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+  .step:disabled {
+    opacity: 0.35;
+    cursor: default;
   }
   .sums {
     display: flex;
