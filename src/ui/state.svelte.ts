@@ -11,7 +11,9 @@ import { freezeScenario } from '../domain/freeze';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { LedgerStore, Revision } from '../persistence/ports';
 import { exportLedgers, importLedgers } from '../persistence/transfer';
-import { DEFAULT_PREFERENCES, type ForecastView, type PreferenceStore } from '../persistence/preferences';
+import {
+  DEFAULT_PREFERENCES, type ForecastView, type MovementOrder, type PreferenceStore
+} from '../persistence/preferences';
 
 export interface LedgerState {
   readonly scenario: Scenario;
@@ -42,6 +44,9 @@ export interface LedgerState {
   /** Which reading of the forecast is on screen, and which sections are folded. */
   readonly view: ForecastView;
   setView(view: ForecastView): void;
+  /** How the month detail lists what moved. */
+  readonly movementOrder: MovementOrder;
+  setMovementOrder(order: MovementOrder): void;
   isFolded(section: string): boolean;
   toggleSection(section: string): void;
   /** Disclosure panels: the month table, the version list, the format notes. */
@@ -117,9 +122,10 @@ export function createLedgerState(
   let view = $state<ForecastView>(saved0.view);
   let folded = $state<string[]>(saved0.collapsed);
   let opened = $state<string[]>(saved0.opened);
+  let movementOrder = $state<MovementOrder>(saved0.movementOrder);
 
   function rememberView(): void {
-    preferences.save({ view, collapsed: folded, opened });
+    preferences.save({ view, movementOrder, collapsed: folded, opened });
   }
 
   /* The dials are a layer: the forecast is of the scenario as dialled, while the
@@ -224,6 +230,11 @@ export function createLedgerState(
     },
     toggleSection(section) {
       folded = folded.includes(section) ? folded.filter((name) => name !== section) : [...folded, section];
+      rememberView();
+    },
+    get movementOrder() { return movementOrder; },
+    setMovementOrder(order) {
+      movementOrder = order;
       rememberView();
     },
     isOpen(panel) {

@@ -233,3 +233,157 @@ test.describe('what the page remembers', () => {
     await expect(page.locator('tbody tr').first()).toBeHidden();
   });
 });
+
+test.describe('the flow reading', () => {
+  test('shows where the money came from and where it went, both sides balanced', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Flow', exact: true }).click();
+
+    await expect(page.locator('.ribbon').first()).toBeVisible();
+    await expect(page.locator('.hub')).toBeVisible();
+    /* Whatever is not spent is named, so the two sides add up. */
+    await expect(page.locator('.reading tbody')).toContainText(/Left over|Shortfall/);
+
+    const rows = page.locator('.reading tbody tr');
+    expect(await rows.count()).toBeGreaterThan(4);
+  });
+
+  test('adds up the period asked for', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Flow', exact: true }).click();
+    const yearly = await page.locator('.reading tbody tr').first().innerText();
+
+    const caption = page.locator('.frame .caption');
+    await page.getByRole('button', { name: 'This month' }).click();
+    await expect(caption).not.toContainText('NEXT TWELVE MONTHS');
+    await expect(page.locator('.reading tbody tr').first()).not.toHaveText(yearly);
+
+    await page.getByRole('button', { name: 'Whole forecast' }).click();
+    await expect(caption).toContainText('WHOLE FORECAST');
+  });
+
+  test('keeps its total inside the frame', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Flow', exact: true }).click();
+    const label = page.locator('.hub-label');
+    const box = (await label.boundingBox())!;
+    const svg = (await page.locator('.frame svg').boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(svg.y - 0.5);
+    expect(box.y + box.height).toBeLessThanOrEqual(svg.y + svg.height + 0.5);
+  });
+});
+
+test.describe('the month-ends reading', () => {
+  test('draws a bar per month and says where the month leaves you', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Month ends', exact: true }).click();
+
+    const bars = page.locator('.bar');
+    expect(await bars.count()).toBeGreaterThan(20);
+    await expect(page.locator('.reading')).toContainText('ends at');
+
+    const bar = page.locator('.hit').nth(5);
+    await bar.hover();
+    await expect(page.locator('.reading')).toContainText(/net|lowest/);
+    await bar.click();
+    await expect(page.locator('.month-detail h3')).toBeVisible();
+  });
+
+  test('colours a month by what its closing balance means', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Month ends', exact: true }).click();
+    await expect(page.locator('.bar[data-band="tight"]').first()).toBeVisible();
+    await expect(page.locator('.bar[data-band="clear"]').first()).toBeVisible();
+  });
+});
+
+test.describe('the month-ends measures', () => {
+  test('switches between where the month leaves you, what came in and what went out', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Month ends', exact: true }).click();
+    const caption = page.locator('.frame .caption');
+    await expect(caption).toContainText('CLOSING BALANCE');
+    await expect(page.locator('.buffer-label')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Money in', exact: true }).click();
+    await expect(caption).toContainText('WHAT CAME IN');
+    /* Neither total answers to the buffer, so the line is not drawn over them. */
+    await expect(page.locator('.buffer-label')).toHaveCount(0);
+    await expect(page.locator('.bar[data-measure="in"]').first()).toBeVisible();
+
+    await page.getByRole('button', { name: 'Money out', exact: true }).click();
+    await expect(caption).toContainText('WHAT WENT OUT');
+    await expect(page.locator('.bar[data-measure="out"]').first()).toBeVisible();
+
+    await page.getByRole('button', { name: 'Ends at', exact: true }).click();
+    await expect(page.locator('.buffer-label')).toBeVisible();
+  });
+
+  test('describes the whole month whichever measure is drawn', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Month ends', exact: true }).click();
+    await page.getByRole('button', { name: 'Money out', exact: true }).click();
+    await page.locator('.hit').nth(4).hover();
+    const reading = page.locator('.reading');
+    await expect(reading).toContainText('in €');
+    await expect(reading).toContainText('out');
+    await expect(reading).toContainText('ends at');
+  });
+});
+
+test.describe('part months', () => {
+  test('are drawn hollow and said out loud, rather than reading as a collapse', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Month ends', exact: true }).click();
+
+    const partial = page.locator('.bar[data-partial="1"]');
+    expect(await partial.count()).toBe(2); // the month it starts in, and the month it ends in
+    await expect(page.locator('.frame .caption')).toContainText('PART MONTHS');
+
+    await page.locator('.hit').first().hover();
+    await expect(page.locator('.reading')).toContainText('part month');
+  });
+
+  test('are marked in the table too', async ({ page }) => {
+    await openFresh(page);
+    await page.locator('summary', { hasText: 'The same river as a table' }).click();
+    await expect(page.locator('tbody .part')).toHaveCount(2);
+  });
+});
+
+test.describe('the month detail order', () => {
+  const amounts = async (page: import('@playwright/test').Page): Promise<number[]> => {
+    const cells = await page.locator('.month-detail .amt').allInnerTexts();
+    return cells.map((text) => Math.abs(Number(text.replace(/[^\d.-]/g, ''))));
+  };
+
+  test('lists a month by date until asked for size, and remembers the choice', async ({ page }) => {
+    await openFresh(page);
+    await expect(page.getByRole('button', { name: 'By date' })).toHaveAttribute('aria-pressed', 'true');
+    const days = await page.locator('.month-detail .when').allInnerTexts();
+    expect([...days].sort((a, b) => Number(a) - Number(b))).toEqual(days.map((day) => day.trim()));
+
+    await page.getByRole('button', { name: 'Biggest first' }).click();
+    const down = await amounts(page);
+    expect([...down].sort((a, b) => b - a)).toEqual(down);
+
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Biggest first' })).toHaveAttribute('aria-pressed', 'true');
+    expect(await amounts(page)).toEqual(down);
+
+    await page.getByRole('button', { name: 'Smallest first' }).click();
+    const up = await amounts(page);
+    expect([...up].sort((a, b) => a - b)).toEqual(up);
+
+    await page.getByRole('button', { name: 'By date' }).click();
+    await expect(page.getByRole('button', { name: 'By date' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('keeps the order when the month is stepped', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Biggest first' }).click();
+    await page.getByRole('button', { name: /^The month after/ }).click();
+    const down = await amounts(page);
+    expect([...down].sort((a, b) => b - a)).toEqual(down);
+  });
+});

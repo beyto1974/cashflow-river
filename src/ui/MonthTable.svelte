@@ -16,6 +16,7 @@
 <details {open} ontoggle={(event) => onopen((event.currentTarget as HTMLDetailsElement).open)}>
   <summary>The same river as a table</summary>
   <p class="print-only caption">Month by month</p>
+
   <div class="scroll">
     <table>
       <thead>
@@ -29,7 +30,11 @@
                spent on the two figures that are actually about the buffer, so an
                ordinary income or outgoing is not coloured as if it were wrong. -->
           <tr class:touched={month.daysUnderBuffer > 0} class:overdrawn={month.low < 0}>
-            <td>{monthName(month.month)}</td>
+            <td>
+              {monthName(month.month)}{#if month.partial}<span class="part" title="The forecast covers only part of this month"
+                  >part</span
+                >{/if}
+            </td>
             <td class="mono">{formatEUR(month.inflow, { cents: false })}</td>
             <td class="mono">{formatEUR(month.outflow, { cents: false })}</td>
             <td class="mono">{formatSigned(month.net, { cents: false })}</td>
@@ -100,6 +105,17 @@
   }
   td.tight {
     color: var(--warning);
+  }
+  .part {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0 3px;
   }
   td.red {
     color: var(--critical);

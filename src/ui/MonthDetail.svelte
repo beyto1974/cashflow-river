@@ -3,23 +3,40 @@
   import { formatEUR, formatSigned } from '../domain/money';
   import type { MonthSummary } from '../domain/rollups';
   import { bandFor } from './bands';
+  import type { MovementOrder } from '../persistence/preferences';
 
   interface Props {
     month: MonthSummary;
     monthName: string;
+    order: MovementOrder;
+    onorder: (order: MovementOrder) => void;
     /** Stepping the selection a month at a time, without going via the chart. */
     onprev: () => void;
     onnext: () => void;
     hasPrev: boolean;
     hasNext: boolean;
   }
-  const { month, monthName, onprev, onnext, hasPrev, hasNext }: Props = $props();
+  const { month, monthName, order, onorder, onprev, onnext, hasPrev, hasNext }: Props = $props();
 
-  const movements = $derived(
-    [...month.movements].sort((a, b) =>
-      a.date === b.date ? Math.abs(b.amount) - Math.abs(a.amount) : a.date.localeCompare(b.date)
-    )
-  );
+  /* Date order is how a statement reads and the default; the other two sort by
+     size, which is how you find what did the damage. */
+  const ORDERS: { key: MovementOrder; label: string; title: string }[] = [
+    { key: 'date', label: 'By date', title: 'In the order they fall in the month' },
+    { key: 'desc', label: 'Biggest first', title: 'Largest amount first, in or out' },
+    { key: 'asc', label: 'Smallest first', title: 'Smallest amount first, in or out' }
+  ];
+
+  const movements = $derived.by(() => {
+    const rows = [...month.movements];
+    if (order === 'date') {
+      return rows.sort((a, b) =>
+        a.date === b.date ? Math.abs(b.amount) - Math.abs(a.amount) : a.date.localeCompare(b.date)
+      );
+    }
+    return rows.sort((a, b) =>
+      order === 'desc' ? Math.abs(b.amount) - Math.abs(a.amount) : Math.abs(a.amount) - Math.abs(b.amount)
+    );
+  });
 </script>
 
 <section class="month-detail">
@@ -53,6 +70,20 @@
       <span>Net <b class="mono">{formatSigned(month.net, { cents: false })}</b></span>
       <span>Ends at <b class="mono">{formatEUR(month.end, { cents: false })}</b></span>
     </div>
+  </div>
+
+  <div class="orders no-print" role="group" aria-label="How to list what moved">
+    {#each ORDERS as option (option.key)}
+      <button
+        type="button"
+        class:on={order === option.key}
+        aria-pressed={order === option.key}
+        title={option.title}
+        onclick={() => onorder(option.key)}
+      >
+        {option.label}
+      </button>
+    {/each}
   </div>
 
   {#if movements.length === 0}
@@ -124,6 +155,28 @@
   }
   .sums b {
     color: var(--ink);
+    font-weight: 600;
+  }
+  .orders {
+    display: inline-flex;
+    gap: 2px;
+    margin: 8px 0 6px;
+    padding: 2px;
+    background: var(--sheet-2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+  }
+  .orders button {
+    font-size: 11.5px;
+    color: var(--ink-2);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+  .orders button.on {
+    background: var(--ink);
+    color: var(--paper);
     font-weight: 600;
   }
   ul {

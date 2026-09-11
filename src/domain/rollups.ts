@@ -1,4 +1,4 @@
-import { compareDates, monthKey, type MonthKey, type PlainDate } from './dates';
+import { compareDates, dayOfMonth, lastDayOfMonth, monthKey, type MonthKey, type PlainDate } from './dates';
 import type { Cents } from './money';
 import { perMonth } from './schedule';
 import { isRecurring, type Category, type Scenario } from './types';
@@ -10,6 +10,13 @@ export interface DatedMovement extends Movement {
 
 export interface MonthSummary {
   month: MonthKey;
+  /**
+   * The forecast covers only part of this calendar month — the first month
+   * starts on the day the forecast does, and the last ends at the horizon. Their
+   * totals are not comparable with a whole month's, which is worth saying rather
+   * than letting a short bar read as a collapse in income.
+   */
+  partial: boolean;
   inflow: Cents;
   outflow: Cents;
   net: Cents;
@@ -29,7 +36,7 @@ export function byMonth(forecast: Forecast): MonthSummary[] {
     const key = monthKey(day.date);
     if (!current || current.month !== key) {
       current = {
-        month: key, inflow: 0, outflow: 0, net: 0,
+        month: key, partial: dayOfMonth(day.date) !== 1, inflow: 0, outflow: 0, net: 0,
         end: day.balance, low: day.balance, daysUnderBuffer: 0, movements: []
       };
       months.push(current);
@@ -44,6 +51,15 @@ export function byMonth(forecast: Forecast): MonthSummary[] {
     if (day.balance < forecast.buffer) current.daysUnderBuffer += 1;
     current.net = current.inflow + current.outflow;
   }
+
+  /* The closing month stops at the horizon, wherever that falls. */
+  const last = months[months.length - 1];
+  const lastDay = forecast.days[forecast.days.length - 1];
+  if (last && lastDay) {
+    const [year, month] = last.month.split('-').map(Number) as [number, number];
+    if (dayOfMonth(lastDay.date) !== lastDayOfMonth(year, month)) last.partial = true;
+  }
+
   return months;
 }
 

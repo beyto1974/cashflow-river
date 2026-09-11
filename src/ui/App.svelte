@@ -9,6 +9,8 @@
   import LedgerPanel from './LedgerPanel.svelte';
   import RiverChart from './RiverChart.svelte';
   import GridChart from './GridChart.svelte';
+  import SankeyChart from './SankeyChart.svelte';
+  import MonthEndsChart from './MonthEndsChart.svelte';
   import MonthDetail from './MonthDetail.svelte';
   import MonthTable from './MonthTable.svelte';
   import FixPanel from './FixPanel.svelte';
@@ -206,12 +208,18 @@
 
     <main>
       <div class="views no-print" role="group" aria-label="How to read the forecast">
-        {#each [['river', 'River'], ['balance', 'Balance'], ['grid', 'Grid']] as [key, label] (key)}
+        {#each [
+          ['river', 'River'],
+          ['balance', 'Balance'],
+          ['ends', 'Month ends'],
+          ['grid', 'Grid'],
+          ['flow', 'Flow']
+        ] as [key, label] (key)}
           <button
             type="button"
             class:on={ledger.view === key}
             aria-pressed={ledger.view === key}
-            onclick={() => ledger.setView(key as 'river' | 'balance' | 'grid')}
+            onclick={() => ledger.setView(key as 'river' | 'balance' | 'ends' | 'grid' | 'flow')}
           >
             {label}
           </button>
@@ -221,6 +229,15 @@
       <div class="chart-hold">
       {#if ledger.view === 'grid'}
         <GridChart forecast={ledger.forecast} target={ledger.target} onpick={(date) => ledger.setTarget(date)} />
+      {:else if ledger.view === 'flow'}
+        <SankeyChart forecast={ledger.forecast} selectedMonth={ledger.selectedMonth} />
+      {:else if ledger.view === 'ends'}
+        <MonthEndsChart
+          forecast={ledger.forecast}
+          months={ledger.months}
+          selectedMonth={ledger.selectedMonth}
+          onselect={pickMonth}
+        />
       {:else}
       <RiverChart
         panels={ledger.view === 'balance' ? 'bed' : 'both'}
@@ -262,6 +279,8 @@
       <MonthDetail
         month={selected}
         monthName={longMonth(selected.month)}
+        order={ledger.movementOrder}
+        onorder={(order) => ledger.setMovementOrder(order)}
         onprev={() => stepMonth(-1)}
         onnext={() => stepMonth(1)}
         hasPrev={monthIndex > 0}

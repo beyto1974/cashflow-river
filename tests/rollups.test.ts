@@ -86,3 +86,26 @@ describe('monthlyRhythm', () => {
     expect(rhythm.outflow).toBe(0);
   });
 });
+
+describe('part-months', () => {
+  it('marks the first month when the forecast starts inside it', () => {
+    const months = byMonth(project(base)); // starts 10 September
+    expect(months[0]).toMatchObject({ month: '2026-09', partial: true });
+  });
+
+  it('marks the closing month when the horizon falls inside it', () => {
+    const months = byMonth(project(base)); // two months from 10 September
+    expect(months.at(-1)).toMatchObject({ month: '2026-11', partial: true });
+  });
+
+  it('leaves the whole months in between alone', () => {
+    const months = byMonth(project({ ...base, horizonMonths: 6 }));
+    expect(months.slice(1, -1).every((month) => month.partial)).toBe(false);
+    expect(months[2]?.partial).toBe(false);
+  });
+
+  it('does not mark a closing month that runs to its own last day', () => {
+    const toMonthEnd = byMonth(project({ ...base, asOf: plainDate('2026-09-01'), horizonMonths: 1 }));
+    expect(toMonthEnd[0]?.partial).toBe(false);
+  });
+});

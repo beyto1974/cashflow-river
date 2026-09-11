@@ -3,12 +3,18 @@
  * sections of the ledger were folded. Per browser, not per ledger — it is about
  * the window, not the household's figures, so it is kept apart from them.
  */
-export type ForecastView = 'river' | 'balance' | 'grid';
+export type ForecastView = 'river' | 'balance' | 'ends' | 'grid' | 'flow';
 
-const VIEWS: ForecastView[] = ['river', 'balance', 'grid'];
+const VIEWS: ForecastView[] = ['river', 'balance', 'ends', 'grid', 'flow'];
+
+/** How the month detail lists what moved: in date order, or by size. */
+export type MovementOrder = 'date' | 'desc' | 'asc';
+
+const ORDERS: MovementOrder[] = ['date', 'desc', 'asc'];
 
 export interface Preferences {
   view: ForecastView;
+  movementOrder: MovementOrder;
   /** Section headings that were folded shut. */
   collapsed: string[];
   /** Disclosure panels — the month table, the version list — left open. */
@@ -16,7 +22,12 @@ export interface Preferences {
 }
 
 export const PREFERENCES_KEY = 'moraview.view.v1';
-export const DEFAULT_PREFERENCES: Preferences = { view: 'river', collapsed: [], opened: [] };
+export const DEFAULT_PREFERENCES: Preferences = {
+  view: 'river',
+  movementOrder: 'date',
+  collapsed: [],
+  opened: []
+};
 
 export interface PreferenceStore {
   load(): Preferences;
@@ -37,6 +48,9 @@ export function createPreferenceStore(storage: Storage | undefined): PreferenceS
         const parsed = JSON.parse(raw) as Partial<Preferences>;
         return {
           view: VIEWS.includes(parsed.view as ForecastView) ? (parsed.view as ForecastView) : 'river',
+          movementOrder: ORDERS.includes(parsed.movementOrder as MovementOrder)
+            ? (parsed.movementOrder as MovementOrder)
+            : 'date',
           collapsed: names(parsed.collapsed),
           opened: names(parsed.opened)
         };
