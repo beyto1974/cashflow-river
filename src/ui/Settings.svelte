@@ -1,8 +1,17 @@
 <script lang="ts">
+  import type { PlainDate } from '../domain/dates';
+  import type { Cents } from '../domain/money';
   import type { Revision } from '../persistence/ports';
   import Ledgers from './Ledgers.svelte';
+  import ForecastSettings from './ForecastSettings.svelte';
 
   interface Props {
+    buffer: Cents;
+    asOf: PlainDate;
+    horizonMonths: number;
+    onbuffer: (buffer: Cents) => void;
+    onasof: (date: PlainDate) => void;
+    onhorizon: (months: number) => void;
     names: string[];
     current: string;
     history: Revision[];
@@ -13,7 +22,9 @@
     onexport: () => string;
     onimport: (text: string) => string[];
   }
-  const props: Props = $props();
+  const {
+    buffer, asOf, horizonMonths, onbuffer, onasof, onhorizon, ...ledgerProps
+  }: Props = $props();
 
   let panel = $state<HTMLDialogElement | null>(null);
 
@@ -47,7 +58,15 @@
       <h2>Ledgers and settings</h2>
       <button type="button" class="button ghost" onclick={close}>Done</button>
     </header>
-    <Ledgers {...props} />
+    <section>
+      <h3>The forecast itself</h3>
+      <ForecastSettings {buffer} {asOf} {horizonMonths} {onbuffer} {onasof} {onhorizon} />
+    </section>
+
+    <section>
+      <h3>Ledgers</h3>
+      <Ledgers {...ledgerProps} />
+    </section>
   </div>
 </dialog>
 
@@ -98,5 +117,21 @@
     font-size: 1.35rem;
     font-weight: 600;
     margin: 0;
+  }
+  .sheet section {
+    border-top: 1px solid var(--rule);
+    padding-top: 10px;
+    margin-top: 14px;
+  }
+  .sheet section:first-of-type {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  h3 {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 8px;
   }
 </style>

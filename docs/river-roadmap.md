@@ -109,6 +109,20 @@ that reads it.
     control that cannot be used from paper left off. Collapsed sections are
     opened for the print and closed again afterwards.
 
+## Asked for along the way — **done**
+
+- **The Runway Grid as a second reading**, toggled over the chart panel: every
+  day of the forecast as a cell, bands read off the buffer, hover and click and
+  arrow keys.
+- **Confirm before deleting** a line, an account, a ledger, or a whole ledger's
+  worth of work — in place, naming what goes, disarming after twelve seconds.
+- **Repeat a fixed number of times** as well as until a date.
+- **Fold every section** of the ledger panel, and remember which were folded and
+  which view was on screen.
+- **A settings sheet behind a gear** holding the ledgers, their versions, export
+  and import, the format documentation, and the forecast's own buffer, start
+  date and horizon.
+
 ## M5 — Craft
 
 15. **Recompute cost.** *(done, and measured)* Reads are memoised on the

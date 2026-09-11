@@ -24,6 +24,8 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   throw them away.
 - **Two rivers side by side.** Pin a baseline, change something, see what it did
   month by month.
+- **Two readings of the same forecast.** The river, or the grid — every day of
+  the forecast as one cell, coloured by what the accounts close at that evening.
 - **Named ledgers with a version history**, kept in the browser, exported to a
   JSON file or the clipboard and imported back — an import never overwrites.
 - **The file format, documented in the page**, generated from the constants the

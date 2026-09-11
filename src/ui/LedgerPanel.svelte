@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { formatEUR, formatSigned, parseAmount } from '../domain/money';
-  import { isPlainDate, plainDate } from '../domain/dates';
+  import { formatEUR, formatSigned } from '../domain/money';
   import { perMonth } from '../domain/schedule';
   import { isRecurring, type Line } from '../domain/types';
   import { isCounted } from '../domain/lineStatus';
@@ -111,52 +110,6 @@
     <AddLine defaultDate={ledger.forecast.asOf} onadd={(line) => ledger.addLine(line)} />
   </FoldSection>
 
-  <FoldSection
-    title="The forecast itself"
-    folded={ledger.isFolded('The forecast itself')}
-    ontoggle={() => ledger.toggleSection('The forecast itself')}
-  >
-    <div class="settings no-print">
-      <label>
-        <span>Buffer to keep</span>
-        <input
-          type="text"
-          inputmode="decimal"
-          class="mono"
-          value={(ledger.scenario.buffer / 100).toFixed(0)}
-          onchange={(event) => {
-            const input = event.currentTarget as HTMLInputElement;
-            const parsed = parseAmount(input.value);
-            if (parsed === null) input.value = (ledger.scenario.buffer / 100).toFixed(0);
-            else ledger.setBuffer(Math.abs(parsed));
-          }}
-        />
-      </label>
-      <label>
-        <span>Starts on</span>
-        <input
-          type="date"
-          value={ledger.scenario.asOf}
-          onchange={(event) => {
-            const input = event.currentTarget as HTMLInputElement;
-            if (isPlainDate(input.value)) ledger.setAsOf(plainDate(input.value));
-            else input.value = ledger.scenario.asOf;
-          }}
-        />
-      </label>
-      <label>
-        <span>Months ahead</span>
-        <input
-          type="number"
-          min="1"
-          max="120"
-          class="mono"
-          value={ledger.scenario.horizonMonths}
-          onchange={(event) => ledger.setHorizon(Number((event.currentTarget as HTMLInputElement).value))}
-        />
-      </label>
-    </div>
-  </FoldSection>
 </aside>
 
 <style>
@@ -175,25 +128,5 @@
     font-size: 11.5px;
     color: var(--ink-3);
     margin: 4px 0 0;
-  }
-  .settings {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .settings label:first-child {
-    grid-column: 1 / -1;
-  }
-  .settings label {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .settings span {
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-3);
   }
 </style>

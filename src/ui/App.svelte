@@ -77,6 +77,12 @@
     <div class="tools no-print">
       <button type="button" class="button ghost" onclick={() => window.print()}>Print this</button>
       <Settings
+        buffer={ledger.scenario.buffer}
+        asOf={ledger.scenario.asOf}
+        horizonMonths={ledger.scenario.horizonMonths}
+        onbuffer={(buffer) => ledger.setBuffer(buffer)}
+        onasof={(date) => ledger.setAsOf(date)}
+        onhorizon={(months) => ledger.setHorizon(months)}
         names={ledger.ledgerNames}
         current={ledger.ledgerName}
         history={ledger.history}
