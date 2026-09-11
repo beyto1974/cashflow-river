@@ -18,6 +18,7 @@
   import ConfirmButton from './ConfirmButton.svelte';
   import Settings from './Settings.svelte';
   import FirstRun from './FirstRun.svelte';
+  import SampleBar from './SampleBar.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -96,6 +97,10 @@
 
 <div class="sheet">
   <p class="sr-only" role="status" aria-live="polite">{ledger.announcement}</p>
+
+  {#if ledger.isSample}
+    <SampleBar onclear={() => ledger.startEmpty()} />
+  {/if}
 
   <header>
     <h1>Cashflow <em>River</em></h1>

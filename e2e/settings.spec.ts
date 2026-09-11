@@ -258,3 +258,53 @@ test.describe('clearing the example', () => {
     await expect(page.locator('aside .row')).toHaveCount(rows);
   });
 });
+
+test.describe('the example bar', () => {
+  test('says the figures are made up, and stays put while you read', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    const bar = page.locator('.bar');
+    await expect(bar).toContainText('Example figures');
+    await expect(bar).toContainText('made-up household');
+
+    await page.evaluate(() => window.scrollBy(0, 900));
+    const pinned = await bar.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return box.top >= -1 && box.top < 40 && box.bottom > 0;
+    });
+    expect(pinned).toBe(true);
+  });
+
+  test('goes as soon as the ledger stops being the example', async ({ page }) => {
+    await openFresh(page);
+    await expect(page.locator('.bar')).toBeVisible();
+
+    await setAmount(page, 'Groceries', '210');
+    await expect(page.locator('.bar')).toHaveCount(0);
+
+    /* And stays gone, because the ledger is theirs now. */
+    await page.reload();
+    await expect(page.locator('.bar')).toHaveCount(0);
+  });
+
+  test('clears the example from the bar itself, without asking', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'clear the example', exact: true }).click();
+
+    await expect(page.locator('.bar')).toHaveCount(0);
+    await expect(page.locator('aside .row')).toHaveCount(0);
+    await expect(page.locator('.answer')).toHaveText('€0.00');
+  });
+
+  test('comes back with the example, and not otherwise', async ({ page }) => {
+    await openFresh(page);
+    await setAmount(page, 'Groceries', '210');
+    await expect(page.locator('.bar')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Back to the example' }).click();
+    await page.getByRole('button', { name: /^Discard this ledger/ }).click();
+    await expect(page.locator('.bar')).toBeVisible();
+  });
+});

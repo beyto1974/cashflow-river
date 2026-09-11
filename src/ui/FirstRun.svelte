@@ -17,10 +17,6 @@
     <em>Copy as text</em>, and either can be imported back here or into another browser. Every change also keeps a
     version you can restore from, in the same place.
   </p>
-  <p>
-    The figures on screen are an example, so there is something to read. Type over them as you like — the first change
-    makes the ledger yours — or clear the lot from the gear: <em>Clear it and start from nothing</em>.
-  </p>
   <button type="button" class="button" onclick={ondismiss}>Understood — start from the example</button>
 </aside>
 
