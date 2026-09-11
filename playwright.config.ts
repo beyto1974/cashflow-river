@@ -12,7 +12,7 @@ import { defineConfig, devices } from '@playwright/test';
 const given = process.env.E2E_PORT;
 if (!given || !Number.isInteger(Number(given))) {
   throw new Error(
-    'Set E2E_PORT to a free port, e.g. E2E_PORT=$(freeport -r 4300-4399) npm run e2e'
+    'Set E2E_PORT to a free port, e.g. E2E_PORT=4300 npm run e2e'
   );
 }
 const port = Number(given);

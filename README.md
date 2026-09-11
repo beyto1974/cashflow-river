@@ -81,13 +81,13 @@ npm run build    # one self-contained HTML file in dist-app/
 `npm run build` emits `dist-app/index.html` with everything inlined — no server,
 no assets to copy. Open it, or put it behind any static host.
 
-The end-to-end suite starts its own dev server. Two environment variables:
-`E2E_PORT` picks the port (this machine runs several dev servers at once), and
-`MORAVIEW_CHROME` points at a Chrome already installed instead of running
-`npx playwright install chromium`:
+The end-to-end suite starts its own dev server and needs to be told which port
+to use, so it can never adopt one that is already serving something else. Two
+environment variables:
 
 ```bash
-E2E_PORT=$(freeport -r 4300-4399) npm run e2e
+E2E_PORT=4300 npm run e2e                    # required: a free port
+MORAVIEW_CHROME=/path/to/chrome npm run e2e  # optional: skip playwright install
 ```
 
 The build is a single file on purpose, so it can be published as-is.
