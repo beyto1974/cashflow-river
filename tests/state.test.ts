@@ -129,6 +129,18 @@ describe('ledger state', () => {
     expect(ledger.forecast.opening).toBe(opening);
   });
 
+  it('hands out a frozen ledger, so nothing can go stale behind the memo', () => {
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    expect(Object.isFrozen(ledger.scenario)).toBe(true);
+    expect(Object.isFrozen(ledger.scenario.lines[0])).toBe(true);
+    expect(() => {
+      (ledger.scenario.lines[0] as { amount: number }).amount = 1;
+    }).toThrow(TypeError);
+
+    ledger.updateLine('pay', { label: 'Wages' });
+    expect(Object.isFrozen(ledger.scenario)).toBe(true);
+  });
+
   it('will not remove the last account', () => {
     const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
     ledger.removeAccount('a');

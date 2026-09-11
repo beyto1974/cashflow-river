@@ -24,6 +24,12 @@
   let pending: Partial<Record<keyof WhatIf, number>> = {};
   let frame = 0;
 
+  function drop(): void {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    pending = {};
+  }
+
   function schedule(dial: keyof WhatIf, value: number): void {
     pending[dial] = value;
     if (frame) return;
@@ -34,6 +40,14 @@
       for (const key of Object.keys(queued) as (keyof WhatIf)[]) onset(key, queued[key] as number);
     });
   }
+
+  /* Baking the dials in or putting them back returns them to neutral. A frame
+     queued by the drag's last input event would otherwise fire afterwards and
+     apply the same change a second time, on top of itself. */
+  $effect(() => {
+    if (!touched) drop();
+    return drop;
+  });
 
   function reading(value: number): string {
     if (value === 1) return 'as it is';

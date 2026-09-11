@@ -7,6 +7,7 @@ import { applyChange, suggestFixes, type Fix } from '../domain/fixes';
 import { applyWhatIf, isNeutral, NEUTRAL, type WhatIf } from '../domain/whatIf';
 import { compare, type Comparison } from '../domain/comparison';
 import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
+import { freezeScenario } from '../domain/freeze';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { LedgerStore, Revision } from '../persistence/ports';
 
@@ -75,13 +76,17 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
   const rolled = saved ? advanceTo(saved, now) : null;
   if (rolled && rolled !== saved) store.save(rolled);
 
-  let scenario = $state<Scenario>(rolled ?? sample);
+  /* Raw rather than proxied, and frozen: the projection is memoised on this
+     object's identity, so the only way the ledger changes is by being replaced
+     in commit(). A write through it now throws instead of leaving a forecast
+     that never updates again. */
+  let scenario = $state.raw<Scenario>(freezeScenario(rolled ?? sample));
   let fromSample = $state(saved === null);
-  let target = $state<PlainDate>(project(rolled ?? sample).low.date);
+  let target = $state<PlainDate>(project(scenario).low.date);
   let selected = $state<MonthKey | null>(null);
   let editing = $state<string | null>(null);
   let dials = $state<WhatIf>({ ...NEUTRAL });
-  let baseline = $state<Scenario | null>(null);
+  let baseline = $state.raw<Scenario | null>(null);
   /* Bumped whenever storage changes under us, so the ledger list and the
      version history are read again rather than cached stale. */
   let storeVersion = $state(0);
@@ -97,16 +102,16 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
   const comparison = $derived(baseline ? compare(baseline, dialled) : null);
 
   function commit(next: Scenario): void {
-    scenario = next;
+    scenario = freezeScenario(next);
     fromSample = false;
-    store.save(next);
+    store.save(scenario);
     storeVersion += 1;
-    target = clampToHorizon(next, target);
+    target = clampToHorizon(scenario, target);
   }
 
   function openCurrent(): void {
     const saved = store.load();
-    scenario = saved ?? sample;
+    scenario = freezeScenario(saved ?? sample);
     fromSample = saved === null;
     target = project(scenario).low.date;
     selected = null;
@@ -162,7 +167,7 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
     get comparison() { return comparison; },
 
     pinBaseline() {
-      baseline = dialled;
+      baseline = freezeScenario(dialled);
     },
     clearBaseline() {
       baseline = null;
@@ -251,9 +256,9 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
     },
     reset() {
       store.clear();
-      scenario = sample;
+      scenario = freezeScenario(sample);
       fromSample = true;
-      target = project(sample).low.date;
+      target = project(scenario).low.date;
       selected = null;
       editing = null;
     }
