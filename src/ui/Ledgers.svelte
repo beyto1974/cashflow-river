@@ -42,25 +42,17 @@
     return `moraview-${new Date().toISOString().slice(0, 10)}.json`;
   }
 
-  /* Where the page is not allowed to hand over a file at all, the button goes
-     and the clipboard is the way out. */
-  let fileSaving = $state(true);
-  $effect(() => {
-    void canSaveFiles().then((allowed) => (fileSaving = allowed));
-  });
+  /* Where the browser cannot hand over a file at all, the button goes and the
+     clipboard is the way out. */
+  const fileSaving = canSaveFiles();
 
-  async function download(): Promise<void> {
+  function download(): void {
     transferError = null;
     transferNote = null;
     const name = fileName();
-    const outcome = await saveFile(name, onexport());
 
-    if (outcome === 'saved') transferNote = `Saved as ${name}`;
-    else if (outcome === 'declined') transferNote = 'Not saved.';
-    else {
-      fileSaving = false;
-      transferError = 'This page is not allowed to save files here. Copy it as text instead.';
-    }
+    if (saveFile(name, onexport()) === 'saved') transferNote = `Saved as ${name}`;
+    else transferError = 'This browser would not let the page save a file. Copy it as text instead.';
   }
 
   async function copy(): Promise<void> {

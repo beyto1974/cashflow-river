@@ -8,7 +8,6 @@ legacy/build.mjs` rebuilds exactly what was published. The screenshots in
 
 ## 1. Horizon Dial — `legacy/dial.html`
 
-Published: https://claude.ai/code/artifact/5a9b25e2-b81e-4fe5-9544-a44b9463aed7
 
 The whole page is one control. A needle is dragged along 30 months of projected
 balance and the hero figure reads out what the accounts hold on that exact day;
@@ -26,7 +25,6 @@ a holiday, a school bill.
 
 ## 2. Cashflow River — `legacy/river.html`  ← chosen direction
 
-Published: https://claude.ai/code/artifact/58b00080-b35d-43eb-86ca-46a7d965412f
 
 An editable ledger on the left, the river it cuts on the right. Monthly stacks
 sit mirrored around the month axis — money in above, money out below, with a net
@@ -37,10 +35,8 @@ panels. Clicking a month opens every movement in it.
 Identity: editorial ledger. Newsreader for display, IBM Plex Sans and Mono for
 the ledger itself, hairline rules instead of cards.
 
-This is the one now rebuilt as the app (TypeScript, Svelte 5, Vite) and
-published at
-https://claude.ai/code/artifact/be300076-7a3c-4cb6-bfe5-660988ab67e6 ; the file
-in `legacy/` is the original prototype.
+This is the one now rebuilt as the app (TypeScript, Svelte 5, Vite); the file in
+`legacy/` is the original prototype.
 
 Seven colour bands, stacked in an order that clears the palette validator's
 adjacent-pair gates in both light and dark mode; the legend, the tooltip and the
@@ -51,7 +47,6 @@ changes if one of them stops.
 
 ## 3. Runway Grid — `legacy/grid.html`
 
-Published: https://claude.ai/code/artifact/a4e675e4-e635-45a3-a5d7-c36de199c270
 
 No chart at all: 913 days as cells, months across, day of month down, each cell
 coloured by what the accounts close at that evening. The bands are multiples of

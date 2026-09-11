@@ -185,16 +185,13 @@ that reads it.
     on the next for font reasons alone, and a suite that cries wolf gets
     ignored. The layout is asserted instead — no sideways scroll, the answer in
     view, the chart inside the viewport, the grid scrolling in its own box.
-19. **Publish.** *(done)* `npm run build:artifact` emits the single-file build
-    and then strips its document wrapper, because the host supplies doctype,
-    html, head and body and wraps whatever it is given. Published at
-    https://claude.ai/code/artifact/be300076-7a3c-4cb6-bfe5-660988ab67e6
+19. **Publish.** *(done, then simplified)* `npm run build` emits one
+    self-contained HTML file with everything inlined — no server, no assets —
+    which can be opened directly or dropped behind any static host.
 
-    Two things the viewer changes, both handled rather than worked around: a
-    page there is never allowed to start a download itself, so the export asks
-    the host to hand the file over and the button disappears where neither route
-    exists; and storage is per-artifact-origin, so a household's ledger on the
-    published page is its own, separate from any other copy.
+    A hosted-page variant lived here for a while, along with the shim that asked
+    its host to hand a file to the viewer. Both have been taken out: the build is
+    a page, and a page downloads a file the ordinary way.
 20. **Date the example relative to today.** *(done)* `sampleScenario(today)`
     generates every anchor, one-off and bank holiday from the day it is opened,
     so the same story shows whenever somebody looks: tight within a couple of

@@ -40,8 +40,6 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   for what the app did on its own, headings for the sections, named controls,
   and keyboard walks through both the month columns and the grid's days.
 
-**Published:** https://claude.ai/code/artifact/be300076-7a3c-4cb6-bfe5-660988ab67e6
-
 ## Run it
 
 ```bash
@@ -53,8 +51,10 @@ npm run bench    # what a change costs
 npm run e2e      # Playwright against a real browser
 npm run verify   # all three checks, in order
 npm run build    # one self-contained HTML file in dist-app/
-npm run build:artifact  # …and the same file without its document wrapper
 ```
+
+`npm run build` emits `dist-app/index.html` with everything inlined — no server,
+no assets to copy. Open it, or put it behind any static host.
 
 The end-to-end suite starts its own dev server. Two environment variables:
 `E2E_PORT` picks the port (this machine runs several dev servers at once), and
