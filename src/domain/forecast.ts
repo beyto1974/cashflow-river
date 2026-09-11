@@ -1,6 +1,7 @@
 import { addDays, addMonths, compareDates, daysBetween, plainDate, type PlainDate } from './dates';
 import { addCents, type Cents } from './money';
 import { occurrenceAmount } from './amounts';
+import { memoiseByScenario } from './memo';
 import { adjustDueDate, effectiveDueRule } from './dueDates';
 import { occurrences } from './schedule';
 import { isRecurring, type Category, type Line, type Scenario } from './types';
@@ -70,7 +71,7 @@ export interface BandedForecast {
  * occurrence is treated as its own independent wobble, so the spreads add in
  * quadrature and the band grows with the square root of the number of guesses.
  */
-export function projectBand(scenario: Scenario): BandedForecast {
+function bandOnce(scenario: Scenario): BandedForecast {
   const likely = project(scenario);
   let hasRange = false;
   /* Each side keeps its own total, so an off-centre guess — cheap by 40, dear by
@@ -122,8 +123,20 @@ function movementOf(line: Line, date: PlainDate): Movement {
   };
 }
 
-/** Day-by-day balance from today to the horizon. The one reading everything else derives from. */
-export function project(scenario: Scenario): Forecast {
+/**
+ * Day-by-day balance from today to the horizon. The one reading everything else
+ * derives from.
+ *
+ * Memoised on the scenario object, which the state container replaces on every
+ * change: the month table, the chart, the summary, the stretches and the fix
+ * search all ask for the same projection, and on a 30-month horizon that is 900
+ * days of work each time.
+ */
+export const project = memoiseByScenario(projectOnce);
+
+export const projectBand = memoiseByScenario(bandOnce);
+
+function projectOnce(scenario: Scenario): Forecast {
   const asOf = plainDate(scenario.asOf);
   const horizon = addMonths(asOf, Math.max(1, scenario.horizonMonths));
   const window = { from: asOf, to: horizon };

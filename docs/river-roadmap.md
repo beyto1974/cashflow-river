@@ -107,8 +107,26 @@ that reads it.
 
 ## M5 — Craft
 
-15. **Recompute cost.** Every keystroke re-projects the whole horizon. Debounce
-    the inputs and recompute from the changed month forward.
+15. **Recompute cost.** *(done, and measured)* Reads are memoised on the
+    scenario object — the state container replaces it on every change, so object
+    identity is exactly the right key — and a slider drag is coalesced into one
+    recompute per frame.
+
+    `npm run bench` on the example household (30 months, 30 lines):
+
+    | | |
+    |---|---|
+    | project, after an edit | ~5.0 ms |
+    | projectBand, after an edit | ~4.3 ms |
+    | everything the page reads, after an edit | ~4.7 ms |
+    | the same reads again, memoised | ~0.14 ms |
+    | suggestFixes (on demand) | ~170 ms |
+
+    So **recomputing from the changed month forward is not worth building**: one
+    edit costs about five milliseconds against a sixteen-millisecond frame, and
+    every component after the first reads the same projection for nothing. The
+    fix search is the only expensive thing, and it already sits behind a button.
+    Revisit if a horizon of many years or a ledger of hundreds of lines turns up.
 16. **Phone layout.** At 400px the ledger becomes a sheet you pull up over a
     chart that stays put, instead of forty rows above it.
 17. **Spoken detail.** A summary sentence per month column for screen readers,

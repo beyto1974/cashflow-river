@@ -19,6 +19,22 @@
     { key: 'saving', label: 'Transfers to savings', min: 0, max: 150 }
   ];
 
+  /* A drag fires an input event per pixel. One recompute per frame is plenty,
+     and the projection costs about five milliseconds. */
+  let pending: Partial<Record<keyof WhatIf, number>> = {};
+  let frame = 0;
+
+  function schedule(dial: keyof WhatIf, value: number): void {
+    pending[dial] = value;
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const queued = pending;
+      pending = {};
+      for (const key of Object.keys(queued) as (keyof WhatIf)[]) onset(key, queued[key] as number);
+    });
+  }
+
   function reading(value: number): string {
     if (value === 1) return 'as it is';
     return `${value > 1 ? '+' : ''}${Math.round((value - 1) * 100)}%`;
@@ -43,7 +59,7 @@
         max={slider.max}
         step="5"
         value={Math.round(dials[slider.key] * 100)}
-        oninput={(event) => onset(slider.key, Number((event.currentTarget as HTMLInputElement).value) / 100)}
+        oninput={(event) => schedule(slider.key, Number((event.currentTarget as HTMLInputElement).value) / 100)}
       />
     </div>
   {/each}
