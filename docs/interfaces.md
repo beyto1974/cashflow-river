@@ -3,8 +3,9 @@
 Three ways to ask the same question — *what does my money look like on a given
 future date?* — over one forecast engine and one sample household. Each was a
 single self-contained file; the sources are in `legacy/` and `node
-legacy/build.mjs` rebuilds exactly what was published. The screenshots in
-`docs/screens/` are those files rendered at 1180px in both themes.
+legacy/build.mjs` rebuilds exactly what was published. They were screenshotted at the
+time; those files are not kept, since `legacy/build.mjs` rebuilds the pages
+themselves.
 
 ## 1. Horizon Dial — `legacy/dial.html`
 

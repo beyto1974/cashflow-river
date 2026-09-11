@@ -17,6 +17,7 @@
   import Comparison from './Comparison.svelte';
   import ConfirmButton from './ConfirmButton.svelte';
   import Settings from './Settings.svelte';
+  import FirstRun from './FirstRun.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -127,6 +128,10 @@
       />
     </div>
   </header>
+
+  {#if ledger.greeting}
+    <FirstRun ondismiss={() => ledger.dismissGreeting()} />
+  {/if}
 
   <div class="askline">
     <span class="lead" aria-hidden="true">On</span>

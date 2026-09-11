@@ -1,10 +1,18 @@
 import { expect, type Page } from '@playwright/test';
 
-/** Opens the app on the example household, with nothing carried over. */
+/**
+ * Opens the app on the example household, with nothing carried over, and reads
+ * the first-open note out of the way — it is covered by its own specs, and every
+ * other test wants the working page rather than the greeting.
+ */
 export async function openFresh(page: Page): Promise<void> {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+
+  const understood = page.getByRole('button', { name: /Understood/ });
+  if (await understood.count()) await understood.click();
+
   await expect(page.locator('.answer')).toBeVisible();
   await expect(page.locator('.verdict').first()).toContainText('buffer');
 }

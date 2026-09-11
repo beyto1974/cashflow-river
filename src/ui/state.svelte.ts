@@ -47,6 +47,9 @@ export interface LedgerState {
   /** How the month detail lists what moved. */
   readonly movementOrder: MovementOrder;
   setMovementOrder(order: MovementOrder): void;
+  /** True until the note about where the ledger is kept has been read. */
+  readonly greeting: boolean;
+  dismissGreeting(): void;
   isFolded(section: string): boolean;
   toggleSection(section: string): void;
   /** Disclosure panels: the month table, the version list, the format notes. */
@@ -123,9 +126,10 @@ export function createLedgerState(
   let folded = $state<string[]>(saved0.collapsed);
   let opened = $state<string[]>(saved0.opened);
   let movementOrder = $state<MovementOrder>(saved0.movementOrder);
+  let greeted = $state(saved0.greeted);
 
   function rememberView(): void {
-    preferences.save({ view, movementOrder, collapsed: folded, opened });
+    preferences.save({ view, movementOrder, greeted, collapsed: folded, opened });
   }
 
   /* The dials are a layer: the forecast is of the scenario as dialled, while the
@@ -233,6 +237,11 @@ export function createLedgerState(
       rememberView();
     },
     get movementOrder() { return movementOrder; },
+    get greeting() { return !greeted; },
+    dismissGreeting() {
+      greeted = true;
+      rememberView();
+    },
     setMovementOrder(order) {
       movementOrder = order;
       rememberView();

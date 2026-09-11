@@ -170,3 +170,34 @@ test.describe('printing', () => {
     await expect(answer(page)).toBeVisible();
   });
 });
+
+test.describe('the first open', () => {
+  test('says where the ledger is kept and how to take a copy', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    const note = page.getByRole('complementary', { name: /Before you type/ });
+    await expect(note).toBeVisible();
+    await expect(note).toContainText('in this browser only');
+    await expect(note).toContainText('gear, top right');
+    await expect(note).toContainText('Export a file');
+
+    await note.getByRole('button', { name: /Understood/ }).click();
+    await expect(note).toHaveCount(0);
+
+    /* Said once, not on every visit. */
+    await page.reload();
+    await expect(page.getByRole('complementary', { name: /Before you type/ })).toHaveCount(0);
+    await expect(page.locator('.answer')).toBeVisible();
+  });
+
+  test('does not stand between the household and the answer', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await expect(page.locator('.answer')).toBeVisible();
+    await expect(page.locator('.verdict').first()).toBeVisible();
+  });
+});

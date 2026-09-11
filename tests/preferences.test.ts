@@ -29,15 +29,23 @@ describe('preference store', () => {
     store().save({
       view: 'grid',
       movementOrder: 'desc',
+      greeted: true,
       collapsed: ['Going out'],
       opened: ['The same river as a table']
     });
     expect(store().load()).toEqual({
       view: 'grid',
       movementOrder: 'desc',
+      greeted: true,
       collapsed: ['Going out'],
       opened: ['The same river as a table']
     });
+  });
+
+  it('has not greeted anybody until it says so', () => {
+    expect(store().load().greeted).toBe(false);
+    store().save({ ...DEFAULT_PREFERENCES, greeted: true });
+    expect(store().load().greeted).toBe(true);
   });
 
   it('lists a month in date order unless told otherwise', () => {
@@ -59,6 +67,7 @@ describe('preference store', () => {
     expect(store().load()).toEqual({
       view: 'grid',
       movementOrder: 'date',
+      greeted: false,
       collapsed: ['Going out'],
       opened: ['Earlier versions']
     });
@@ -76,15 +85,13 @@ describe('preference store', () => {
       removeItem: () => { throw new Error('blocked'); }
     } as unknown as Storage;
     const preferences = createPreferenceStore(blocked);
-    expect(() =>
-      preferences.save({ view: 'grid', movementOrder: 'date', collapsed: [], opened: [] })
-    ).not.toThrow();
+    expect(() => preferences.save({ ...DEFAULT_PREFERENCES, view: 'grid' })).not.toThrow();
     expect(preferences.load()).toEqual(DEFAULT_PREFERENCES);
   });
 
   it('works with no storage at all', () => {
     const preferences = createPreferenceStore(undefined);
-    preferences.save({ view: 'grid', movementOrder: 'asc', collapsed: ['x'], opened: [] });
+    preferences.save({ ...DEFAULT_PREFERENCES, collapsed: ['x'] });
     expect(preferences.load()).toEqual(DEFAULT_PREFERENCES);
   });
 });

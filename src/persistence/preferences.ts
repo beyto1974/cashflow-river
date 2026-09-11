@@ -15,6 +15,8 @@ const ORDERS: MovementOrder[] = ['date', 'desc', 'asc'];
 export interface Preferences {
   view: ForecastView;
   movementOrder: MovementOrder;
+  /** True once the note about where the ledger is kept has been read. */
+  greeted: boolean;
   /** Section headings that were folded shut. */
   collapsed: string[];
   /** Disclosure panels — the month table, the version list — left open. */
@@ -25,6 +27,7 @@ export const PREFERENCES_KEY = 'moraview.view.v1';
 export const DEFAULT_PREFERENCES: Preferences = {
   view: 'river',
   movementOrder: 'date',
+  greeted: false,
   collapsed: [],
   opened: []
 };
@@ -51,6 +54,7 @@ export function createPreferenceStore(storage: Storage | undefined): PreferenceS
           movementOrder: ORDERS.includes(parsed.movementOrder as MovementOrder)
             ? (parsed.movementOrder as MovementOrder)
             : 'date',
+          greeted: parsed.greeted === true,
           collapsed: names(parsed.collapsed),
           opened: names(parsed.opened)
         };

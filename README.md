@@ -1,12 +1,26 @@
-# Moraview
+# Moraview — Cashflow River
 
 What does my money look like on a given future date? You describe what comes in
 and what goes out — recurring lines and planned one-offs — and the forecast runs
 day by day from today to the horizon.
 
+![The answer, the tight stretches and the river, on the example household](docs/screens/app-light.png)
+
+*The example household the app opens on: one sentence saying what happens and
+when, the tight stretches as chips, and the river of monthly flow over the
+balance it leaves behind. The same page in the viewer's dark theme:*
+*[app-dark.png](docs/screens/app-dark.png).*
+
 Three interfaces were prototyped over one engine; the **Cashflow River** is the
-one being built out. See `docs/interfaces.md` for all three and why, and
-`docs/river-roadmap.md` for what is next.
+one that was built out. See `docs/interfaces.md` for all three and why, and
+`docs/river-roadmap.md` for what is done and what is left.
+
+## Where your figures live
+
+Everything is kept in this browser — no account, no service, nothing sent
+anywhere. The app says so the first time it opens, and says how to take a copy:
+
+![The note shown on a first open](docs/screens/first-open.png)
 
 ## What it does
 
@@ -23,12 +37,24 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   without touching what you typed; keep the figures or throw them away.
 - **Two rivers side by side.** Pin a baseline, change something, see what it did
   month by month.
-- **Five readings of the same forecast.** The river (monthly flow over the
-  balance it leaves), the balance on its own, month-end bars (or the month's
-  total in or out), the grid — every day as one cell, coloured by what the
-  accounts close at that evening — and the flow, a Sankey of where the money came
-  from and went over a chosen period. See `docs/flow-views.md` for what the last
-  two are good and bad at.
+- **Five readings of the same forecast**, switched over the chart panel:
+
+  | | |
+  |---|---|
+  | **River** | monthly flow above the balance it leaves (the picture above) |
+  | **Balance** | the daily line on its own, with the band and the buffer |
+  | **Month ends** | one bar per month — where it leaves you, or its total in or out |
+  | **Grid** | every day as one cell, coloured by that evening's closing balance |
+  | **Flow** | a Sankey of where the money came from and went over a chosen period |
+
+  ![Month ends](docs/screens/view-ends.png)
+  ![The grid](docs/screens/view-grid.png)
+  ![The flow](docs/screens/view-flow.png)
+
+  `docs/flow-views.md` says what the last two are good and bad at.
+- **It works on a phone.** The forecast comes first, the ledger is folded into
+  sections under it, and nothing scrolls sideways:
+  [app-phone.png](docs/screens/app-phone.png).
 - **Named ledgers with a version history**, kept in the browser, exported to a
   JSON file or the clipboard and imported back — an import never overwrites.
 - **The file format, documented in the page**, generated from the constants the
@@ -84,7 +110,8 @@ e2e/              Playwright specs: the state container, storage, pointer and
 scripts/bench.mjs what a change costs, so performance claims stay honest
 legacy/           the three original single-file prototypes and their inlining
                   build; `node legacy/build.mjs` rebuilds them
-docs/             the interfaces, the decision, the roadmap, screenshots
+docs/             the interfaces, the decision, the roadmap, the screenshots
+                  this README shows
 ```
 
 ## How it is put together
