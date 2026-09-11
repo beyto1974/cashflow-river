@@ -68,15 +68,16 @@ that reads it.
 7. **A sentence at the top.** *(done)* The sentence states the likely reading;
    what the guesses could do to it is a second, plainly conditional sentence, so
    a worst case is never dressed as fact.
-8. **Smallest fix.** For each stretch, search for the least disruptive change
-   that clears it: move a planned one-off later, pause the transfer to savings
-   for a month or two, or split a one-off in half. *Tests:* the search returns
-   the smallest change that works, and nothing when no single change is enough.
-9. **The Horizon Dial's dials, here.** The prototype's what-if sliders — scale
-   everything coming in, the day-to-day spending, the transfer to savings — as a
-   layer over the scenario rather than an edit to it, so it can be thrown away.
-   Plus its draggable needle on the bed panel, which answers "what about that
-   day" without going through the date field.
+8. **Smallest fix.** *(done)* On demand, the app searches for the least
+   disruptive single change that clears the first tight stretch and offers up to
+   four, cheapest first. A transfer to savings may be paused outright; a living
+   cost is only ever trimmed. The search aims at the likely reading, not the
+   pessimistic edge of the band.
+9. **The Horizon Dial's dials, here.** *(done)* Three sliders sit over the
+   ledger without changing it — everything coming in, day-to-day and the car,
+   transfers to savings — with "keep these figures" to write them in and "put
+   the dials back" to throw them away. The needle drags along the bed panel, so
+   any day can be read without going near the date field.
 10. **Compare two rivers.** Baseline against a variant (solar panels in June,
     car sold, one salary drops): two beds overlaid, a per-month delta strip.
 

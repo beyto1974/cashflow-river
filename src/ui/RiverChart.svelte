@@ -3,7 +3,7 @@
   import { formatEUR, formatSigned } from '../domain/money';
   import type { BandDay, Forecast } from '../domain/forecast';
   import type { MonthSummary } from '../domain/rollups';
-  import { columnAt, riverGeometry, type Column } from './chart/riverModel';
+  import { columnAt, dayIndexAt, inBed, riverGeometry, type Column } from './chart/riverModel';
   import { trackPointer } from './pointerTracking';
   import { longMonth } from './format';
 
@@ -13,10 +13,13 @@
     target: PlainDate;
     selectedMonth: MonthKey;
     onselect: (month: MonthKey) => void;
+    /** Dragging the needle answers "what about that day" without the date field. */
+    onpick: (date: PlainDate) => void;
     /** The edges of the guesses, drawn as a band around the likely line. */
     band?: BandDay[] | undefined;
   }
-  const { forecast, months, target, selectedMonth, onselect, band }: Props = $props();
+  const { forecast, months, target, selectedMonth, onselect, onpick, band }: Props = $props();
+  let dragging = $state(false);
 
   let frameWidth = $state(880);
   let plot = $state<SVGSVGElement | null>(null);
@@ -36,14 +39,40 @@
 
   /** Measured against the drawing, not its frame: the frame carries padding and
       a border, and the viewBox knows nothing about either. */
+  function inPlot(event: PointerEvent): { x: number; y: number } | null {
+    if (!plot) return null;
+    const box = plot.getBoundingClientRect();
+    if (box.width === 0) return null;
+    const scale = geometry.width / box.width;
+    return { x: (event.clientX - box.left) * scale, y: (event.clientY - box.top) * scale };
+  }
+
   function move(event: PointerEvent): void {
     const frame = event.currentTarget as HTMLElement | null;
-    if (!frame || !plot) return;
+    const at = inPlot(event);
+    if (!frame || !at) return;
+    if (dragging) {
+      pickAt(at.x);
+      hovered = null;
+      return;
+    }
     const frameBox = frame.getBoundingClientRect();
-    const plotBox = plot.getBoundingClientRect();
-    const scale = plotBox.width > 0 ? geometry.width / plotBox.width : 1;
-    hovered = columnAt(geometry, (event.clientX - plotBox.left) * scale) ?? null;
+    hovered = columnAt(geometry, at.x) ?? null;
     tip = { x: event.clientX - frameBox.left, y: event.clientY - frameBox.top };
+  }
+
+  function pickAt(x: number): void {
+    const day = forecast.days[dayIndexAt(geometry, x, forecast.days.length)];
+    if (day) onpick(day.date);
+  }
+
+  function grab(event: PointerEvent): void {
+    const at = inPlot(event);
+    if (!at || !inBed(geometry, at.y)) return;
+    dragging = true;
+    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+    pickAt(at.x);
+    event.preventDefault();
   }
   function step(delta: number): MonthKey | undefined {
     const index = months.findIndex((month) => month.month === selectedMonth);
@@ -72,7 +101,10 @@
 <div
   class="frame"
   bind:clientWidth={frameWidth}
-  use:trackPointer={{ move, leave: () => (hovered = null) }}
+  use:trackPointer={{ move, leave: () => (hovered = null), down: grab, up: () => (dragging = false) }}
+  class:dragging
+  data-dragging={dragging}
+  data-target={target}
 >
   <p class="sr-only" id="river-summary">
     Money in and out per month from {horizonLabel}, above and below the axis, with the balance it leaves behind. On
@@ -205,6 +237,7 @@
       class="needle"
     />
     <circle cx={geometry.bed.needle.x} cy={geometry.bed.needle.y} r="4.5" class="needle-knob" />
+    <circle cx={geometry.bed.needle.x} cy={geometry.bed.needle.y} r="10" class="needle-grip" />
 
     {#each geometry.flow.columns as column (column.month)}
       <rect
@@ -254,6 +287,7 @@
 
 <style>
   .frame {
+    touch-action: pan-y;
     background: var(--sheet);
     border: 1px solid var(--rule);
     border-radius: 10px;
@@ -367,6 +401,15 @@
   }
   .needle-knob {
     fill: var(--ink);
+  }
+  .needle-grip {
+    fill: none;
+    stroke: var(--ink);
+    stroke-opacity: 0.3;
+    stroke-width: 1.5;
+  }
+  .frame.dragging {
+    cursor: ew-resize;
   }
   .hit {
     cursor: pointer;

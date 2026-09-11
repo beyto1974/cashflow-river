@@ -70,6 +70,26 @@ describe('river geometry', () => {
   });
 });
 
+describe('pointing at the bed panel', () => {
+  it('maps an x to a day, clamped to the forecast', async () => {
+    const { dayIndexAt } = await import('../src/ui/chart/riverModel');
+    const days = forecast.days.length;
+    expect(dayIndexAt(geometry, geometry.pad.left, days)).toBe(0);
+    expect(dayIndexAt(geometry, geometry.width - geometry.pad.right, days)).toBe(days - 1);
+    expect(dayIndexAt(geometry, -500, days)).toBe(0);
+    expect(dayIndexAt(geometry, 99_999, days)).toBe(days - 1);
+    const middle = dayIndexAt(geometry, (geometry.pad.left + geometry.width - geometry.pad.right) / 2, days);
+    expect(middle).toBeGreaterThan(days * 0.45);
+    expect(middle).toBeLessThan(days * 0.55);
+  });
+
+  it('knows the bed panel from the flow panel above it', async () => {
+    const { inBed } = await import('../src/ui/chart/riverModel');
+    expect(inBed(geometry, geometry.bed.top + 10)).toBe(true);
+    expect(inBed(geometry, geometry.flow.midY)).toBe(false);
+  });
+});
+
 describe('the bed panel shows the guesses and the red', () => {
   const scenario = sampleScenario();
   const banded = projectBand(scenario);

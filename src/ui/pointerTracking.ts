@@ -7,15 +7,24 @@
 export interface PointerTracking {
   move: (event: PointerEvent) => void;
   leave: () => void;
+  /** Dragging the needle: also an enhancement, with the date field and the
+   *  month buttons covering the same ground for keyboard and assistive tech. */
+  down?: (event: PointerEvent) => void;
+  up?: () => void;
 }
 
 export function trackPointer(node: HTMLElement, handlers: PointerTracking) {
   let current = handlers;
   const onMove = (event: PointerEvent): void => current.move(event);
   const onLeave = (): void => current.leave();
+  const onDown = (event: PointerEvent): void => current.down?.(event);
+  const onUp = (): void => current.up?.();
 
   node.addEventListener('pointermove', onMove);
   node.addEventListener('pointerleave', onLeave);
+  node.addEventListener('pointerdown', onDown);
+  node.addEventListener('pointerup', onUp);
+  node.addEventListener('pointercancel', onUp);
 
   return {
     update(next: PointerTracking) {
@@ -24,6 +33,9 @@ export function trackPointer(node: HTMLElement, handlers: PointerTracking) {
     destroy() {
       node.removeEventListener('pointermove', onMove);
       node.removeEventListener('pointerleave', onLeave);
+      node.removeEventListener('pointerdown', onDown);
+      node.removeEventListener('pointerup', onUp);
+      node.removeEventListener('pointercancel', onUp);
     }
   };
 }

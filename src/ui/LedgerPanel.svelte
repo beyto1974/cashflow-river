@@ -8,6 +8,7 @@
   import LineRow from './LineRow.svelte';
   import AddLine from './AddLine.svelte';
   import AccountsStrip from './AccountsStrip.svelte';
+  import Dials from './Dials.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -82,6 +83,15 @@
     <h2>Add a line</h2>
     <AddLine defaultDate={ledger.forecast.asOf} onadd={(line) => ledger.addLine(line)} />
   </section>
+
+  <Dials
+    dials={ledger.dials}
+    touched={ledger.dialsTouched}
+    rhythm={ledger.rhythm}
+    onset={(dial, value) => ledger.setDial(dial, value)}
+    onreset={() => ledger.resetDials()}
+    onkeep={() => ledger.keepDials()}
+  />
 
   <section class="group">
     <h2>The forecast itself</h2>

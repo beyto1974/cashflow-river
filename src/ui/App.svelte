@@ -119,6 +119,7 @@
         target={ledger.target}
         selectedMonth={ledger.selectedMonth}
         onselect={pickMonth}
+        onpick={(date) => ledger.setTarget(date)}
         band={ledger.banded.hasRange ? ledger.banded.band : undefined}
       />
 
@@ -127,6 +128,7 @@
           <span><i style:background={band.color}></i>{band.label}</span>
         {/each}
         <span><i class="net-key"></i>net for the month</span>
+        <span class="drag-hint">drag along the lower panel to read any day</span>
         {#if ledger.banded.hasRange}
           <span><i class="cone-key"></i>where the guesses could put it</span>
         {/if}
@@ -298,6 +300,10 @@
     height: 2px;
     border-radius: 0;
     background: var(--ink);
+  }
+  .legend .drag-hint {
+    color: var(--ink-3);
+    font-style: italic;
   }
   .legend i.cone-key {
     background: color-mix(in oklab, var(--accent) 30%, transparent);

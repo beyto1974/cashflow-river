@@ -289,6 +289,18 @@ export function columnAt(geometry: RiverGeometry, x: number): Column | undefined
   return geometry.flow.columns.find((column) => x >= column.slotX && x < column.slotX + column.slotWidth);
 }
 
+/** Which day of the forecast an x in the bed panel points at. */
+export function dayIndexAt(geometry: RiverGeometry, x: number, dayCount: number): number {
+  const inner = geometry.width - geometry.pad.left - geometry.pad.right;
+  const share = inner > 0 ? (x - geometry.pad.left) / inner : 0;
+  return Math.round(clamp(share, 0, 1) * (dayCount - 1));
+}
+
+/** True when a y is inside the bed panel, where the needle lives. */
+export function inBed(geometry: RiverGeometry, y: number): boolean {
+  return y >= geometry.bed.top - 10 && y <= geometry.bed.top + geometry.bed.height + 10;
+}
+
 export function monthOf(date: PlainDate): MonthKey {
   return monthKey(date);
 }

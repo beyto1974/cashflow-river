@@ -4,6 +4,7 @@ import { project, projectBand, type BandedForecast, type Forecast } from '../dom
 import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domain/rollups';
 import { summarise, type Summary } from '../domain/summary';
 import { applyChange, suggestFixes, type Fix } from '../domain/fixes';
+import { applyWhatIf, isNeutral, NEUTRAL, type WhatIf } from '../domain/whatIf';
 import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { ScenarioStore } from '../persistence/ports';
@@ -17,6 +18,13 @@ export interface LedgerState {
   readonly rhythm: Rhythm;
   /** The answer in a sentence, plus the tight stretches behind it. */
   readonly summary: Summary;
+  /** The what-if dials, and whether they are doing anything. */
+  readonly dials: WhatIf;
+  readonly dialsTouched: boolean;
+  setDial(dial: keyof WhatIf, value: number): void;
+  resetDials(): void;
+  /** Writes the dials into the ledger as real edits. */
+  keepDials(): void;
   readonly target: PlainDate;
   readonly selectedMonth: MonthKey;
   readonly editing: string | null;
@@ -58,11 +66,15 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   let target = $state<PlainDate>(project(rolled ?? sample).low.date);
   let selected = $state<MonthKey | null>(null);
   let editing = $state<string | null>(null);
+  let dials = $state<WhatIf>({ ...NEUTRAL });
 
-  const banded = $derived(projectBand(scenario));
+  /* The dials are a layer: the forecast is of the scenario as dialled, while the
+     ledger on screen stays the household's own figures. */
+  const dialled = $derived(applyWhatIf(scenario, dials));
+  const banded = $derived(projectBand(dialled));
   const forecast = $derived(banded.likely);
   const months = $derived(byMonth(forecast));
-  const rhythm = $derived(monthlyRhythm(scenario));
+  const rhythm = $derived(monthlyRhythm(dialled));
   const summary = $derived(summarise(banded, scenario.buffer, target));
 
   function commit(next: Scenario): void {
@@ -82,6 +94,20 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     get months() { return months; },
     get rhythm() { return rhythm; },
     get summary() { return summary; },
+    get dials() { return dials; },
+    get dialsTouched() { return !isNeutral(dials); },
+
+    setDial(dial, value) {
+      dials = { ...dials, [dial]: value };
+    },
+    resetDials() {
+      dials = { ...NEUTRAL };
+    },
+    keepDials() {
+      if (isNeutral(dials)) return;
+      commit(applyWhatIf(scenario, dials));
+      dials = { ...NEUTRAL };
+    },
     get target() { return target; },
     get selectedMonth() { return selected ?? monthKey(forecast.low.date); },
     get editing() { return editing; },
@@ -146,7 +172,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
       commit(compareDates(date, scenario.asOf) > 0 ? advanceTo(scenario, date) : { ...scenario, asOf: date });
     },
     fixes() {
-      return suggestFixes(scenario);
+      return suggestFixes(dialled);
     },
     applyFix(fix) {
       commit(applyChange(scenario, fix.change));
