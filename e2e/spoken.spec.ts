@@ -7,15 +7,19 @@ test.describe('what a screen reader gets', () => {
     /* Found by its own hook, not by the text: the region settles after a beat,
        and a text filter would have nothing to match until it does. */
     const spoken = page.locator('[data-spoken="answer"]');
-    await expect(spoken).toContainText(/On \w+ \d+ \w+ \d{4} the accounts hold/);
+    /* Punctuation between the weekday and the date is the browser's own ICU
+       data's business — "Wednesday 25 November" on one build, "Wednesday, 25
+       November" on another — so the assertion is about the words, not the commas. */
+    await expect(spoken).toContainText(/On \w+,?\s\d{1,2}\s\w+\s\d{4} the accounts hold/);
     await expect(spoken).toContainText('somewhere between');
 
     const probe = await dateInForecast(page, 200);
     await readOn(page, probe);
-    const spokenDate = new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
-    }).format(new Date(`${probe}T00:00:00Z`));
-    await expect(spoken).toContainText(spokenDate);
+    const [year, , day] = probe.split('-');
+    const monthName = new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone: 'UTC' }).format(
+      new Date(`${probe}T00:00:00Z`)
+    );
+    await expect(spoken).toContainText(new RegExp(`${Number(day)}\\s${monthName}\\s${year}`));
   });
 
   test('what the app did on its own is announced', async ({ page }) => {
