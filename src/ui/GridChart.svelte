@@ -16,6 +16,9 @@
 
   const grid = $derived(gridModel(forecast, forecast.buffer));
   let hovered = $state<PlainDate | null>(null);
+  /* Months down and days across reads like a wall calendar, and a year fits on
+     one screen; the other way round packs more months into less width. */
+  let layout = $state<'yearly' | 'compact'>('yearly');
 
   const readout = $derived.by(() => {
     const day = forecast.dayAt(hovered ?? target);
@@ -26,13 +29,20 @@
     }`;
   });
 
-  /** Arrow keys walk a day at a time, or a month sideways. */
+  /**
+   * Arrow keys follow the layout: they walk a day along the grain and a month
+   * across it, so left and right always mean "next to this one on screen".
+   */
   function keys(event: KeyboardEvent, date: PlainDate): void {
-    const step = { ArrowUp: -1, ArrowDown: 1 }[event.key];
+    const alongIsHorizontal = layout === 'yearly';
+    const day = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    const month = { ArrowUp: -1, ArrowDown: 1 }[event.key];
     let next: PlainDate | null = null;
-    if (step !== undefined) next = addDays(date, step);
-    else if (event.key === 'ArrowLeft') next = addMonths(date, -1);
-    else if (event.key === 'ArrowRight') next = addMonths(date, 1);
+
+    if (alongIsHorizontal && day !== undefined) next = addDays(date, day);
+    else if (alongIsHorizontal && month !== undefined) next = addMonths(date, month);
+    else if (!alongIsHorizontal && month !== undefined) next = addDays(date, month);
+    else if (!alongIsHorizontal && day !== undefined) next = addMonths(date, day);
     else if (event.key === 'Enter' || event.key === ' ') next = date;
     else return;
 
@@ -44,14 +54,74 @@
   }
 </script>
 
+{#snippet cell(item: NonNullable<(typeof grid.rows)[number]['cells'][number]>)}
+  <button
+    type="button"
+    id={`cell-${item.date}`}
+    class="cell"
+    class:selected={item.date === target}
+    class:today={item.today}
+    data-band={item.band}
+    data-plan={item.planned ? 1 : 0}
+    tabindex={item.date === target ? 0 : -1}
+    aria-label={`${shortDate(item.date)}: ${formatEUR(item.balance, { cents: false })}, ${BAND_MEANING[item.band]}`}
+    onpointerenter={() => (hovered = item.date)}
+    onfocus={() => (hovered = item.date)}
+    onclick={() => onpick(item.date)}
+    onkeydown={(event) => keys(event, item.date)}
+  ></button>
+{/snippet}
+
 <section class="frame">
+  <div class="head">
+    <div class="layouts no-print" role="group" aria-label="How to lay the calendar out">
+      {#each [['yearly', 'Months down'], ['compact', 'Months across']] as [key, label] (key)}
+        <button
+          type="button"
+          class:on={layout === key}
+          aria-pressed={layout === key}
+          onclick={() => (layout = key as 'yearly' | 'compact')}
+        >
+          {label}
+        </button>
+      {/each}
+    </div>
+  </div>
   <p class="caption">
-    EVERY DAY, MONTHS ACROSS AND DAY OF MONTH DOWN{grid.monthsHidden > 0
+    {layout === 'yearly'
+      ? 'EVERY DAY, MONTHS DOWN AND DAY OF MONTH ACROSS'
+      : 'EVERY DAY, MONTHS ACROSS AND DAY OF MONTH DOWN'}{grid.monthsHidden > 0
       ? ` — FIRST ${grid.months.length} MONTHS, ${grid.monthsHidden} MORE NOT SHOWN`
       : ''}
   </p>
 
   <div class="scroll" use:trackPointer={{ move: () => {}, leave: () => (hovered = null) }}>
+    {#if layout === 'yearly'}
+      <table class="yearly" aria-label="Projected closing balance for every day of the forecast">
+        <thead>
+          <tr>
+            <th class="month-name"></th>
+            {#each Array.from({ length: 31 }, (_, day) => day + 1) as day (day)}
+              <th scope="col">{day}</th>
+            {/each}
+          </tr>
+        </thead>
+        <tbody>
+          {#each grid.monthRows as row (row.month)}
+            <tr class:year-start={row.startsYear}>
+              <th class="month-name" scope="row">{row.label}</th>
+              {#each row.cells as item, day (day)}
+                {#if item}
+                  <td>{@render cell(item)}</td>
+                {:else}
+                  <td class="blank"></td>
+                {/if}
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
     <table aria-label="Projected closing balance for every day of the forecast">
       <thead>
         <tr>
@@ -71,27 +141,9 @@
         {#each grid.rows as row (row.dayOfMonth)}
           <tr>
             <th class="dom" scope="row">{row.dayOfMonth}</th>
-            {#each row.cells as cell, index (grid.months[index]?.month ?? index)}
-              {#if cell}
-                <td>
-                  <button
-                    type="button"
-                    id={`cell-${cell.date}`}
-                    class="cell"
-                    class:selected={cell.date === target}
-                    class:today={cell.today}
-                    data-band={cell.band}
-                    data-plan={cell.planned ? 1 : 0}
-                    tabindex={cell.date === target ? 0 : -1}
-                    aria-label={`${shortDate(cell.date)}: ${formatEUR(cell.balance, { cents: false })}, ${
-                      BAND_MEANING[cell.band]
-                    }`}
-                    onpointerenter={() => (hovered = cell.date)}
-                    onfocus={() => (hovered = cell.date)}
-                    onclick={() => onpick(cell.date)}
-                    onkeydown={(event) => keys(event, cell.date)}
-                  ></button>
-                </td>
+            {#each row.cells as item, index (grid.months[index]?.month ?? index)}
+              {#if item}
+                <td>{@render cell(item)}</td>
               {:else}
                 <td class="blank"></td>
               {/if}
@@ -100,6 +152,7 @@
         {/each}
       </tbody>
     </table>
+    {/if}
   </div>
 
   <p class="readout" aria-live="polite">{readout}</p>
@@ -122,6 +175,50 @@
     border: 1px solid var(--rule);
     border-radius: 10px;
     padding: 10px 12px 12px;
+  }
+  .head {
+    display: flex;
+    justify-content: flex-start;
+  }
+  .layouts {
+    display: inline-flex;
+    gap: 2px;
+    margin-bottom: 6px;
+    padding: 2px;
+    background: var(--sheet-2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+  }
+  .layouts button {
+    font-size: 11.5px;
+    color: var(--ink-2);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+  .layouts button.on {
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 600;
+  }
+  table.yearly th.month-name {
+    width: 58px;
+    text-align: right;
+    padding-right: 6px;
+    color: var(--ink-2);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+  table.yearly tr.year-start th.month-name {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  table.yearly tr.year-start td,
+  table.yearly tr.year-start th {
+    box-shadow: inset 0 2px 0 -1px var(--rule);
   }
   .caption {
     margin: 0 0 8px;

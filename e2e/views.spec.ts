@@ -65,23 +65,6 @@ test.describe('the two readings', () => {
     await expect(answer(page)).toContainText('€');
   });
 
-  test('the grid cells walk a day at a time and a month sideways', async ({ page }) => {
-    await openFresh(page);
-    await page.getByRole('button', { name: 'Grid', exact: true }).click();
-    const selected = page.locator('.cell.selected');
-    await selected.focus();
-    const before = await page.getByLabel('Date to read the balance on').inputValue();
-
-    await page.keyboard.press('ArrowDown');
-    const next = await page.getByLabel('Date to read the balance on').inputValue();
-    expect(Date.parse(next)).toBe(Date.parse(before) + 86_400_000);
-
-    await page.keyboard.press('ArrowLeft');
-    expect(Date.parse(await page.getByLabel('Date to read the balance on').inputValue())).toBeLessThan(
-      Date.parse(next)
-    );
-  });
-
   test('remembers which reading was on screen', async ({ page }) => {
     await openFresh(page);
     await page.getByRole('button', { name: 'Grid', exact: true }).click();
@@ -385,5 +368,51 @@ test.describe('the month detail order', () => {
     await page.getByRole('button', { name: /^The month after/ }).click();
     const down = await amounts(page);
     expect([...down].sort((a, b) => b - a)).toEqual(down);
+  });
+});
+
+test.describe('the calendar layout', () => {
+  test('reads as a wall calendar by default: a month a row, days across', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Grid', exact: true }).click();
+
+    await expect(page.getByRole('button', { name: 'Months down' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('table.yearly')).toBeVisible();
+    await expect(page.locator('table.yearly tbody tr')).toHaveCount(31); // one per month of the forecast
+    await expect(page.locator('table.yearly thead th').nth(1)).toHaveText('1');
+    await expect(page.locator('table.yearly tbody th').first()).toHaveText('Sep 2026');
+    await expect(page.locator('.frame .caption')).toContainText('MONTHS DOWN');
+  });
+
+  test('turns the other way when asked, keeping every day', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Grid', exact: true }).click();
+    const cells = await page.locator('.cell').count();
+
+    await page.getByRole('button', { name: 'Months across' }).click();
+    await expect(page.locator('table.yearly')).toHaveCount(0);
+    await expect(page.locator('.frame .caption')).toContainText('MONTHS ACROSS');
+    expect(await page.locator('.cell').count()).toBe(cells);
+  });
+
+  test('walks the arrow keys along the grain of whichever layout is on', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Grid', exact: true }).click();
+    const field = page.getByLabel('Date to read the balance on');
+
+    await page.locator('.cell.selected').focus();
+    const start = await field.inputValue();
+    /* Months down: sideways is a day, up and down is a month. */
+    await page.keyboard.press('ArrowRight');
+    expect(Date.parse(await field.inputValue())).toBe(Date.parse(start) + 86_400_000);
+    await page.keyboard.press('ArrowDown');
+    expect(await field.inputValue()).not.toBe(start);
+
+    await page.getByRole('button', { name: 'Months across' }).click();
+    await page.locator('.cell.selected').focus();
+    const compactStart = await field.inputValue();
+    /* Months across: down is a day, sideways is a month. */
+    await page.keyboard.press('ArrowDown');
+    expect(Date.parse(await field.inputValue())).toBe(Date.parse(compactStart) + 86_400_000);
   });
 });

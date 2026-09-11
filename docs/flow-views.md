@@ -41,6 +41,18 @@ it.
 This is the plainest thing in the app and probably the most useful: no reading
 required, only glancing.
 
+## The calendar, laid out either way
+
+The grid reads as a wall calendar by default: a month per row, the days across,
+years marked down the left. A year of days fits on one screen that way, and the
+tight weeks show up as amber runs rather than as a column to decode.
+
+"Months across" turns it back — months as columns, day of month down — which
+packs far more months into the same width and is what the original prototype
+did. The arrow keys follow the grain either way: sideways is always the next day
+in the yearly layout and the next month in the compact one, so left and right
+mean "next to this one on screen" rather than something fixed.
+
 ## Also on this branch
 
 - **Part months are marked.** The first and last months of a forecast are

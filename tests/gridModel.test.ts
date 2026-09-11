@@ -91,3 +91,42 @@ describe('a very long horizon', () => {
     expect(grid.monthsHidden).toBe(0);
   });
 });
+
+describe('the yearly layout, months down and days across', () => {
+  it('gives one row per month, each thirty-one cells wide', () => {
+    expect(grid.monthRows).toHaveLength(grid.months.length);
+    for (const row of grid.monthRows) expect(row.cells).toHaveLength(31);
+  });
+
+  it('puts each day in the column of its own date', () => {
+    const september = grid.monthRows[0]!;
+    expect(september.month).toBe('2026-09');
+    expect(september.cells[0]).toBeNull(); // the forecast starts on the 11th
+    expect(september.cells[10]?.date).toBe('2026-09-11');
+    expect(september.cells[29]?.date).toBe('2026-09-30');
+    expect(september.cells[30]).toBeNull(); // September has thirty days
+  });
+
+  it('holds exactly the days of the forecast, like the other layout', () => {
+    const across = grid.monthRows.flatMap((row) => row.cells).filter((cell) => cell !== null);
+    const down = grid.rows.flatMap((row) => row.cells).filter((cell) => cell !== null);
+    expect(across).toHaveLength(down.length);
+    expect(across.map((cell) => cell!.date).sort()).toEqual(down.map((cell) => cell!.date).sort());
+  });
+
+  it('says which year each row belongs to, and where a year starts', () => {
+    const first = grid.monthRows[0]!;
+    expect(first.year).toBe('2026');
+    expect(first.startsYear).toBe(true);
+    const january = grid.monthRows.find((row) => row.month.endsWith('-01'))!;
+    expect(january.startsYear).toBe(true);
+    const february = grid.monthRows.find((row) => row.month === '2027-02')!;
+    expect(february.startsYear).toBe(false);
+    expect(february.year).toBe('2027');
+  });
+
+  it('labels a row the way a month is said, with the year on the first of each', () => {
+    expect(grid.monthRows[0]?.label).toBe('Sep 2026');
+    expect(grid.monthRows.find((row) => row.month === '2026-10')?.label).toBe('Oct');
+  });
+});

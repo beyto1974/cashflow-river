@@ -44,7 +44,7 @@ anywhere. The app says so the first time it opens, and says how to take a copy:
   | **River** | monthly flow above the balance it leaves (the picture above) |
   | **Balance** | the daily line on its own, with the band and the buffer |
   | **Month ends** | one bar per month — where it leaves you, or its total in or out |
-  | **Grid** | every day as one cell, coloured by that evening's closing balance |
+  | **Grid** | every day as one cell, coloured by that evening's closing balance — a month a row and days across, or turned the other way to pack more months in |
   | **Flow** | a Sankey of where the money came from and went over a chosen period |
 
   ![Month ends](docs/screens/view-ends.png)

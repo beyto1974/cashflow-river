@@ -47,10 +47,22 @@ export interface GridRow {
   cells: (Cell | null)[];
 }
 
+/** A month read across rather than down: thirty-one day columns. */
+export interface MonthRow {
+  month: MonthKey;
+  /** "Sep 2026" on the first month of a year, "Oct" after that. */
+  label: string;
+  year: string;
+  startsYear: boolean;
+  /** One entry per day of the month; null outside the month or the forecast. */
+  cells: (Cell | null)[];
+}
+
 export interface GridModel {
   months: { month: MonthKey; label: string }[];
   years: { year: string; span: number }[];
   rows: GridRow[];
+  monthRows: MonthRow[];
   underBuffer: number;
   buffer: Cents;
   /** Months the grid is not showing, because a cell each would be thousands. */
@@ -114,5 +126,22 @@ export function gridModel(forecast: Forecast, buffer: Cents, maxMonths = MAX_MON
     });
   }
 
-  return { months, years, rows, underBuffer, buffer, monthsHidden };
+  /* The same cells read the other way: a month per row, a day per column, which
+     is how a wall calendar is laid out. */
+  const monthRows: MonthRow[] = months.map(({ month, label }, index) => {
+    const year = month.slice(0, 4);
+    const startsYear = index === 0 || months[index - 1]?.month.slice(0, 4) !== year;
+    return {
+      month,
+      label: startsYear ? `${label} ${year}` : label,
+      year,
+      startsYear,
+      cells: Array.from(
+        { length: 31 },
+        (_, day) => byDate.get(`${month}-${String(day + 1).padStart(2, '0')}` as PlainDate) ?? null
+      )
+    };
+  });
+
+  return { months, years, rows, monthRows, underBuffer, buffer, monthsHidden };
 }
