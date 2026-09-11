@@ -14,9 +14,11 @@
     onrestore: (revision: number) => void;
     onexport: () => string;
     onimport: (text: string) => string[];
+    isOpen: (panel: string) => boolean;
+    setOpen: (panel: string, open: boolean) => void;
   }
   const {
-    names, current, history, onselect, onsaveas, onremove, onrestore, onexport, onimport
+    names, current, history, onselect, onsaveas, onremove, onrestore, onexport, onimport, isOpen, setOpen
   }: Props = $props();
 
   let newName = $state('');
@@ -160,11 +162,14 @@
     <p class="hint">
       An import never overwrites: a name that is taken comes in beside it, so you can delete whichever you do not want.
     </p>
-    <FormatDocs />
+    <FormatDocs open={isOpen('format')} onopen={(open) => setOpen('format', open)} />
   </div>
 
   {#if history.length > 0}
-    <details>
+    <details
+      open={isOpen('versions')}
+      ontoggle={(event) => setOpen('versions', (event.currentTarget as HTMLDetailsElement).open)}
+    >
       <summary>Earlier versions ({history.length})</summary>
       <ul>
         {#each history as entry (entry.revision)}

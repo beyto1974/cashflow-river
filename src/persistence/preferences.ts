@@ -11,14 +11,20 @@ export interface Preferences {
   view: ForecastView;
   /** Section headings that were folded shut. */
   collapsed: string[];
+  /** Disclosure panels — the month table, the version list — left open. */
+  opened: string[];
 }
 
 export const PREFERENCES_KEY = 'moraview.view.v1';
-export const DEFAULT_PREFERENCES: Preferences = { view: 'river', collapsed: [] };
+export const DEFAULT_PREFERENCES: Preferences = { view: 'river', collapsed: [], opened: [] };
 
 export interface PreferenceStore {
   load(): Preferences;
   save(preferences: Preferences): void;
+}
+
+function names(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 }
 
 export function createPreferenceStore(storage: Storage | undefined): PreferenceStore {
@@ -31,9 +37,8 @@ export function createPreferenceStore(storage: Storage | undefined): PreferenceS
         const parsed = JSON.parse(raw) as Partial<Preferences>;
         return {
           view: VIEWS.includes(parsed.view as ForecastView) ? (parsed.view as ForecastView) : 'river',
-          collapsed: Array.isArray(parsed.collapsed)
-            ? parsed.collapsed.filter((entry): entry is string => typeof entry === 'string')
-            : []
+          collapsed: names(parsed.collapsed),
+          opened: names(parsed.opened)
         };
       } catch {
         return DEFAULT_PREFERENCES;

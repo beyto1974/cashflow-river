@@ -120,6 +120,8 @@
         onrestore={(revision) => ledger.restoreRevision(revision)}
         onexport={() => ledger.exportAll()}
         onimport={(text) => ledger.importAll(text)}
+        isOpen={(panel) => ledger.isOpen(panel)}
+        setOpen={(panel, open) => ledger.setOpen(panel, open)}
       />
     </div>
   </header>
@@ -265,7 +267,13 @@
         hasPrev={monthIndex > 0}
         hasNext={monthIndex >= 0 && monthIndex < ledger.months.length - 1}
       />
-      <MonthTable months={ledger.months} monthName={shortMonth} />
+      <MonthTable
+        months={ledger.months}
+        monthName={shortMonth}
+        buffer={ledger.forecast.buffer}
+        open={ledger.isOpen('month table')}
+        onopen={(open) => ledger.setOpen('month table', open)}
+      />
     </main>
   </div>
 

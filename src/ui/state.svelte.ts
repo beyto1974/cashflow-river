@@ -44,6 +44,9 @@ export interface LedgerState {
   setView(view: ForecastView): void;
   isFolded(section: string): boolean;
   toggleSection(section: string): void;
+  /** Disclosure panels: the month table, the version list, the format notes. */
+  isOpen(panel: string): boolean;
+  setOpen(panel: string, open: boolean): void;
   /** Every ledger in this browser, as one JSON file's worth of text. */
   exportAll(): string;
   /** Adds a bundle's ledgers alongside these ones, overwriting nothing. */
@@ -113,9 +116,10 @@ export function createLedgerState(
   let announcement = $state('');
   let view = $state<ForecastView>(saved0.view);
   let folded = $state<string[]>(saved0.collapsed);
+  let opened = $state<string[]>(saved0.opened);
 
   function rememberView(): void {
-    preferences.save({ view, collapsed: folded });
+    preferences.save({ view, collapsed: folded, opened });
   }
 
   /* The dials are a layer: the forecast is of the scenario as dialled, while the
@@ -220,6 +224,14 @@ export function createLedgerState(
     },
     toggleSection(section) {
       folded = folded.includes(section) ? folded.filter((name) => name !== section) : [...folded, section];
+      rememberView();
+    },
+    isOpen(panel) {
+      return opened.includes(panel);
+    },
+    setOpen(panel, open) {
+      if (open === opened.includes(panel)) return;
+      opened = open ? [...opened, panel] : opened.filter((name) => name !== panel);
       rememberView();
     },
 

@@ -21,6 +21,8 @@
     onrestore: (revision: number) => void;
     onexport: () => string;
     onimport: (text: string) => string[];
+    isOpen: (panel: string) => boolean;
+    setOpen: (panel: string, open: boolean) => void;
   }
   const {
     buffer, asOf, horizonMonths, onbuffer, onasof, onhorizon, ...ledgerProps

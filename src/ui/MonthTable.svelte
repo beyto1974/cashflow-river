@@ -1,15 +1,19 @@
 <script lang="ts">
-  import { formatEUR, formatSigned } from '../domain/money';
+  import { formatEUR, formatSigned, type Cents } from '../domain/money';
   import type { MonthSummary } from '../domain/rollups';
 
   interface Props {
     months: MonthSummary[];
     monthName: (month: string) => string;
+    /** What counts as tight, so the table can mark the figure that is tight. */
+    buffer: Cents;
+    open: boolean;
+    onopen: (open: boolean) => void;
   }
-  const { months, monthName }: Props = $props();
+  const { months, monthName, buffer, open, onopen }: Props = $props();
 </script>
 
-<details>
+<details {open} ontoggle={(event) => onopen((event.currentTarget as HTMLDetailsElement).open)}>
   <summary>The same river as a table</summary>
   <p class="print-only caption">Month by month</p>
   <div class="scroll">
@@ -21,14 +25,19 @@
       </thead>
       <tbody>
         {#each months as month (month.month)}
-          <tr class:under={month.daysUnderBuffer > 0}>
+          <!-- A month that touched the buffer is marked down its edge; the red is
+               spent on the two figures that are actually about the buffer, so an
+               ordinary income or outgoing is not coloured as if it were wrong. -->
+          <tr class:touched={month.daysUnderBuffer > 0} class:overdrawn={month.low < 0}>
             <td>{monthName(month.month)}</td>
             <td class="mono">{formatEUR(month.inflow, { cents: false })}</td>
             <td class="mono">{formatEUR(month.outflow, { cents: false })}</td>
             <td class="mono">{formatSigned(month.net, { cents: false })}</td>
-            <td class="mono">{formatEUR(month.low, { cents: false })}</td>
-            <td class="mono">{month.daysUnderBuffer || '—'}</td>
-            <td class="mono">{formatEUR(month.end, { cents: false })}</td>
+            <td class="mono" class:tight={month.low < buffer && month.low >= 0} class:red={month.low < 0}>
+              {formatEUR(month.low, { cents: false })}
+            </td>
+            <td class="mono" class:tight={month.daysUnderBuffer > 0}>{month.daysUnderBuffer || '—'}</td>
+            <td class="mono" class:red={month.end < 0}>{formatEUR(month.end, { cents: false })}</td>
           </tr>
         {/each}
       </tbody>
@@ -82,7 +91,18 @@
     color: var(--ink-3);
     font-weight: 600;
   }
-  tbody tr.under td {
+  tbody tr.touched td:first-child {
+    box-shadow: inset 3px 0 0 var(--warning);
+    padding-left: 8px;
+  }
+  tbody tr.overdrawn td:first-child {
+    box-shadow: inset 3px 0 0 var(--critical);
+  }
+  td.tight {
+    color: var(--warning);
+  }
+  td.red {
     color: var(--critical);
+    font-weight: 600;
   }
 </style>

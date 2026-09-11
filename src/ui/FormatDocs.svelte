@@ -1,6 +1,12 @@
 <script lang="ts">
   import { formatSpec } from '../persistence/formatSpec';
 
+  interface Props {
+    open: boolean;
+    onopen: (open: boolean) => void;
+  }
+  const { open, onopen }: Props = $props();
+
   const spec = formatSpec();
   let copied = $state<string | null>(null);
 
@@ -15,7 +21,11 @@
   }
 </script>
 
-<details class="no-print">
+<details
+  class="no-print"
+  {open}
+  ontoggle={(event) => onopen((event.currentTarget as HTMLDetailsElement).open)}
+>
   <summary>The file format, for writing one by hand or with a model</summary>
 
   <p class="lead">

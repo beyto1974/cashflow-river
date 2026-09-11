@@ -187,3 +187,49 @@ test.describe('the month detail', () => {
     await expect(page.locator('.month-detail .sums')).toContainText('Ends at');
   });
 });
+
+test.describe('the month table', () => {
+  test('marks the months that touched the buffer without reddening every figure', async ({ page }) => {
+    await openFresh(page);
+    await page.locator('summary', { hasText: 'The same river as a table' }).click();
+
+    const touched = page.locator('tbody tr.touched').first();
+    await expect(touched).toBeVisible();
+
+    /* The red belongs to the two figures that are about the buffer. */
+    await expect(touched.locator('td.tight, td.red')).not.toHaveCount(0);
+    const ordinary = touched.locator('td').nth(1); // money in
+    const colour = await ordinary.evaluate((cell) => getComputedStyle(cell).color);
+    const inkColour = await page
+      .locator('tbody tr:not(.touched) td')
+      .first()
+      .evaluate((cell) => getComputedStyle(cell).color);
+    expect(colour).toBe(inkColour);
+  });
+
+  test('calls an overdrawn month out more strongly than a tight one', async ({ page }) => {
+    await openFresh(page);
+    await page.locator('summary', { hasText: 'The same river as a table' }).click();
+    await expect(page.locator('tbody tr.overdrawn')).not.toHaveCount(0);
+    await expect(page.locator('tbody tr.overdrawn td.red').first()).toBeVisible();
+  });
+});
+
+test.describe('what the page remembers', () => {
+  test('keeps the month table open across a reload', async ({ page }) => {
+    await openFresh(page);
+    /* A closed <details> keeps its children in the DOM, so this is about what is
+       visible, not about what exists. */
+    await expect(page.locator('tbody tr').first()).toBeHidden();
+
+    await page.locator('summary', { hasText: 'The same river as a table' }).click();
+    await expect(page.locator('tbody tr').first()).toBeVisible();
+
+    await page.reload();
+    await expect(page.locator('tbody tr').first()).toBeVisible();
+
+    await page.locator('summary', { hasText: 'The same river as a table' }).click();
+    await page.reload();
+    await expect(page.locator('tbody tr').first()).toBeHidden();
+  });
+});

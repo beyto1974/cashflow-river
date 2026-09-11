@@ -25,9 +25,13 @@ describe('preference store', () => {
     expect(store().load()).toEqual(DEFAULT_PREFERENCES);
   });
 
-  it('remembers the view and which sections are folded', () => {
-    store().save({ view: 'grid', collapsed: ['Going out', 'One-offs you have planned'] });
-    expect(store().load()).toEqual({ view: 'grid', collapsed: ['Going out', 'One-offs you have planned'] });
+  it('remembers the view, the folded sections and the panels left open', () => {
+    store().save({ view: 'grid', collapsed: ['Going out'], opened: ['The same river as a table'] });
+    expect(store().load()).toEqual({
+      view: 'grid',
+      collapsed: ['Going out'],
+      opened: ['The same river as a table']
+    });
   });
 
   it('ignores a view it does not know', () => {
@@ -35,9 +39,12 @@ describe('preference store', () => {
     expect(store().load().view).toBe('river');
   });
 
-  it('ignores collapsed entries that are not names', () => {
-    storage.setItem('moraview.view.v1', JSON.stringify({ view: 'grid', collapsed: ['Going out', 7, null] }));
-    expect(store().load()).toEqual({ view: 'grid', collapsed: ['Going out'] });
+  it('ignores entries that are not names', () => {
+    storage.setItem(
+      'moraview.view.v1',
+      JSON.stringify({ view: 'grid', collapsed: ['Going out', 7, null], opened: [3, 'Earlier versions'] })
+    );
+    expect(store().load()).toEqual({ view: 'grid', collapsed: ['Going out'], opened: ['Earlier versions'] });
   });
 
   it('falls back to the defaults for anything unreadable', () => {
@@ -52,13 +59,13 @@ describe('preference store', () => {
       removeItem: () => { throw new Error('blocked'); }
     } as unknown as Storage;
     const preferences = createPreferenceStore(blocked);
-    expect(() => preferences.save({ view: 'grid', collapsed: [] })).not.toThrow();
+    expect(() => preferences.save({ view: 'grid', collapsed: [], opened: [] })).not.toThrow();
     expect(preferences.load()).toEqual(DEFAULT_PREFERENCES);
   });
 
   it('works with no storage at all', () => {
     const preferences = createPreferenceStore(undefined);
-    preferences.save({ view: 'grid', collapsed: ['x'] });
+    preferences.save({ view: 'grid', collapsed: ['x'], opened: [] });
     expect(preferences.load()).toEqual(DEFAULT_PREFERENCES);
   });
 });
