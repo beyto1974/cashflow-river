@@ -261,7 +261,12 @@
         role="button"
         tabindex={column.month === selectedMonth ? 0 : -1}
         aria-label={`${longMonth(column.month)}: net ${formatSigned(column.summary.net)}, ends at ${formatEUR(column.summary.end)}`}
-        onclick={() => onselect(column.month)}
+        onclick={() => {
+          /* In the balance-only reading a pointer down anywhere is the needle,
+             and the month follows the day it lands on — so a click here would
+             fight the drag it is part of. */
+          if (!bedOnly) onselect(column.month);
+        }}
         onkeydown={(event) => keys(event, column.month)}
       />
     {/each}

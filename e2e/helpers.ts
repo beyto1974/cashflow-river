@@ -40,3 +40,19 @@ export async function openSettings(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Ledgers and settings' }).click();
   await expect(page.locator('dialog[open]')).toBeVisible();
 }
+
+/** A date inside the forecast, counted from the day it starts. */
+export async function dateInForecast(page: Page, daysAhead: number): Promise<string> {
+  const start = await page.getByLabel('Date to read the balance on').getAttribute('min');
+  const at = new Date(`${start}T00:00:00Z`);
+  at.setUTCDate(at.getUTCDate() + daysAhead);
+  return at.toISOString().slice(0, 10);
+}
+
+/** Sets the read-out date and waits for the page to agree. */
+export async function readOn(page: Page, date: string): Promise<void> {
+  const field = page.getByLabel('Date to read the balance on');
+  await field.fill(date);
+  await field.dispatchEvent('change');
+  await expect(field).toHaveValue(date);
+}

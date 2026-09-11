@@ -192,3 +192,19 @@ describe('the balance-only reading', () => {
     expect(bedOnly.bed.needle.x).toBeGreaterThan(bedOnly.pad.left);
   });
 });
+
+describe('the balance-only reading leaves no half-drawn flow behind', () => {
+  const bedOnly = riverGeometry({
+    forecast,
+    months: byMonth(forecast),
+    width: 900,
+    target: plainDate('2027-03-02'),
+    panels: 'bed'
+  });
+
+  it('puts every net marker on the axis rather than mirroring it', () => {
+    for (const column of bedOnly.flow.columns) {
+      expect(column.netY).toBe(bedOnly.flow.midY);
+    }
+  });
+});

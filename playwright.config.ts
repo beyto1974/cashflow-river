@@ -5,10 +5,17 @@ import { defineConfig, devices } from '@playwright/test';
  * place the parts that are not domain logic actually meet: the state container,
  * the storage, the pointer and keyboard handling, and the printing.
  *
- * The port is taken from the environment because this machine runs several dev
- * servers at once; `npm run e2e` picks a free one.
+ * The port has to be given rather than defaulted: a fixed default plus a reused
+ * server means the suite can silently drive somebody else's app and either fail
+ * confusingly or pass against a stale build.
  */
-const port = Number(process.env.E2E_PORT ?? 4300);
+const given = process.env.E2E_PORT;
+if (!given || !Number.isInteger(Number(given))) {
+  throw new Error(
+    'Set E2E_PORT to a free port, e.g. E2E_PORT=$(freeport -r 4300-4399) npm run e2e'
+  );
+}
+const port = Number(given);
 
 export default defineConfig({
   testDir: './e2e',
@@ -38,7 +45,8 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --port ${port} --strictPort --host 127.0.0.1`,
     url: `http://127.0.0.1:${port}`,
-    reuseExistingServer: !process.env.CI,
+    /* Never adopt a server this suite did not start. */
+    reuseExistingServer: false,
     timeout: 60_000
   }
 });

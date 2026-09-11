@@ -134,17 +134,6 @@
     overflow-x: auto;
     max-width: 100%;
   }
-  @media (max-width: 620px) {
-    /* Shorter rows so a phone shows more months without scrolling. */
-    td,
-    .cell {
-      height: 13px;
-    }
-    td,
-    th.dom {
-      width: 17px;
-    }
-  }
   table {
     border-collapse: separate;
     border-spacing: 2px;
@@ -287,6 +276,18 @@
   }
   .blank {
     background: none;
+  }
+  /* After the base sizes, not before: a media query adds no specificity, so the
+     later rule wins whichever way round they are written. */
+  @media screen and (max-width: 620px) {
+    td,
+    .cell {
+      height: 13px;
+    }
+    td,
+    th.dom {
+      width: 17px;
+    }
   }
   .readout {
     margin: 8px 0 0;

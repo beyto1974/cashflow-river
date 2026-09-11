@@ -86,17 +86,36 @@ test.describe('settings and ledgers', () => {
     await expect(amountOf(page, 'Groceries')).toHaveValue('210.00');
   });
 
-  test('restores an earlier version', async ({ page }) => {
+  test('restores an earlier version, bringing the older figure back', async ({ page }) => {
     await openFresh(page);
     await setAmount(page, 'Groceries', '250');
 
+    /* Saves inside a minute coalesce into one version, which is the point of
+       that rule — so the second version is aged by hand rather than by waiting. */
+    await page.evaluate(() => {
+      const key = [...Array(localStorage.length).keys()]
+        .map((index) => localStorage.key(index) as string)
+        .find((name) => name.startsWith('moraview.history.'));
+      const history = JSON.parse(localStorage.getItem(key as string) as string);
+      history[0].savedAt = new Date(Date.parse(history[0].savedAt) - 10 * 60_000).toISOString();
+      localStorage.setItem(key as string, JSON.stringify(history));
+    });
+    await setAmount(page, 'Groceries', '410');
+
     await openSettings(page);
     await page.locator('dialog summary', { hasText: 'Earlier versions' }).click();
-    await expect(page.locator('dialog details li')).not.toHaveCount(0);
-    await page.locator('dialog details li').last().getByRole('button', { name: 'Restore' }).click();
+    await expect(page.locator('dialog details li')).toHaveCount(2);
+
+    const older = page.locator('dialog details li', { hasText: 'Version 1' });
+    await older.getByRole('button', { name: 'Restore' }).click();
     await page.keyboard.press('Escape');
 
     await expect(amountOf(page, 'Groceries')).toHaveValue('250.00');
+
+    /* Restoring saved a version of its own, so nothing was lost by trying it. */
+    await openSettings(page);
+    await expect(page.locator('dialog details li')).toHaveCount(2);
+    await expect(page.locator('dialog details li', { hasText: 'Version 2' })).toBeVisible();
   });
 
   test('documents the file format, generated from the code', async ({ page }) => {
@@ -127,6 +146,19 @@ test.describe('settings and ledgers', () => {
 });
 
 test.describe('printing', () => {
+  test('keeps the paper layout even though paper is narrower than a desktop', async ({ page }) => {
+    await openFresh(page);
+    /* A4 is about 794px wide, which is inside the narrow-screen breakpoint: the
+       phone layout must not follow the page onto paper. */
+    await page.setViewportSize({ width: 816, height: 1056 });
+    await page.emulateMedia({ media: 'print' });
+
+    const order = await page.locator('main').evaluate((main) => getComputedStyle(main).order);
+    expect(order).toBe('0');
+    const position = await page.locator('.chart-hold').evaluate((hold) => getComputedStyle(hold).position);
+    expect(position).toBe('static');
+  });
+
   test('leaves out the controls and opens the month table', async ({ page }) => {
     await openFresh(page);
     await page.emulateMedia({ media: 'print' });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openFresh, openSettings, setAmount } from './helpers';
+import { dateInForecast, openFresh, openSettings, readOn, setAmount } from './helpers';
 
 test.describe('what a screen reader gets', () => {
   test('the answer is spoken as a sentence, not as scattered numbers', async ({ page }) => {
@@ -8,10 +8,12 @@ test.describe('what a screen reader gets', () => {
     await expect(spoken).toContainText(/On \w+ \d+ \w+ \d{4} the accounts hold/);
     await expect(spoken).toContainText('somewhere between');
 
-    const field = page.getByLabel('Date to read the balance on');
-    await field.fill('2027-03-02');
-    await field.dispatchEvent('change');
-    await expect(spoken).toContainText('2 March 2027');
+    const probe = await dateInForecast(page, 200);
+    await readOn(page, probe);
+    const spokenDate = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+    }).format(new Date(`${probe}T00:00:00Z`));
+    await expect(spoken).toContainText(spokenDate);
   });
 
   test('what the app did on its own is announced', async ({ page }) => {

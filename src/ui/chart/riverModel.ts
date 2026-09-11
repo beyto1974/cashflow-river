@@ -117,7 +117,8 @@ export function riverGeometry({ forecast, months, width, target, band, panels = 
   const midY = pad.top + flowHeight / 2;
 
   const peak = Math.max(1, ...months.map((month) => Math.max(month.inflow, -month.outflow)));
-  const flowScale = (flowHeight / 2 - 20) / peak;
+  /* Zero in the balance-only reading, where there are no bars to scale. */
+  const flowScale = Math.max(flowHeight / 2 - 20, 0) / peak;
 
   const columns: Column[] = months.map((summary, index) => {
     const slotX = pad.left + index * slotWidth;
@@ -159,7 +160,7 @@ export function riverGeometry({ forecast, months, width, target, band, panels = 
       isYearStart: month === 0,
       x, width: barWidth, slotX, slotWidth,
       segments,
-      netY: midY - summary.net * flowScale,
+      netY: bedOnly ? midY : midY - summary.net * flowScale,
       summary
     };
   });

@@ -35,6 +35,15 @@ test.describe('on a phone', { tag: '@phone' }, () => {
     })).toBe(true);
   });
 
+  test('draws the grid with smaller cells, so more months fit', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Grid', exact: true }).click();
+    await expect(page.locator('.cell').first()).toBeVisible();
+
+    const height = await page.locator('.cell').first().evaluate((cell) => getComputedStyle(cell).height);
+    expect(height).toBe('13px');
+  });
+
   test('can still edit a line', async ({ page }) => {
     await openFresh(page);
     await openSection(page, /Coming in/);

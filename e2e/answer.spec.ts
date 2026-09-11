@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { amountOf, answer, openFresh, sentence, setAmount } from './helpers';
+import { amountOf, answer, dateInForecast, openFresh, readOn, sentence, setAmount } from './helpers';
 
 test.describe('the answer', () => {
   test('opens on the example, at its lowest point, with the sentence and the stretches', async ({ page }) => {
@@ -16,9 +16,8 @@ test.describe('the answer', () => {
 
   test('moves the answer when a line changes, and keeps it after a reload', async ({ page }) => {
     await openFresh(page);
-    const field = page.getByLabel('Date to read the balance on');
-    await field.fill('2027-03-02');
-    await field.dispatchEvent('change');
+    const probe = await dateInForecast(page, 173);
+    await readOn(page, probe);
     const before = await answer(page).innerText();
 
     await setAmount(page, 'Groceries', '320');
@@ -29,8 +28,7 @@ test.describe('the answer', () => {
        before comparing — the point is that the edit survived, not the needle. */
     await page.reload();
     await expect(page.locator('footer')).not.toContainText('example figures');
-    await page.getByLabel('Date to read the balance on').fill('2027-03-02');
-    await page.getByLabel('Date to read the balance on').dispatchEvent('change');
+    await readOn(page, probe);
     await expect(answer(page)).toHaveText(after);
     await expect(amountOf(page, 'Groceries')).toHaveValue('320.00');
   });
@@ -39,9 +37,8 @@ test.describe('the answer', () => {
     await openFresh(page);
     const field = page.getByLabel('Date to read the balance on');
 
-    await field.fill('2027-03-02');
-    await field.dispatchEvent('change');
-    await expect(page.locator('.askline')).toContainText('in 5 months');
+    await readOn(page, await dateInForecast(page, 100));
+    await expect(page.locator('.askline')).toContainText('in 3 months');
 
     await field.fill('2099-01-01');
     await field.dispatchEvent('change');

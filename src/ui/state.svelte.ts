@@ -325,13 +325,15 @@ export function createLedgerState(
       return suggestFixes(dialled);
     },
     applyFix(fix) {
-      announce(`${fix.description}. ${summary.sentence}`);
       /* The search runs on the dialled figures, so the change has to land on
          them: applying it to the undialled ledger would write an amount derived
          from a dialled one. Baking the dials in is the honest reading of "do
          it", and the dials go back to neutral because they are now the ledger. */
       commit(applyChange(dialled, fix.change));
       dials = { ...NEUTRAL };
+      /* After the change, so what is said is what is now true: `summary` is
+         derived, and reading it first would announce the old sentence. */
+      announce(`${fix.description}. ${summary.sentence}`);
     },
     reset() {
       store.clear();

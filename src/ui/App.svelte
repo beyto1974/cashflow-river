@@ -3,6 +3,7 @@
   import { formatEUR } from '../domain/money';
   import type { LedgerState } from './state.svelte';
   import { BANDS } from './bands';
+  import { tick } from 'svelte';
   import { worstFirst } from '../domain/stretches';
   import { distanceFrom, longDate, longMonth, shortDate, shortMonth } from './format';
   import LedgerPanel from './LedgerPanel.svelte';
@@ -30,6 +31,23 @@
   const distance = $derived(distanceFrom(ledger.forecast.asOf, ledger.target));
   const shown = $derived(worstFirst(ledger.summary.likelyStretches, 6));
   let verdictEl = $state<HTMLElement | null>(null);
+
+  /**
+   * The answer as one sentence for a screen reader, settled rather than live:
+   * dragging the needle changes the date many times a second, and a live region
+   * that follows every frame reads out a stream of balances.
+   */
+  const answerSentence = $derived(
+    `On ${longDate(ledger.target)} the accounts hold ${formatEUR(day.balance)}${
+      ledger.banded.hasRange ? `, somewhere between ${formatEUR(worst)} and ${formatEUR(best)}` : ''
+    }.`
+  );
+  let spokenAnswer = $state('');
+  $effect(() => {
+    const settling = answerSentence;
+    const timer = setTimeout(() => (spokenAnswer = settling), 600);
+    return () => clearTimeout(timer);
+  });
 
 
 
@@ -107,7 +125,7 @@
   </header>
 
   <div class="askline">
-    <span class="lead">On</span>
+    <span class="lead" aria-hidden="true">On</span>
     <input
       class="no-print"
       type="date"
@@ -117,16 +135,16 @@
       onchange={pickDate}
       aria-label="Date to read the balance on"
     />
-    <span class="print-only lead">{longDate(ledger.target)}</span>
-    <span class="lead">the accounts hold</span>
-    <span class="answer mono" class:short={day.balance < 0}>{formatEUR(day.balance)}</span>
+    <span class="print-only lead" aria-hidden="true">{longDate(ledger.target)}</span>
+    <span class="lead" aria-hidden="true">the accounts hold</span>
+    <span class="answer mono" class:short={day.balance < 0} aria-hidden="true">{formatEUR(day.balance)}</span>
     {#if ledger.banded.hasRange}
-      <span class="spread">
+      <span class="spread" aria-hidden="true">
         somewhere between <b class="mono">{formatEUR(worst, { cents: false })}</b> and
         <b class="mono">{formatEUR(best, { cents: false })}</b>
       </span>
     {/if}
-    <span class="aside">
+    <span class="aside" aria-hidden="true">
       · {distance}, starting from {formatEUR(ledger.forecast.opening)}{worst < ledger.forecast.buffer
         ? ledger.banded.hasRange
           ? ` · could be under the ${formatEUR(ledger.forecast.buffer, { cents: false })} buffer`
@@ -135,11 +153,7 @@
     </span>
   </div>
 
-  <p class="sr-only" aria-live="polite">
-    On {longDate(ledger.target)} the accounts hold {formatEUR(day.balance)}{ledger.banded.hasRange
-      ? `, somewhere between ${formatEUR(worst)} and ${formatEUR(best)}`
-      : ''}.
-  </p>
+  <p class="sr-only" aria-live="polite">{spokenAnswer}</p>
 
   <p class="verdict" data-tone={ledger.summary.tone} tabindex="-1" bind:this={verdictEl}>
     {ledger.summary.sentence}
@@ -174,9 +188,11 @@
   {#if ledger.summary.likelyStretches.length > 0}
     <FixPanel
       find={() => ledger.fixes()}
-      apply={(fix) => {
+      apply={async (fix) => {
         ledger.applyFix(fix);
-        /* The outcome is a changed sentence, so put the reader on it. */
+        /* The outcome is a changed sentence, so put the reader on it — after the
+           re-render, or focus lands on the old text. */
+        await tick();
         verdictEl?.focus();
       }}
       stretches={ledger.summary.likelyStretches.length}
@@ -419,7 +435,7 @@
     min-width: 0;
     max-width: 100%;
   }
-  @media (max-width: 900px) {
+  @media screen and (max-width: 900px) {
     .board {
       grid-template-columns: minmax(0, 1fr);
       gap: 20px;
@@ -428,17 +444,6 @@
        ledger below it is the working surface. */
     .board main {
       order: -1;
-    }
-  }
-  /* On a narrow screen the chart stays put while the ledger scrolls under it. */
-  @media (max-width: 900px) {
-    .chart-hold {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: var(--paper);
-      padding-bottom: 6px;
-      margin-bottom: 4px;
     }
   }
   .views {

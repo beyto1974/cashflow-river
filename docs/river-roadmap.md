@@ -125,6 +125,13 @@ that reads it.
   and import, the format documentation, and the forecast's own buffer, start
   date and horizon.
 
+## Still open
+
+- **A pull-up sheet on a phone**, so the chart really does stay put while the
+  ledger is worked on. The plain stacked order is what ships.
+- **Actuals against forecast** — marking what really happened, and reading the
+  two side by side. The biggest thing the tool does not do.
+
 ## M5 — Craft
 
 15. **Recompute cost.** *(done, and measured)* Reads are memoised on the
@@ -147,9 +154,15 @@ that reads it.
     every component after the first reads the same projection for nothing. The
     fix search is the only expensive thing, and it already sits behind a button.
     Revisit if a horizon of many years or a ledger of hundreds of lines turns up.
-16. **Phone layout.** *(done)* The forecast comes first on a narrow screen and
-    stays put while the ledger scrolls under it; the chart shortens, the grid
-    keeps its cells small and scrolls inside its own box.
+16. **Phone layout.** *(done)* The forecast comes first on a narrow screen, the
+    chart shortens, and the grid keeps its cells small and scrolls inside its
+    own box.
+
+    A sticky chart was tried and taken out again: the ledger is a sibling of the
+    chart in the board grid, so it only stuck over the panels below it and never
+    over the ledger it was supposed to stay above — and a sticky block taller
+    than a short phone screen pins with its lower half unreachable. A pull-up
+    sheet is the version that would work, and is not built.
 
     The end-to-end suite caught the actual bug on the way in: both tracks of the
     board grid defaulted to `min-width: auto`, so the wide grid table pushed the
