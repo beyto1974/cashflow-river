@@ -139,15 +139,16 @@ that reads it.
     identity is exactly the right key — and a slider drag is coalesced into one
     recompute per frame.
 
-    `npm run bench` on the example household (30 months, 30 lines):
+    `npm run bench` on the example household (30 months, 30 lines) — mean of a
+    few hundred runs, through Vitest's own benchmark runner:
 
     | | |
     |---|---|
-    | project, after an edit | ~5.0 ms |
-    | projectBand, after an edit | ~4.3 ms |
-    | everything the page reads, after an edit | ~4.7 ms |
-    | the same reads again, memoised | ~0.14 ms |
-    | suggestFixes (on demand) | ~170 ms |
+    | project, after an edit | ~4.3 ms |
+    | projectBand, after an edit | ~4.1 ms |
+    | everything the page reads, after an edit | ~4.6 ms |
+    | the same reads again, memoised | ~0.14 ms (30× faster) |
+    | suggestFixes (on demand) | ~155 ms |
 
     So **recomputing from the changed month forward is not worth building**: one
     edit costs about five milliseconds against a sixteen-millisecond frame, and

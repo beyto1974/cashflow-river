@@ -113,7 +113,7 @@ src/ui/           Svelte components, the colour bands, and the chart's geometry
 tests/            Vitest suites, written before the code they cover
 e2e/              Playwright specs: the state container, storage, pointer and
                   keyboard handling and printing, in a real browser
-scripts/bench.mjs what a change costs, so performance claims stay honest
+tests/*.bench.ts  what a change costs, so performance claims stay honest
 legacy/           the three original single-file prototypes and their inlining
                   build; `node legacy/build.mjs` rebuilds them
 docs/             the interfaces, the decision, the roadmap, the screenshots

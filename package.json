@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "bench": "vite-node scripts/bench.mjs",
+    "bench": "vitest bench --run",
     "e2e": "playwright test",
     "e2e:report": "playwright show-report",
     "verify": "npm run check && npm test && npm run e2e"
@@ -24,8 +24,7 @@
     "svelte-check": "^4.1.4",
     "typescript": "^5.7.3",
     "vite": "^6.0.11",
-    "vite-node": "^3.2.0",
     "vite-plugin-singlefile": "^2.1.0",
-    "vitest": "^3.0.4"
+    "vitest": "^4.1.11"
   }
 }

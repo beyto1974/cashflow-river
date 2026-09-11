@@ -6,5 +6,9 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 export default defineConfig({
   plugins: [svelte(), viteSingleFile()],
   build: { outDir: 'dist-app', target: 'es2022', assetsInlineLimit: 100_000_000 },
-  test: { environment: 'node', include: ['tests/**/*.test.ts'] }
+  test: {
+    environment: 'node',
+    include: ['tests/**/*.test.ts'],
+    benchmark: { include: ['tests/**/*.bench.ts'] }
+  }
 });
