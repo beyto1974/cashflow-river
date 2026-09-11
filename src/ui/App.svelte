@@ -33,6 +33,26 @@
     if (isPlainDate(input.value)) ledger.setTarget(plainDate(input.value));
     input.value = ledger.target;
   }
+  /* A closed <details> prints as its summary alone, so the month table would be
+     a heading with nothing under it. Opened for the print, restored after. */
+  $effect(() => {
+    let reopened: HTMLDetailsElement[] = [];
+    const open = (): void => {
+      reopened = [...document.querySelectorAll('details:not([open])')] as HTMLDetailsElement[];
+      for (const details of reopened) details.open = true;
+    };
+    const close = (): void => {
+      for (const details of reopened) details.open = false;
+      reopened = [];
+    };
+    window.addEventListener('beforeprint', open);
+    window.addEventListener('afterprint', close);
+    return () => {
+      window.removeEventListener('beforeprint', open);
+      window.removeEventListener('afterprint', close);
+    };
+  });
+
   function pickMonth(month: MonthKey): void {
     ledger.selectMonth(month);
     const middle = `${month}-15`;
@@ -43,13 +63,19 @@
 <div class="sheet">
   <header>
     <h1>Cashflow <em>River</em></h1>
-    <p class="stand">Every line you keep sends water into the month it falls in. Edit a line on the left and the river
-      re-cuts — including the bed it leaves behind, which is your balance.</p>
+    <p class="stand no-print">Every line you keep sends water into the month it falls in. Edit a line on the left and
+      the river re-cuts — including the bed it leaves behind, which is your balance.</p>
+    <p class="printed print-only">
+      {ledger.ledgerName} · forecast from {longDate(ledger.forecast.asOf)}, {ledger.scenario.horizonMonths} months
+      ahead · buffer {formatEUR(ledger.forecast.buffer, { cents: false })}
+    </p>
+    <button type="button" class="button ghost print no-print" onclick={() => window.print()}>Print this</button>
   </header>
 
   <div class="askline">
     <span class="lead">On</span>
     <input
+      class="no-print"
       type="date"
       value={ledger.target}
       min={ledger.forecast.asOf}
@@ -57,6 +83,7 @@
       onchange={pickDate}
       aria-label="Date to read the balance on"
     />
+    <span class="print-only lead">{longDate(ledger.target)}</span>
     <span class="lead">the accounts hold</span>
     <span class="answer mono" class:short={day.balance < 0}>{formatEUR(day.balance)}</span>
     {#if ledger.banded.hasRange}
@@ -129,7 +156,7 @@
           <span><i style:background={band.color}></i>{band.label}</span>
         {/each}
         <span><i class="net-key"></i>net for the month</span>
-        <span class="drag-hint">drag along the lower panel to read any day</span>
+        <span class="drag-hint no-print">drag along the lower panel to read any day</span>
         {#if ledger.banded.hasRange}
           <span><i class="cone-key"></i>where the guesses could put it</span>
         {/if}
@@ -156,7 +183,7 @@
         : 'Your own figures, kept in this browser only.'}
       The forecast starts on {longDate(ledger.forecast.asOf)} and runs {ledger.scenario.horizonMonths} months.
     </span>
-    <button type="button" class="button ghost" onclick={() => ledger.reset()}>Back to the example</button>
+    <button type="button" class="button ghost no-print" onclick={() => ledger.reset()}>Back to the example</button>
   </footer>
 </div>
 
@@ -187,6 +214,15 @@
     font-style: italic;
     font-weight: 400;
     color: var(--ink-2);
+  }
+  .printed {
+    flex: 1 1 220px;
+    color: var(--ink-2);
+    font-size: 12px;
+    margin: 0;
+  }
+  .print {
+    align-self: flex-end;
   }
   .stand {
     flex: 1 1 220px;

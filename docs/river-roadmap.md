@@ -99,8 +99,11 @@ that reads it.
     side, each with its own history: "save a copy" names a variant, the picker
     switches between them, and the last ledger cannot be deleted. A name that is
     taken is refused rather than overwritten.
-14. **A printable one-pager.** The month table, the bed and the tight days, for
-    the conversation the tool is really for.
+14. **A printable one-pager.** *(done)* A print stylesheet turns the page into
+    the kitchen-table version: the answer, the tight stretches, the ledger as a
+    plain list, the chart, the month detail and the month table, with every
+    control that cannot be used from paper left off. Collapsed sections are
+    opened for the print and closed again afterwards.
 
 ## M5 — Craft
 

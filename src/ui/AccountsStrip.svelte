@@ -33,7 +33,7 @@
         sign="typed"
         onchange={(balance) => onpatch(account.id, { balance })}
       />
-      <label class="count" title="Count this account in the forecast">
+      <label class="count no-print" title="Count this account in the forecast">
         <input
           type="checkbox"
           checked={account.inForecast}
@@ -43,7 +43,7 @@
       </label>
       <button
         type="button"
-        class="drop"
+        class="drop no-print"
         onclick={() => onremove(account.id)}
         disabled={accounts.length === 1}
         aria-label={`Remove ${account.name}`}>×</button
@@ -51,8 +51,8 @@
     </div>
   {/each}
 
-  <button type="button" class="button ghost add" onclick={onadd}>Add an account</button>
-  <p class="hint">Untick an account to hold it outside the forecast — a savings pot you are not spending from.
+  <button type="button" class="button ghost add no-print" onclick={onadd}>Add an account</button>
+  <p class="hint no-print">Untick an account to hold it outside the forecast — a savings pot you are not spending from.
     A balance can be negative: type <span class="mono">-320.50</span> for an account in the red.</p>
 </section>
 

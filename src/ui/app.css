@@ -117,3 +117,52 @@ button { cursor: pointer; }
 .button.danger { background: none; color: var(--critical); border-color: color-mix(in oklab, var(--critical) 40%, var(--rule)); }
 .amount-in { color: var(--s-benefit); }
 .amount-out { color: var(--ink); }
+
+/* The printed page is the kitchen-table version: the answer, the tight
+   stretches, the chart and the month table, with everything you cannot act on
+   from paper — editors, pickers, dials — left off. */
+@media print {
+  :root {
+    --paper: #ffffff;
+    --sheet: #ffffff;
+    --sheet-2: #ffffff;
+    --rule: #999999;
+    --hair: #cccccc;
+    --ink: #000000;
+    --ink-2: #333333;
+    --ink-3: #555555;
+    --accent: #1f5c46;
+    color-scheme: light;
+  }
+  body {
+    background: #ffffff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  /* The ledger becomes a plain list of lines, without its editors. */
+  input,
+  select {
+    border: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    color: #000000 !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  details {
+    display: block !important;
+  }
+  details > summary {
+    list-style: none;
+  }
+  a[href]::after {
+    content: '';
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+.print-only {
+  display: none;
+}

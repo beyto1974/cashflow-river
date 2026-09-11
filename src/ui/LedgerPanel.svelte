@@ -44,8 +44,8 @@
 <aside>
   <div>
     <h2>The lines</h2>
-    <p class="hint">Amounts are per occurrence. Click a line to change how it repeats, when it starts or stops, or to
-      delete it. Untick to see the river without it.</p>
+    <p class="hint no-print">Amounts are per occurrence. Click a line to change how it repeats, when it starts or
+      stops, or to delete it. Untick to see the river without it.</p>
   </div>
 
   <AccountsStrip
@@ -80,7 +80,7 @@
     </section>
   {/each}
 
-  <section class="group">
+  <section class="group no-print">
     <h2>Add a line</h2>
     <AddLine defaultDate={ledger.forecast.asOf} onadd={(line) => ledger.addLine(line)} />
   </section>
@@ -104,7 +104,7 @@
     onkeep={() => ledger.keepDials()}
   />
 
-  <section class="group">
+  <section class="group no-print">
     <h2>The forecast itself</h2>
     <div class="settings">
       <label>

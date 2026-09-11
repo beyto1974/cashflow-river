@@ -25,7 +25,7 @@
   }
 </script>
 
-<section class="group">
+<section class="group no-print">
   <div class="head">
     <h2>What if…</h2>
     <span class="rhythm mono">{formatSigned(rhythm.net, { cents: false })} / month</span>

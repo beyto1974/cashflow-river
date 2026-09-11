@@ -17,12 +17,12 @@
 
 <section>
   {#if !comparison}
-    <button type="button" class="button ghost" onclick={onpin}>Pin this as the baseline</button>
-    <p class="hint">Then change something — a line, a dial, a date — and the two rivers are compared here.</p>
+    <button type="button" class="button ghost no-print" onclick={onpin}>Pin this as the baseline</button>
+    <p class="hint no-print">Then change something — a line, a dial, a date — and the two rivers are compared here.</p>
   {:else}
     <div class="head">
       <p class="eyebrow">Against the pinned baseline</p>
-      <button type="button" class="button ghost" onclick={onclear}>Drop the baseline</button>
+      <button type="button" class="button ghost no-print" onclick={onclear}>Drop the baseline</button>
     </div>
     <p class="verdict" class:worse={comparison.endDelta < 0}>{comparison.verdict}</p>
     <div class="strip">

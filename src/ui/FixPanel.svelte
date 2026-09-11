@@ -23,7 +23,7 @@
   }
 </script>
 
-<section>
+<section class="no-print">
   {#if fixes === null}
     <button type="button" class="button ghost" onclick={search} disabled={searching}>
       {searching ? 'Looking…' : `What would fix ${stretches > 1 ? 'the first one' : 'it'}?`}

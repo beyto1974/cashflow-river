@@ -51,7 +51,7 @@
   }
 </script>
 
-<form onsubmit={submit}>
+<form onsubmit={submit} class="no-print">
   <input type="text" placeholder="What is it? e.g. Piano lessons" bind:value={label} aria-label="What is it" />
   <input type="text" inputmode="decimal" placeholder="Amount" bind:value={amount} aria-label="Amount" class="mono" />
   <select bind:value={direction} aria-label="Direction">

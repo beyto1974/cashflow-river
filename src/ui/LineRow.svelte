@@ -57,7 +57,7 @@
     <AmountInput value={line.amount} label={`${line.label} amount`} onchange={(amount) => onpatch({ amount })} />
   </span>
 
-  <label class="keep">
+  <label class="keep no-print">
     <input type="checkbox" checked={line.muted !== true} onchange={ontoggle} />
     <span class="sr">Count {line.label} in the forecast</span>
   </label>

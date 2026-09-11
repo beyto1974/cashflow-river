@@ -11,6 +11,7 @@
 
 <details>
   <summary>The same river as a table</summary>
+  <p class="print-only caption">Month by month</p>
   <div class="scroll">
     <table>
       <thead>
@@ -40,6 +41,11 @@
     margin-top: 26px;
     border-top: 1px solid var(--rule);
     padding-top: 12px;
+  }
+  .caption {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 1.05rem;
+    margin: 8px 0 0;
   }
   summary {
     cursor: pointer;

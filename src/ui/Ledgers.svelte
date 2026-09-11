@@ -39,7 +39,7 @@
   }
 </script>
 
-<section class="group">
+<section class="group no-print">
   <h2>Ledgers</h2>
   <p class="hint">Keep the household's own figures and the variants worth keeping side by side.</p>
 
