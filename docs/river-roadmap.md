@@ -85,16 +85,20 @@ that reads it.
 
 ## M4 — Keep it, share it
 
-11. **Pick a backing store.** Still open, and the one decision that needs
+11. **Pick a backing store.** Still open, and still the one decision that needs
     answering rather than building: a small service with a database, an object
-    store, or a hosted runtime's own storage. Whatever it is goes behind the
-    existing `ScenarioStore` port, with the browser copy kept as the offline
-    fallback.
-12. **Save, auto-save, restore.** Debounced writes, a revision per save so two
-    devices cannot silently overwrite each other, and a list of earlier versions
-    to restore from.
-13. **Named ledgers.** More than one scenario side by side — the household's
-    real one, and the variants worth keeping.
+    store, or a hosted runtime's own storage. Whatever it is implements the
+    `LedgerStore` interface that steps 12 and 13 were built against, with the
+    browser copy kept as the offline fallback.
+12. **Save, auto-save, restore.** *(done, in the browser)* Every change is
+    written through, and a version is kept per save — with a flurry of edits
+    inside a minute coalescing into one version rather than twenty, and a cap of
+    twenty versions per ledger. Restoring an earlier version saves a new one, so
+    nothing is lost by trying one.
+13. **Named ledgers.** *(done, in the browser)* More than one ledger side by
+    side, each with its own history: "save a copy" names a variant, the picker
+    switches between them, and the last ledger cannot be deleted. A name that is
+    taken is refused rather than overwritten.
 14. **A printable one-pager.** The month table, the bed and the tight days, for
     the conversation the tool is really for.
 

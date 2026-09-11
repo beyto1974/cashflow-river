@@ -8,7 +8,7 @@ import { applyWhatIf, isNeutral, NEUTRAL, type WhatIf } from '../domain/whatIf';
 import { compare, type Comparison } from '../domain/comparison';
 import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
-import type { ScenarioStore } from '../persistence/ports';
+import type { LedgerStore, Revision } from '../persistence/ports';
 
 export interface LedgerState {
   readonly scenario: Scenario;
@@ -26,6 +26,14 @@ export interface LedgerState {
   resetDials(): void;
   /** Writes the dials into the ledger as real edits. */
   keepDials(): void;
+  /** The named ledgers this browser holds, and the versions of this one. */
+  readonly ledgerNames: string[];
+  readonly ledgerName: string;
+  readonly history: Revision[];
+  selectLedger(name: string): void;
+  saveLedgerAs(name: string): boolean;
+  removeLedger(name: string): void;
+  restoreRevision(revision: number): void;
   /** The pinned baseline to compare against, and the comparison itself. */
   readonly baseline: Scenario | null;
   readonly comparison: Comparison | null;
@@ -60,7 +68,7 @@ export interface LedgerState {
  * store, and the forecast is derived rather than kept, so nothing can hold a
  * projection that no longer matches the ledger.
  */
-export function createLedgerState(store: ScenarioStore, sample: Scenario, now: PlainDate = today()): LedgerState {
+export function createLedgerState(store: LedgerStore, sample: Scenario, now: PlainDate = today()): LedgerState {
   const saved = store.load();
   /* A stored ledger is dated the day it was last saved. Roll it forward so the
      forecast starts today, folding what has happened since into the balance. */
@@ -74,6 +82,9 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   let editing = $state<string | null>(null);
   let dials = $state<WhatIf>({ ...NEUTRAL });
   let baseline = $state<Scenario | null>(null);
+  /* Bumped whenever storage changes under us, so the ledger list and the
+     version history are read again rather than cached stale. */
+  let storeVersion = $state(0);
 
   /* The dials are a layer: the forecast is of the scenario as dialled, while the
      ledger on screen stays the household's own figures. */
@@ -89,7 +100,20 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     scenario = next;
     fromSample = false;
     store.save(next);
+    storeVersion += 1;
     target = clampToHorizon(next, target);
+  }
+
+  function openCurrent(): void {
+    const saved = store.load();
+    scenario = saved ?? sample;
+    fromSample = saved === null;
+    target = project(scenario).low.date;
+    selected = null;
+    editing = null;
+    baseline = null;
+    dials = { ...NEUTRAL };
+    storeVersion += 1;
   }
   function mapLines(change: (line: Line) => Line): void {
     commit({ ...scenario, lines: scenario.lines.map(change) });
@@ -103,6 +127,37 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     get rhythm() { return rhythm; },
     get summary() { return summary; },
     get dials() { return dials; },
+    get ledgerNames() {
+      void storeVersion;
+      return store.names();
+    },
+    get ledgerName() {
+      void storeVersion;
+      return store.current();
+    },
+    get history() {
+      void storeVersion;
+      return store.history();
+    },
+
+    selectLedger(name) {
+      store.select(name);
+      openCurrent();
+    },
+    saveLedgerAs(name) {
+      const saved = store.saveAs(name, scenario);
+      if (saved) storeVersion += 1;
+      return saved;
+    },
+    removeLedger(name) {
+      store.remove(name);
+      openCurrent();
+    },
+    restoreRevision(revision) {
+      const restored = store.restore(revision);
+      if (restored) commit(restored);
+    },
+
     get baseline() { return baseline; },
     get comparison() { return comparison; },
 

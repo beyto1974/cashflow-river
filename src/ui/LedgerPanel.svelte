@@ -9,6 +9,7 @@
   import AddLine from './AddLine.svelte';
   import AccountsStrip from './AccountsStrip.svelte';
   import Dials from './Dials.svelte';
+  import Ledgers from './Ledgers.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -83,6 +84,16 @@
     <h2>Add a line</h2>
     <AddLine defaultDate={ledger.forecast.asOf} onadd={(line) => ledger.addLine(line)} />
   </section>
+
+  <Ledgers
+    names={ledger.ledgerNames}
+    current={ledger.ledgerName}
+    history={ledger.history}
+    onselect={(name) => ledger.selectLedger(name)}
+    onsaveas={(name) => ledger.saveLedgerAs(name)}
+    onremove={(name) => ledger.removeLedger(name)}
+    onrestore={(revision) => ledger.restoreRevision(revision)}
+  />
 
   <Dials
     dials={ledger.dials}

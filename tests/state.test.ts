@@ -2,17 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { plainDate } from '../src/domain/dates';
 import { euros } from '../src/domain/money';
 import type { Scenario } from '../src/domain/types';
-import type { ScenarioStore } from '../src/persistence/ports';
+import type { LedgerStore } from '../src/persistence/ports';
 import { createLedgerState } from '../src/ui/state.svelte';
 import { tinyScenario } from './fixtures';
 
-function recordingStore(initial: Scenario | null = null): ScenarioStore & { saves: Scenario[] } {
+function recordingStore(initial: Scenario | null = null): LedgerStore & { saves: Scenario[] } {
   const saves: Scenario[] = [];
+  let held = initial;
   return {
     saves,
-    load: () => initial,
-    save: (scenario) => void saves.push(scenario),
-    clear: () => void saves.push(tinyScenario())
+    load: () => held,
+    save: (scenario) => {
+      held = scenario;
+      saves.push(scenario);
+    },
+    clear: () => {
+      held = null;
+    },
+    history: () => saves.map((_, index) => ({ revision: index + 1, savedAt: '2026-09-11T09:00:00.000Z' })),
+    restore: (revision) => saves[revision - 1] ?? null,
+    names: () => ['My ledger'],
+    current: () => 'My ledger',
+    select: () => {},
+    saveAs: () => true,
+    remove: () => {}
   };
 }
 
