@@ -1,6 +1,7 @@
-# Two more readings, on the `sankey` branch
+# Two more readings: Flow and Month ends
 
-Both are experiments kept off `master` until they earn their place.
+Built on a branch and merged. Both are still on probation — see the notes at the
+end for what would have to improve if they are to stay.
 
 ## Flow — a Sankey of where it came from and where it went
 

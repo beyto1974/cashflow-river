@@ -24,9 +24,12 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   throw them away.
 - **Two rivers side by side.** Pin a baseline, change something, see what it did
   month by month.
-- **Three readings of the same forecast.** The river (monthly flow over the
-  balance it leaves), the balance on its own, or the grid — every day as one
-  cell, coloured by what the accounts close at that evening.
+- **Five readings of the same forecast.** The river (monthly flow over the
+  balance it leaves), the balance on its own, month-end bars (or the month's
+  total in or out), the grid — every day as one cell, coloured by what the
+  accounts close at that evening — and the flow, a Sankey of where the money came
+  from and went over a chosen period. See `docs/flow-views.md` for what the last
+  two are good and bad at.
 - **Named ledgers with a version history**, kept in the browser, exported to a
   JSON file or the clipboard and imported back — an import never overwrites.
 - **The file format, documented in the page**, generated from the constants the
