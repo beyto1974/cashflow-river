@@ -1,5 +1,7 @@
 # Moraview — Cashflow River
 
+**Open it: https://beyto1974.github.io/cashflow-river/**
+
 What does my money look like on a given future date? You describe what comes in
 and what goes out — recurring lines and planned one-offs — and the forecast runs
 day by day from today to the horizon.
@@ -17,8 +19,10 @@ one that was built out. See `docs/interfaces.md` for all three and why, and
 
 ## Where your figures live
 
-Everything is kept in this browser — no account, no service, nothing sent
-anywhere. The app says so the first time it opens, and says how to take a copy:
+Everything is kept in the browser you open it in — no account, no server, no
+analytics, nothing sent anywhere. The published page is a single static file:
+GitHub Pages serves it and never sees a figure. The app says so the first time
+it opens, and says how to take a copy:
 
 ![The note shown on a first open](docs/screens/first-open.png)
 
@@ -79,7 +83,9 @@ npm run build    # one self-contained HTML file in dist-app/
 ```
 
 `npm run build` emits `dist-app/index.html` with everything inlined — no server,
-no assets to copy. Open it, or put it behind any static host.
+no assets to copy. Open it, or put it behind any static host; that is exactly
+what the published page is, built by `.github/workflows/pages.yml` on every push
+to `master`.
 
 The end-to-end suite starts its own dev server and needs to be told which port
 to use, so it can never adopt one that is already serving something else. Two
