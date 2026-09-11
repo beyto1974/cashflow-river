@@ -38,6 +38,7 @@
       <span class="drop no-print">
         <ConfirmButton
           label="×"
+          describe={`Remove ${account.name}`}
           confirm={`Remove ${account.name}`}
           onconfirm={() => onremove(account.id)}
           disabled={accounts.length === 1}

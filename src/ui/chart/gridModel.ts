@@ -53,6 +53,8 @@ export interface GridModel {
   rows: GridRow[];
   underBuffer: number;
   buffer: Cents;
+  /** Months the grid is not showing, because a cell each would be thousands. */
+  monthsHidden: number;
 }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -62,7 +64,14 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
  * of month down. No aggregation — it is the same daily balance the bed panel
  * draws, read as a calendar instead of a line.
  */
-export function gridModel(forecast: Forecast, buffer: Cents): GridModel {
+/**
+ * A cell per day is one focusable button per day. Fifty years of forecast —
+ * which the file format allows — would be eighteen thousand of them, so the
+ * grid shows the first stretch and says how much it is leaving out.
+ */
+export const MAX_MONTHS = 60;
+
+export function gridModel(forecast: Forecast, buffer: Cents, maxMonths = MAX_MONTHS): GridModel {
   const byDate = new Map<PlainDate, Cell>();
   let underBuffer = 0;
 
@@ -78,12 +87,14 @@ export function gridModel(forecast: Forecast, buffer: Cents): GridModel {
     });
   }
 
-  const months: { month: MonthKey; label: string }[] = [];
+  const allMonths: { month: MonthKey; label: string }[] = [];
   for (const day of forecast.days) {
     const key = monthKey(day.date);
-    if (months[months.length - 1]?.month === key) continue;
-    months.push({ month: key, label: MONTH_NAMES[Number(key.slice(5)) - 1] ?? key });
+    if (allMonths[allMonths.length - 1]?.month === key) continue;
+    allMonths.push({ month: key, label: MONTH_NAMES[Number(key.slice(5)) - 1] ?? key });
   }
+  const months = allMonths.slice(0, Math.max(1, maxMonths));
+  const monthsHidden = allMonths.length - months.length;
 
   const years: { year: string; span: number }[] = [];
   for (const { month } of months) {
@@ -103,5 +114,5 @@ export function gridModel(forecast: Forecast, buffer: Cents): GridModel {
     });
   }
 
-  return { months, years, rows, underBuffer, buffer };
+  return { months, years, rows, underBuffer, buffer, monthsHidden };
 }

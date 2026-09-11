@@ -98,10 +98,11 @@ function earlierOf(a: PlainDate, b: PlainDate | undefined): PlainDate {
  * that simply keeps going.
  */
 export function lastOccurrence(line: RecurringLine): PlainDate | undefined {
+  /* A count of nothing means the line never falls due at all, so its own anchor
+     is the last word on it. */
+  if (line.times !== undefined && line.times <= 0) return line.anchor;
   const counted =
-    line.times !== undefined && line.times > 0
-      ? CADENCES[line.cadence].nth(line.anchor, line.times - 1)
-      : undefined;
+    line.times !== undefined ? CADENCES[line.cadence].nth(line.anchor, line.times - 1) : undefined;
   if (counted && line.to) return compareDates(counted, line.to) < 0 ? counted : line.to;
   return counted ?? line.to;
 }

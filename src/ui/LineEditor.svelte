@@ -107,6 +107,28 @@
     onpatch({ indexation: { ratePerYear, from } });
   }
 
+  /**
+   * Text rather than a number input on purpose: a number input reads an
+   * unparseable entry back as an empty string, which would quietly turn "six
+   * times" into "for ever".
+   */
+  function setTimes(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const text = input.value.trim();
+    const current = line.kind === 'recurring' && line.times ? String(line.times) : '';
+
+    if (text === '') {
+      onpatch({ times: undefined });
+      return;
+    }
+    const count = Number(text);
+    if (!Number.isInteger(count) || count < 1 || count > 600) {
+      input.value = current;
+      return;
+    }
+    onpatch({ times: count });
+  }
+
   function setRiseDate(event: Event): void {
     const input = event.currentTarget as HTMLInputElement;
     if (line.kind !== 'recurring' || !line.indexation) return;
@@ -180,26 +202,12 @@
     <label class="field">
       <span>How many times</span>
       <input
-        type="number"
-        min="1"
-        max="600"
+        type="text"
+        inputmode="numeric"
         class="mono"
         placeholder="for ever"
         value={line.times ?? ''}
-        onchange={(event) => {
-          const input = event.currentTarget as HTMLInputElement;
-          const text = input.value.trim();
-          if (text === '') {
-            onpatch({ times: undefined });
-            return;
-          }
-          const count = Number(text);
-          if (!Number.isInteger(count) || count < 1) {
-            input.value = line.kind === 'recurring' && line.times ? String(line.times) : '';
-            return;
-          }
-          onpatch({ times: count });
-        }}
+        onchange={setTimes}
       />
     </label>
     <label class="field">

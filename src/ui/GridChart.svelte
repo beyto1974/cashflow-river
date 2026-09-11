@@ -4,6 +4,7 @@
   import type { Forecast } from '../domain/forecast';
   import { BAND_MEANING, gridModel } from './chart/gridModel';
   import { shortDate } from './format';
+  import { trackPointer } from './pointerTracking';
 
   interface Props {
     forecast: Forecast;
@@ -44,9 +45,13 @@
 </script>
 
 <section class="frame">
-  <p class="caption">EVERY DAY, MONTHS ACROSS AND DAY OF MONTH DOWN</p>
+  <p class="caption">
+    EVERY DAY, MONTHS ACROSS AND DAY OF MONTH DOWN{grid.monthsHidden > 0
+      ? ` — FIRST ${grid.months.length} MONTHS, ${grid.monthsHidden} MORE NOT SHOWN`
+      : ''}
+  </p>
 
-  <div class="scroll">
+  <div class="scroll" use:trackPointer={{ move: () => {}, leave: () => (hovered = null) }}>
     <table aria-label="Projected closing balance for every day of the forecast">
       <thead>
         <tr>

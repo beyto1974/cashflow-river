@@ -77,3 +77,17 @@ describe('gridModel', () => {
     expect(grid.underBuffer).toBe(forecast.days.filter((day) => day.balance < scenario.buffer).length);
   });
 });
+
+describe('a very long horizon', () => {
+  it('shows the first stretch of months and says how many it is leaving out', () => {
+    const long = project({ ...scenario, horizonMonths: 240 });
+    const capped = gridModel(long, scenario.buffer);
+    expect(capped.months).toHaveLength(60);
+    expect(capped.monthsHidden).toBe(181); // 241 calendar months in a 240-month horizon
+    expect(capped.rows[0]?.cells).toHaveLength(60);
+  });
+
+  it('leaves a normal horizon alone', () => {
+    expect(grid.monthsHidden).toBe(0);
+  });
+});

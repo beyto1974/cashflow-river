@@ -172,11 +172,24 @@ describe('applyPatch keeps a range consistent with its amount', () => {
     expect(patched.range).toEqual({ low: euros(-100), high: euros(-195) });
   });
 
-  it('keeps the range and the payment rule through a change of kind', () => {
-    const withRule = { ...guessed, dueRule: 'next-working-day' as const, to: plainDate('2028-01-01') };
-    const asPlanned = switchKind(withRule, 'planned', plainDate('2026-09-10'));
-    expect(asPlanned).toMatchObject({ kind: 'planned', range: guessed.range, dueRule: 'next-working-day' });
-    expect(asPlanned).not.toHaveProperty('to');
-    expect(asPlanned).not.toHaveProperty('cadence');
+  it('keeps what a one-off can carry and drops what only a repeat can', () => {
+    const withEverything = {
+      ...guessed,
+      dueRule: 'next-working-day' as const,
+      to: plainDate('2028-01-01'),
+      times: 6,
+      indexation: { ratePerYear: 200, from: plainDate('2027-01-01') }
+    };
+    const asPlanned = switchKind(withEverything, 'planned', plainDate('2026-09-10'));
+    expect(asPlanned).toMatchObject({ kind: 'planned', range: guessed.range });
+    for (const field of ['to', 'times', 'cadence', 'anchor', 'dueRule', 'indexation']) {
+      expect(asPlanned).not.toHaveProperty(field);
+    }
+  });
+
+  it('does not smuggle a repeat count back through a round trip', () => {
+    const counted = { ...guessed, times: 6 };
+    const back = switchKind(switchKind(counted, 'planned', plainDate('2026-09-10')), 'recurring', plainDate('2026-09-10'));
+    expect(back).not.toHaveProperty('times');
   });
 });

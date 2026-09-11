@@ -5,11 +5,13 @@
     /** What it says once it wants confirming — name the thing being destroyed. */
     confirm: string;
     onconfirm: () => void;
+    /** Spoken name, for a button whose label is a symbol. */
+    describe?: string | undefined;
     disabled?: boolean;
-    title?: string;
+    title?: string | undefined;
     small?: boolean;
   }
-  const { label, confirm, onconfirm, disabled = false, title, small = false }: Props = $props();
+  const { label, confirm, onconfirm, describe, disabled = false, title, small = false }: Props = $props();
 
   let asking = $state(false);
   let timer = 0;
@@ -27,6 +29,11 @@
     timer = 0;
   }
   $effect(() => disarm);
+  /* A guarded action must stay guarded once armed: two rows can both be armed,
+     and confirming one can be what disables the other. */
+  $effect(() => {
+    if (disabled) disarm();
+  });
 </script>
 
 {#if asking}
@@ -35,9 +42,10 @@
       type="button"
       class="button danger"
       class:small
+      {disabled}
       onclick={() => {
         disarm();
-        onconfirm();
+        if (!disabled) onconfirm();
       }}
     >
       {confirm}
@@ -45,7 +53,15 @@
     <button type="button" class="button ghost" class:small onclick={disarm}>Keep it</button>
   </span>
 {:else}
-  <button type="button" class="button ghost" class:small {disabled} {title} onclick={arm}>{label}</button>
+  <button
+    type="button"
+    class="button ghost"
+    class:small
+    {disabled}
+    {title}
+    aria-label={describe ?? undefined}
+    onclick={arm}>{label}</button
+  >
 {/if}
 
 <style>

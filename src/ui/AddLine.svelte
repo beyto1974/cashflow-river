@@ -43,7 +43,9 @@
       amount: direction === 'in' ? size : -size,
       category
     };
-    const count = times === null ? undefined : times;
+    /* A one-off has no count at all, so a stale number left behind by switching
+       away from "repeats" must not block the form with a field nobody can see. */
+    const count = repeats === 'once' || times === null ? undefined : times;
     if (count !== undefined && (!Number.isInteger(count) || count < 1)) {
       error = 'How many times must be a whole number, or left empty to repeat for ever';
       return;

@@ -49,7 +49,9 @@ export function switchKind(line: Line, kind: Line['kind'], fallbackDate: PlainDa
   /* Built by dropping the other kind's fields rather than by listing the shared
      ones, so a new optional field is carried across instead of being lost. */
   const shared = { ...line } as Record<string, unknown>;
-  for (const field of ['kind', 'cadence', 'anchor', 'from', 'to', 'date']) delete shared[field];
+  for (const field of ['kind', 'cadence', 'anchor', 'from', 'to', 'times', 'dueRule', 'indexation', 'date']) {
+    delete shared[field];
+  }
 
   return kind === 'planned'
     ? ({ ...shared, kind: 'planned', date: isRecurring(line) ? line.anchor : fallbackDate } as unknown as Line)

@@ -16,11 +16,13 @@
 
 <section class="group">
   <div class="head">
-    <button type="button" class="fold" aria-expanded={!folded} onclick={ontoggle}>
-      <span class="chevron" aria-hidden="true">{folded ? '▸' : '▾'}</span>
-      <h2>{title}</h2>
-      {#if count !== undefined}<span class="count">{count}</span>{/if}
-    </button>
+    <h2>
+      <button type="button" class="fold" aria-expanded={!folded} onclick={ontoggle}>
+        <span class="chevron" aria-hidden="true">{folded ? '▸' : '▾'}</span>
+        {title}
+        {#if count !== undefined}<span class="count">{count}</span>{/if}
+      </button>
+    </h2>
     {#if note}<span class="note mono">{note}</span>{/if}
   </div>
   {#if !folded}
@@ -49,7 +51,7 @@
     color: inherit;
     text-align: left;
   }
-  .fold:hover h2 {
+  .fold:hover {
     text-decoration: underline;
   }
   h2 {
@@ -57,6 +59,9 @@
     font-size: 1.15rem;
     font-weight: 600;
     margin: 0 0 6px;
+  }
+  .fold {
+    font: inherit;
   }
   .chevron {
     color: var(--ink-3);
