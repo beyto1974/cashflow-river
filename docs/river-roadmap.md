@@ -60,7 +60,7 @@ that reads it.
    and left out of the group subtotals — the subtotals now count exactly what
    the forecast counts. A line that has not started yet says when it does.
 
-## M3 — Answer "so what"
+## M3 — Answer "so what" — **done**
 
 6. **Stretches, not days.** *(done)* The days below a line are grouped into
    stretches with a start, an end, the deepest day and how far short it goes.
@@ -82,8 +82,6 @@ that reads it.
     anything — a line, a dial, a date — and the two are compared: one line on
     what it did to the end of the forecast and to the tightest point, plus a
     per-month strip of where each month now ends against the baseline.
-
-## M3 — Answer "so what" — **done**
 
 ## M4 — Keep it, share it
 
