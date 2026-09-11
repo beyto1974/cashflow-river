@@ -2,6 +2,7 @@
   import type { Revision } from '../persistence/ports';
   import FormatDocs from './FormatDocs.svelte';
   import ConfirmButton from './ConfirmButton.svelte';
+  import { canSaveFiles, saveFile } from './save';
 
   interface Props {
     names: string[];
@@ -39,16 +40,25 @@
     return `moraview-${new Date().toISOString().slice(0, 10)}.json`;
   }
 
-  /** A download where the page is allowed one, the clipboard where it is not. */
-  function download(): void {
+  /* Where the page is not allowed to hand over a file at all, the button goes
+     and the clipboard is the way out. */
+  let fileSaving = $state(true);
+  $effect(() => {
+    void canSaveFiles().then((allowed) => (fileSaving = allowed));
+  });
+
+  async function download(): Promise<void> {
     transferError = null;
-    const url = URL.createObjectURL(new Blob([onexport()], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName();
-    link.click();
-    URL.revokeObjectURL(url);
-    transferNote = `Saved as ${fileName()}`;
+    transferNote = null;
+    const name = fileName();
+    const outcome = await saveFile(name, onexport());
+
+    if (outcome === 'saved') transferNote = `Saved as ${name}`;
+    else if (outcome === 'declined') transferNote = 'Not saved.';
+    else {
+      fileSaving = false;
+      transferError = 'This page is not allowed to save files here. Copy it as text instead.';
+    }
   }
 
   async function copy(): Promise<void> {
@@ -123,8 +133,10 @@
 
   <div class="transfer">
     <p class="eyebrow">Keep a copy off this browser</p>
-    <div class="row">
-      <button type="button" class="button ghost" onclick={download}>Export a file</button>
+    <div class="row" class:single={!fileSaving}>
+      {#if fileSaving}
+        <button type="button" class="button ghost" onclick={download}>Export a file</button>
+      {/if}
       <button type="button" class="button ghost" onclick={copy}>Copy as text</button>
     </div>
     <div class="row">
@@ -200,6 +212,9 @@
     grid-template-columns: 1fr 1fr;
     gap: 6px;
     margin-top: 6px;
+  }
+  .transfer .row.single {
+    grid-template-columns: 1fr;
   }
   .file {
     position: relative;

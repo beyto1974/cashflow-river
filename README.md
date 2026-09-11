@@ -24,8 +24,9 @@ one being built out. See `docs/interfaces.md` for all three and why, and
   throw them away.
 - **Two rivers side by side.** Pin a baseline, change something, see what it did
   month by month.
-- **Two readings of the same forecast.** The river, or the grid — every day of
-  the forecast as one cell, coloured by what the accounts close at that evening.
+- **Three readings of the same forecast.** The river (monthly flow over the
+  balance it leaves), the balance on its own, or the grid — every day as one
+  cell, coloured by what the accounts close at that evening.
 - **Named ledgers with a version history**, kept in the browser, exported to a
   JSON file or the clipboard and imported back — an import never overwrites.
 - **The file format, documented in the page**, generated from the constants the
@@ -35,6 +36,8 @@ one being built out. See `docs/interfaces.md` for all three and why, and
 - **Readable with a screen reader**: the answer as a sentence, one status region
   for what the app did on its own, headings for the sections, named controls,
   and keyboard walks through both the month columns and the grid's days.
+
+**Published:** https://claude.ai/code/artifact/be300076-7a3c-4cb6-bfe5-660988ab67e6
 
 ## Run it
 
@@ -47,6 +50,7 @@ npm run bench    # what a change costs
 npm run e2e      # Playwright against a real browser
 npm run verify   # all three checks, in order
 npm run build    # one self-contained HTML file in dist-app/
+npm run build:artifact  # …and the same file without its document wrapper
 ```
 
 The end-to-end suite starts its own dev server. Two environment variables:

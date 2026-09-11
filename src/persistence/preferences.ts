@@ -3,7 +3,9 @@
  * sections of the ledger were folded. Per browser, not per ledger — it is about
  * the window, not the household's figures, so it is kept apart from them.
  */
-export type ForecastView = 'river' | 'grid';
+export type ForecastView = 'river' | 'balance' | 'grid';
+
+const VIEWS: ForecastView[] = ['river', 'balance', 'grid'];
 
 export interface Preferences {
   view: ForecastView;
@@ -28,7 +30,7 @@ export function createPreferenceStore(storage: Storage | undefined): PreferenceS
         if (!raw) return DEFAULT_PREFERENCES;
         const parsed = JSON.parse(raw) as Partial<Preferences>;
         return {
-          view: parsed.view === 'grid' ? 'grid' : 'river',
+          view: VIEWS.includes(parsed.view as ForecastView) ? (parsed.view as ForecastView) : 'river',
           collapsed: Array.isArray(parsed.collapsed)
             ? parsed.collapsed.filter((entry): entry is string => typeof entry === 'string')
             : []

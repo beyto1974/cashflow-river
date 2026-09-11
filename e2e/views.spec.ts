@@ -120,3 +120,40 @@ test.describe('fixes and comparison', () => {
     await expect(page.getByRole('button', { name: 'Pin this as the baseline' })).toBeVisible();
   });
 });
+
+test.describe('the balance-only reading', () => {
+  test('drops the bars and keeps the line, the band and the buffer', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Balance', exact: true }).click();
+
+    await expect(page.locator('.bed-line')).toBeVisible();
+    await expect(page.locator('.cone')).toBeVisible();
+    await expect(page.locator('.buffer-label')).toBeVisible();
+    expect(await page.locator('.frame rect[rx="1.5"]').count()).toBe(0);
+    await expect(page.locator('.legend')).toContainText('the balance, day by day');
+    await expect(page.locator('.legend')).not.toContainText('net for the month');
+  });
+
+  test('still reads a day out when the needle is dragged', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Balance', exact: true }).click();
+    const frame = page.locator('.frame').first();
+    const box = (await frame.boundingBox())!;
+    const before = await page.getByLabel('Date to read the balance on').inputValue();
+
+    const y = box.y + box.height * 0.5;
+    await page.mouse.move(box.x + box.width * 0.35, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.75, y, { steps: 6 });
+    await page.mouse.up();
+
+    await expect(page.getByLabel('Date to read the balance on')).not.toHaveValue(before);
+  });
+
+  test('is remembered like the others', async ({ page }) => {
+    await openFresh(page);
+    await page.getByRole('button', { name: 'Balance', exact: true }).click();
+    await page.reload();
+    await expect(page.locator('.views button.on')).toHaveText('Balance');
+  });
+});

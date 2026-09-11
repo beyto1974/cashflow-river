@@ -153,3 +153,42 @@ describe('the bed panel shows the guesses and the red', () => {
     expect(flush.bed.redZone).toBeNull();
   });
 });
+
+describe('the balance-only reading', () => {
+  const bedOnly = riverGeometry({
+    forecast,
+    months: byMonth(forecast),
+    width: 900,
+    target: plainDate('2027-03-02'),
+    panels: 'bed'
+  });
+
+  it('draws no monthly bars at all', () => {
+    expect(bedOnly.flow.columns.every((column) => column.segments.length === 0)).toBe(true);
+    expect(bedOnly.flow.ticks).toEqual([]);
+    expect(bedOnly.flow.height).toBe(0);
+  });
+
+  it('keeps a column per month, so hovering and picking still work', () => {
+    expect(bedOnly.flow.columns).toHaveLength(geometry.flow.columns.length);
+    expect(bedOnly.flow.columns[0]?.slotWidth).toBeGreaterThan(0);
+  });
+
+  it('is shorter than the two-panel reading, and starts the bed near the top', () => {
+    expect(bedOnly.height).toBeLessThan(geometry.height);
+    expect(bedOnly.bed.top).toBeLessThan(geometry.bed.top);
+    expect(bedOnly.bed.top).toBeLessThan(60);
+  });
+
+  it('puts the month labels under the bed rather than between the panels', () => {
+    expect(bedOnly.flow.labelY).toBeGreaterThan(bedOnly.bed.top + bedOnly.bed.height);
+    expect(bedOnly.flow.labelY).toBeLessThanOrEqual(bedOnly.height);
+  });
+
+  it('still marks the buffer, the low point, the needle and the red', () => {
+    expect(bedOnly.bed.bufferY).toBeGreaterThanOrEqual(bedOnly.bed.top);
+    expect(bedOnly.bed.linePath.startsWith('M')).toBe(true);
+    expect(bedOnly.bed.negativeAreas.length).toBeGreaterThan(0);
+    expect(bedOnly.bed.needle.x).toBeGreaterThan(bedOnly.pad.left);
+  });
+});

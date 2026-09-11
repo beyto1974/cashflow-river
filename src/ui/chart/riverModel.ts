@@ -12,6 +12,11 @@ export interface RiverInput {
   target: PlainDate;
   /** The edges of the guesses, one entry per day, when any line has a range. */
   band?: BandDay[];
+  /**
+   * 'both' draws the monthly flow above the balance it leaves; 'bed' draws the
+   * balance on its own, for reading the line without the bars.
+   */
+  panels?: 'both' | 'bed';
 }
 
 export interface Segment {
@@ -96,13 +101,15 @@ function clamp(value: number, low: number, high: number): number {
  * balance those flows leave behind. Nothing here touches the DOM, so it can be
  * checked on its own.
  */
-export function riverGeometry({ forecast, months, width, target, band }: RiverInput): RiverGeometry {
+export function riverGeometry({ forecast, months, width, target, band, panels = 'both' }: RiverInput): RiverGeometry {
   const narrow = width < 620;
   const tiny = width < 420;
+  const bedOnly = panels === 'bed';
   const pad = { left: narrow ? 46 : 60, right: 12, top: 18 };
-  const flowHeight = tiny ? 120 : narrow ? 168 : 214;
-  const bedHeight = tiny ? 76 : narrow ? 92 : 116;
-  const axisBand = 42;
+  const flowHeight = bedOnly ? 0 : tiny ? 120 : narrow ? 168 : 214;
+  /* With the bars gone the line has the room to itself, so it gets more of it. */
+  const bedHeight = bedOnly ? (tiny ? 150 : 210) : tiny ? 76 : narrow ? 92 : 116;
+  const axisBand = bedOnly ? 4 : 42;
 
   const inner = Math.max(width - pad.left - pad.right, 40);
   const slotWidth = inner / Math.max(months.length, 1);
@@ -125,7 +132,7 @@ export function riverGeometry({ forecast, months, width, target, band }: RiverIn
     let up = midY;
     let down = midY;
     const segments: Segment[] = [];
-    for (const band of BANDS) {
+    for (const band of bedOnly ? [] : BANDS) {
       const amount = totals.get(band.key) ?? 0;
       if (amount === 0) continue;
       const height = Math.abs(amount) * flowScale;
@@ -159,7 +166,7 @@ export function riverGeometry({ forecast, months, width, target, band }: RiverIn
 
   const step = niceStep(peak / 2);
   const ticks: Tick[] = [];
-  for (let value = step; value <= peak; value += step) {
+  for (let value = step; !bedOnly && value <= peak; value += step) {
     for (const direction of [1, -1]) {
       ticks.push({
         value: value * direction,
@@ -252,14 +259,15 @@ export function riverGeometry({ forecast, months, width, target, band }: RiverIn
 
   return {
     width,
-    height: bedTop + bedHeight + 20,
+    height: bedTop + bedHeight + (bedOnly ? 22 : 20),
     pad,
     flow: {
       height: flowHeight,
       midY,
       columns,
       ticks,
-      labelY: pad.top + flowHeight + 18
+      /* Between the panels when both are drawn, under the bed when it is alone. */
+      labelY: bedOnly ? bedTop + bedHeight + 15 : pad.top + flowHeight + 18
     },
     bed: {
       top: bedTop,

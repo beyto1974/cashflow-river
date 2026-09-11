@@ -181,22 +181,16 @@
 
     <main>
       <div class="views no-print" role="group" aria-label="How to read the forecast">
-        <button
-          type="button"
-          class:on={ledger.view === 'river'}
-          aria-pressed={ledger.view === 'river'}
-          onclick={() => ledger.setView('river')}
-        >
-          River
-        </button>
-        <button
-          type="button"
-          class:on={ledger.view === 'grid'}
-          aria-pressed={ledger.view === 'grid'}
-          onclick={() => ledger.setView('grid')}
-        >
-          Grid
-        </button>
+        {#each [['river', 'River'], ['balance', 'Balance'], ['grid', 'Grid']] as [key, label] (key)}
+          <button
+            type="button"
+            class:on={ledger.view === key}
+            aria-pressed={ledger.view === key}
+            onclick={() => ledger.setView(key as 'river' | 'balance' | 'grid')}
+          >
+            {label}
+          </button>
+        {/each}
       </div>
 
       <div class="chart-hold">
@@ -204,6 +198,7 @@
         <GridChart forecast={ledger.forecast} target={ledger.target} onpick={(date) => ledger.setTarget(date)} />
       {:else}
       <RiverChart
+        panels={ledger.view === 'balance' ? 'bed' : 'both'}
         forecast={ledger.forecast}
         months={ledger.months}
         target={ledger.target}
@@ -214,10 +209,14 @@
       />
 
       <div class="legend">
-        {#each BANDS as band (band.key)}
-          <span><i style:background={band.color}></i>{band.label}</span>
-        {/each}
-        <span><i class="net-key"></i>net for the month</span>
+        {#if ledger.view !== 'balance'}
+          {#each BANDS as band (band.key)}
+            <span><i style:background={band.color}></i>{band.label}</span>
+          {/each}
+          <span><i class="net-key"></i>net for the month</span>
+        {:else}
+          <span><i class="line-key"></i>the balance, day by day</span>
+        {/if}
         <span class="drag-hint no-print">drag along the lower panel to read any day</span>
         {#if ledger.banded.hasRange}
           <span><i class="cone-key"></i>where the guesses could put it</span>
@@ -478,6 +477,11 @@
   .legend .drag-hint {
     color: var(--ink-3);
     font-style: italic;
+  }
+  .legend i.line-key {
+    height: 2px;
+    border-radius: 0;
+    background: var(--accent);
   }
   .legend i.cone-key {
     background: color-mix(in oklab, var(--accent) 30%, transparent);

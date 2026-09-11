@@ -17,8 +17,11 @@
     onpick: (date: PlainDate) => void;
     /** The edges of the guesses, drawn as a band around the likely line. */
     band?: BandDay[] | undefined;
+    /** 'bed' leaves the monthly bars off and gives the balance the whole frame. */
+    panels?: 'both' | 'bed';
   }
-  const { forecast, months, target, selectedMonth, onselect, onpick, band }: Props = $props();
+  const { forecast, months, target, selectedMonth, onselect, onpick, band, panels = 'both' }: Props = $props();
+  const bedOnly = $derived(panels === 'bed');
   let dragging = $state(false);
 
   let frameWidth = $state(880);
@@ -32,6 +35,7 @@
       months,
       width: Math.max(frameWidth - 26, 320),
       target,
+      panels,
       ...(band ? { band } : {})
     })
   );
@@ -120,25 +124,29 @@
     aria-describedby="river-summary"
     aria-label="Monthly flow and the balance it leaves"
   >
-    <text x={geometry.width - geometry.pad.right} y="13" text-anchor="end" class="caption">
-      MONTHLY FLOW — IN ABOVE, OUT BELOW
-    </text>
+    {#if !bedOnly}
+      <text x={geometry.width - geometry.pad.right} y="13" text-anchor="end" class="caption">
+        MONTHLY FLOW — IN ABOVE, OUT BELOW
+      </text>
+    {/if}
 
     {#each geometry.flow.ticks as tick (tick.value)}
       <line x1={geometry.pad.left} x2={geometry.width - geometry.pad.right} y1={tick.y} y2={tick.y} class="hair" />
       <text x={geometry.pad.left - 7} y={tick.y + 3.5} text-anchor="end" class="tick mono">{tick.label}</text>
     {/each}
 
-    <line
-      x1={geometry.pad.left}
-      x2={geometry.width - geometry.pad.right}
-      y1={geometry.flow.midY}
-      y2={geometry.flow.midY}
-      class="axis"
-    />
+    {#if !bedOnly}
+      <line
+        x1={geometry.pad.left}
+        x2={geometry.width - geometry.pad.right}
+        y1={geometry.flow.midY}
+        y2={geometry.flow.midY}
+        class="axis"
+      />
+    {/if}
 
     {#each geometry.flow.columns as column, index (column.month)}
-      {#if column.month === selectedMonth}
+      {#if column.month === selectedMonth && !bedOnly}
         <rect
           x={column.x - 2}
           y={geometry.pad.top + 4}
@@ -152,7 +160,9 @@
           <title>{column.month} · {segment.label} {formatSigned(segment.amount, { cents: false })}</title>
         </rect>
       {/each}
-      <line x1={column.x - 1.5} x2={column.x + column.width + 1.5} y1={column.netY} y2={column.netY} class="net" />
+      {#if !bedOnly}
+        <line x1={column.x - 1.5} x2={column.x + column.width + 1.5} y1={column.netY} y2={column.netY} class="net" />
+      {/if}
       {#if index % labelEvery === 0}
         <text
           x={column.slotX + column.slotWidth / 2}
@@ -167,7 +177,7 @@
     {/each}
 
     <text x={geometry.width - geometry.pad.right} y={geometry.bed.top - 7} text-anchor="end" class="caption">
-      THE BED IT LEAVES — BALANCE
+      {bedOnly ? 'BALANCE, DAY BY DAY' : 'THE BED IT LEAVES — BALANCE'}
     </text>
     <text x={geometry.pad.left - 7} y={geometry.bed.highLabel.y} text-anchor="end" class="tick mono">
       {geometry.bed.highLabel.text}

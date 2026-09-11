@@ -13,7 +13,8 @@
     "bench": "vite-node scripts/bench.mjs",
     "e2e": "playwright test",
     "e2e:report": "playwright show-report",
-    "verify": "npm run check && npm test && npm run e2e"
+    "verify": "npm run check && npm test && npm run e2e",
+    "build:artifact": "npm run build && node scripts/artifact.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

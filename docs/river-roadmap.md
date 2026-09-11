@@ -114,6 +114,8 @@ that reads it.
 - **The Runway Grid as a second reading**, toggled over the chart panel: every
   day of the forecast as a cell, bands read off the buffer, hover and click and
   arrow keys.
+- **A balance-only reading**, for the line without the monthly bars: the same
+  panel with the whole frame to itself, its band, its buffer and its needle.
 - **Confirm before deleting** a line, an account, a ledger, or a whole ledger's
   worth of work — in place, naming what goes, disarming after twelve seconds.
 - **Repeat a fixed number of times** as well as until a date.
@@ -170,8 +172,16 @@ that reads it.
     on the next for font reasons alone, and a suite that cries wolf gets
     ignored. The layout is asserted instead — no sideways scroll, the answer in
     view, the chart inside the viewport, the grid scrolling in its own box.
-19. **Publish.** `npm run build` already emits one self-contained file; wire it
-    to a published page so the household can open it without a dev server.
+19. **Publish.** *(done)* `npm run build:artifact` emits the single-file build
+    and then strips its document wrapper, because the host supplies doctype,
+    html, head and body and wraps whatever it is given. Published at
+    https://claude.ai/code/artifact/be300076-7a3c-4cb6-bfe5-660988ab67e6
+
+    Two things the viewer changes, both handled rather than worked around: a
+    page there is never allowed to start a download itself, so the export asks
+    the host to hand the file over and the button disappears where neither route
+    exists; and storage is per-artifact-origin, so a household's ledger on the
+    published page is its own, separate from any other copy.
 20. **Date the example relative to today.** *(done)* `sampleScenario(today)`
     generates every anchor, one-off and bank holiday from the day it is opened,
     so the same story shows whenever somebody looks: tight within a couple of
