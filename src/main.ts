@@ -3,7 +3,7 @@ import { mount } from 'svelte';
 import App from './ui/App.svelte';
 import { createLedgerStore } from './persistence/ledgerStore';
 import { createPreferenceStore } from './persistence/preferences';
-import { sampleScenario } from './data/sample';
+import { emptyScenario, sampleScenario } from './data/sample';
 import { today } from './domain/dates';
 import { createLedgerState } from './ui/state.svelte';
 
@@ -18,6 +18,7 @@ const storage = ((): Storage | undefined => {
 const ledger = createLedgerState(
   createLedgerStore(storage),
   sampleScenario(today()),
+  emptyScenario(today()),
   today(),
   createPreferenceStore(storage)
 );

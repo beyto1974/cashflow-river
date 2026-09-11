@@ -87,6 +87,8 @@ export interface LedgerState {
   /** Applies the change to the figures it was searched against, dials included. */
   applyFix(fix: Fix): void;
   reset(): void;
+  /** Clears the ledger to one empty account and no lines. */
+  startEmpty(): void;
 }
 
 /**
@@ -97,6 +99,7 @@ export interface LedgerState {
 export function createLedgerState(
   store: LedgerStore,
   sample: Scenario,
+  empty: Scenario,
   now: PlainDate = today(),
   preferences: PreferenceStore = { load: () => DEFAULT_PREFERENCES, save: () => {} }
 ): LedgerState {
@@ -383,6 +386,16 @@ export function createLedgerState(
       dials = { ...NEUTRAL };
       storeVersion += 1;
       announce('Back to the example household.');
+    },
+
+    startEmpty() {
+      commit(empty);
+      target = project(scenario).low.date;
+      selected = null;
+      editing = null;
+      baseline = null;
+      dials = { ...NEUTRAL };
+      announce('Started an empty ledger.');
     }
   };
 }

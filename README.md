@@ -61,6 +61,10 @@ it opens, and says how to take a copy:
   [app-phone.png](docs/screens/app-phone.png).
 - **Named ledgers with a version history**, kept in the browser, exported to a
   JSON file or the clipboard and imported back — an import never overwrites.
+- **The example is not in the way.** Type over it and the first change makes the
+  ledger yours, or clear the lot from the gear — *Clear it and start from
+  nothing* leaves one empty account and no lines, with the version before it
+  still restorable.
 - **The file format, documented in the page**, generated from the constants the
   importer checks against: paste it to a model with your own situation and
   import what it writes.

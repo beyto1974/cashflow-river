@@ -160,3 +160,20 @@ function bankHolidays(today: PlainDate, months: number): PlainDate[] {
   }
   return days.filter((date) => date >= today);
 }
+
+/**
+ * A ledger with nothing in it: one account at nothing, no lines, the same
+ * horizon. For a household that would rather type its own figures than delete
+ * somebody else's.
+ */
+export function emptyScenario(today: PlainDate = todayDate()): Scenario {
+  return {
+    label: 'My household',
+    asOf: today,
+    horizonMonths: 30,
+    buffer: euros(1000),
+    accounts: [{ id: 'current', name: 'Current account', balance: 0, inForecast: true }],
+    lines: [],
+    holidays: bankHolidays(today, 30)
+  };
+}

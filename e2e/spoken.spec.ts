@@ -4,7 +4,9 @@ import { dateInForecast, openFresh, openSettings, readOn, setAmount } from './he
 test.describe('what a screen reader gets', () => {
   test('the answer is spoken as a sentence, not as scattered numbers', async ({ page }) => {
     await openFresh(page);
-    const spoken = page.locator('p[aria-live="polite"]').filter({ hasText: 'the accounts hold' });
+    /* Found by its own hook, not by the text: the region settles after a beat,
+       and a text filter would have nothing to match until it does. */
+    const spoken = page.locator('[data-spoken="answer"]');
     await expect(spoken).toContainText(/On \w+ \d+ \w+ \d{4} the accounts hold/);
     await expect(spoken).toContainText('somewhere between');
 

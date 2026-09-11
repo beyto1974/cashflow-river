@@ -6,6 +6,9 @@ import type { LedgerStore } from '../src/persistence/ports';
 import { createLedgerState } from '../src/ui/state.svelte';
 import { tinyScenario } from './fixtures';
 
+const emptyFixture = (): Scenario =>
+  tinyScenario({ label: 'Empty', lines: [], accounts: [{ id: 'a', name: 'Current', balance: 0, inForecast: true }] });
+
 function recordingStore(initial: Scenario | null = null): LedgerStore & { saves: Scenario[] } {
   const saves: Scenario[] = [];
   let held = initial;
@@ -33,7 +36,7 @@ describe('ledger state', () => {
   it('rolls a stored ledger forward to today and saves the roll', () => {
     const stored = tinyScenario({ label: 'Mine' }); // dated 2026-09-10
     const store = recordingStore(stored);
-    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-10-05'));
+    const ledger = createLedgerState(store, tinyScenario(), emptyFixture(), plainDate('2026-10-05'));
 
     expect(ledger.scenario.asOf).toBe('2026-10-05');
     // salary on 27 September and the boiler service on 2 October have happened
@@ -42,12 +45,12 @@ describe('ledger state', () => {
   });
 
   it('opens with the needle on the lowest point rather than a fixed date', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     expect(ledger.target).toBe(ledger.forecast.low.date);
   });
 
   it('changes a line between repeating and one-off without keeping stale fields', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.updateLine('pay', { to: plainDate('2027-01-01') } as never);
     ledger.changeKind('pay', 'planned');
     ledger.changeKind('pay', 'recurring');
@@ -58,21 +61,21 @@ describe('ledger state', () => {
   });
 
   it('opens on the example when nothing is stored, and says so', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     expect(ledger.isSample).toBe(true);
     expect(ledger.forecast.opening).toBe(euros(1500));
   });
 
   it('prefers what was stored', () => {
     const stored = tinyScenario({ label: 'Mine', buffer: euros(50) });
-    const ledger = createLedgerState(recordingStore(stored), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(stored), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     expect(ledger.isSample).toBe(false);
     expect(ledger.scenario.label).toBe('Mine');
   });
 
   it('writes every change through to the store and reprojects', () => {
     const store = recordingStore();
-    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(store, tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     const before = ledger.forecast.days.at(-1)!.balance;
 
     ledger.updateLine('pay', { amount: euros(3000) });
@@ -83,7 +86,7 @@ describe('ledger state', () => {
   });
 
   it('keeps the read-out date inside the horizon when the horizon shrinks', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.setTarget(plainDate('2027-02-01'));
     expect(ledger.target).toBe('2027-02-01');
 
@@ -93,7 +96,7 @@ describe('ledger state', () => {
   });
 
   it('adds, mutes and removes lines', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.addLine({
       kind: 'planned', id: 'new', label: 'Tyres', amount: euros(-320),
       category: 'transport', date: plainDate('2026-10-10')
@@ -110,7 +113,7 @@ describe('ledger state', () => {
   });
 
   it('folds what has happened when the start date is moved forward', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     const opening = ledger.forecast.opening;
 
     ledger.setAsOf(plainDate('2026-10-05'));
@@ -122,7 +125,7 @@ describe('ledger state', () => {
   });
 
   it('moves the start date back without inventing money', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     const opening = ledger.forecast.opening;
     ledger.setAsOf(plainDate('2026-08-01'));
     expect(ledger.scenario.asOf).toBe('2026-08-01');
@@ -131,7 +134,7 @@ describe('ledger state', () => {
 
   it('carries every ledger out and back in again', () => {
     const store = recordingStore();
-    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(store, tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.updateLine('pay', { label: 'Wages' });
 
     const text = ledger.exportAll();
@@ -141,7 +144,7 @@ describe('ledger state', () => {
   });
 
   it('hands out a frozen ledger, so nothing can go stale behind the memo', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     expect(Object.isFrozen(ledger.scenario)).toBe(true);
     expect(Object.isFrozen(ledger.scenario.lines[0])).toBe(true);
     expect(() => {
@@ -153,7 +156,7 @@ describe('ledger state', () => {
   });
 
   it('will not remove the last account', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.removeAccount('a');
     expect(ledger.scenario.accounts).toHaveLength(1);
   });
@@ -161,14 +164,14 @@ describe('ledger state', () => {
   it('rolls a ledger forward when switching to it, not only on first load', () => {
     const stored = tinyScenario({ label: 'Mine' }); // dated 2026-09-10
     const store = recordingStore(stored);
-    const ledger = createLedgerState(store, tinyScenario(), plainDate('2026-10-05'));
+    const ledger = createLedgerState(store, tinyScenario(), emptyFixture(), plainDate('2026-10-05'));
 
     ledger.selectLedger('My ledger');
     expect(ledger.scenario.asOf).toBe('2026-10-05');
   });
 
   it('drops the dials, the baseline and the history when it goes back to the example', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.updateLine('pay', { label: 'Wages' });
     ledger.setDial('income', 0.8);
     ledger.pinBaseline();
@@ -181,7 +184,7 @@ describe('ledger state', () => {
   });
 
   it('applies a fix to the figures it was searched against', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.setDial('income', 0.5);
     const fixes = ledger.fixes();
     if (fixes.length > 0) {
@@ -193,8 +196,23 @@ describe('ledger state', () => {
     }
   });
 
+  it('clears to an empty ledger when asked, keeping a version behind it', () => {
+    const store = recordingStore();
+    const ledger = createLedgerState(store, tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
+    ledger.updateLine('pay', { label: 'Wages' });
+
+    ledger.startEmpty();
+
+    expect(ledger.scenario.lines).toEqual([]);
+    expect(ledger.scenario.accounts).toHaveLength(1);
+    expect(ledger.forecast.opening).toBe(0);
+    expect(ledger.isSample).toBe(false);
+    /* The ledger before it was saved, so it can be restored. */
+    expect(store.saves.some((saved) => saved.lines.some((line) => line.label === 'Wages'))).toBe(true);
+  });
+
   it('goes back to the example on reset', () => {
-    const ledger = createLedgerState(recordingStore(), tinyScenario(), plainDate('2026-09-10'));
+    const ledger = createLedgerState(recordingStore(), tinyScenario(), emptyFixture(), plainDate('2026-09-10'));
     ledger.updateLine('pay', { label: 'Wages' });
     ledger.reset();
     expect(ledger.isSample).toBe(true);

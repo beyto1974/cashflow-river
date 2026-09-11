@@ -201,3 +201,60 @@ test.describe('the first open', () => {
     await expect(page.locator('.verdict').first()).toBeVisible();
   });
 });
+
+test.describe('clearing the example', () => {
+  test('replaces the whole ledger with one empty account and no lines', async ({ page }) => {
+    await openFresh(page);
+    /* Scoped to the ledger panel: the settings sheet has rows of its own. */
+    const lines = page.locator('aside .row');
+    await expect(lines).not.toHaveCount(0);
+
+    await openSettings(page);
+    await page.getByRole('button', { name: 'Clear it and start from nothing' }).click();
+    await page.getByRole('button', { name: 'Clear this ledger' }).click();
+    await page.keyboard.press('Escape');
+
+    await expect(lines).toHaveCount(0);
+    await expect(page.locator('.askline')).toContainText('€0');
+    await expect(page.locator('footer')).not.toContainText('example figures');
+  });
+
+  test('keeps what was there restorable afterwards', async ({ page }) => {
+    await openFresh(page);
+    await setAmount(page, 'Groceries', '222');
+
+    /* Saves inside a minute coalesce, so the version being restored is aged by
+       hand rather than by waiting. */
+    await page.evaluate(() => {
+      const key = [...Array(localStorage.length).keys()]
+        .map((index) => localStorage.key(index) as string)
+        .find((name) => name.startsWith('moraview.history.'));
+      const history = JSON.parse(localStorage.getItem(key as string) as string);
+      history[0].savedAt = new Date(Date.parse(history[0].savedAt) - 10 * 60_000).toISOString();
+      localStorage.setItem(key as string, JSON.stringify(history));
+    });
+
+    await openSettings(page);
+    await page.getByRole('button', { name: 'Clear it and start from nothing' }).click();
+    await page.getByRole('button', { name: 'Clear this ledger' }).click();
+    await expect(page.locator('aside .row')).toHaveCount(0);
+
+    await page.locator('dialog summary', { hasText: 'Earlier versions' }).click();
+    await page.locator('dialog details li', { hasText: 'Version 1' }).getByRole('button', { name: 'Restore' }).click();
+    await page.keyboard.press('Escape');
+
+    await expect(amountOf(page, 'Groceries')).toHaveValue('222.00');
+  });
+
+  test('asks first, and takes no for an answer', async ({ page }) => {
+    await openFresh(page);
+    const rows = await page.locator('aside .row').count();
+
+    await openSettings(page);
+    await page.getByRole('button', { name: 'Clear it and start from nothing' }).click();
+    await page.getByRole('button', { name: 'Keep it' }).click();
+    await page.keyboard.press('Escape');
+
+    await expect(page.locator('aside .row')).toHaveCount(rows);
+  });
+});

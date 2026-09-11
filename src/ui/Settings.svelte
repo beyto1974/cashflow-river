@@ -23,6 +23,7 @@
     onimport: (text: string) => string[];
     isOpen: (panel: string) => boolean;
     setOpen: (panel: string, open: boolean) => void;
+    onempty: () => void;
   }
   const {
     buffer, asOf, horizonMonths, onbuffer, onasof, onhorizon, ...ledgerProps

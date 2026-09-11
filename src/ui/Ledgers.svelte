@@ -16,9 +16,11 @@
     onimport: (text: string) => string[];
     isOpen: (panel: string) => boolean;
     setOpen: (panel: string, open: boolean) => void;
+    onempty: () => void;
   }
   const {
-    names, current, history, onselect, onsaveas, onremove, onrestore, onexport, onimport, isOpen, setOpen
+    names, current, history, onselect, onsaveas, onremove, onrestore, onexport, onimport, isOpen, setOpen,
+    onempty
   }: Props = $props();
 
   let newName = $state('');
@@ -119,6 +121,18 @@
     />
   </div>
 
+  <div class="empty-start">
+    <ConfirmButton
+      label="Clear it and start from nothing"
+      confirm="Clear this ledger"
+      onconfirm={onempty}
+    />
+    <p class="hint">
+      Replaces whatever is in this ledger with one empty account and no lines — the example included. The version
+      before it is kept, so it can be restored.
+    </p>
+  </div>
+
   <form onsubmit={saveAs}>
     <input type="text" bind:value={newName} placeholder="Copy it as… e.g. If Sam goes part time" aria-label="Name for the copy" />
     <button type="submit" class="button ghost">Save a copy</button>
@@ -186,6 +200,9 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px;
+  }
+  .empty-start {
+    margin-top: 10px;
   }
   form {
     display: grid;

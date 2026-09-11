@@ -125,6 +125,7 @@
         onimport={(text) => ledger.importAll(text)}
         isOpen={(panel) => ledger.isOpen(panel)}
         setOpen={(panel, open) => ledger.setOpen(panel, open)}
+        onempty={() => ledger.startEmpty()}
       />
     </div>
   </header>
@@ -162,7 +163,7 @@
     </span>
   </div>
 
-  <p class="sr-only" aria-live="polite">{spokenAnswer}</p>
+  <p class="sr-only" aria-live="polite" data-spoken="answer">{spokenAnswer}</p>
 
   <p class="verdict" data-tone={ledger.summary.tone} tabindex="-1" bind:this={verdictEl}>
     {ledger.summary.sentence}
