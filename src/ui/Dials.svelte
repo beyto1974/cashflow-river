@@ -1,17 +1,14 @@
 <script lang="ts">
-  import { formatSigned } from '../domain/money';
-  import type { Rhythm } from '../domain/rollups';
   import type { WhatIf } from '../domain/whatIf';
 
   interface Props {
     dials: WhatIf;
     touched: boolean;
-    rhythm: Rhythm;
     onset: (dial: keyof WhatIf, value: number) => void;
     onreset: () => void;
     onkeep: () => void;
   }
-  const { dials, touched, rhythm, onset, onreset, onkeep }: Props = $props();
+  const { dials, touched, onset, onreset, onkeep }: Props = $props();
 
   const SLIDERS: { key: keyof WhatIf; label: string; min: number; max: number }[] = [
     { key: 'income', label: 'Everything coming in', min: 60, max: 130 },
@@ -57,11 +54,7 @@
   }
 </script>
 
-<section class="group no-print">
-  <div class="head">
-    <h2>What if…</h2>
-    <span class="rhythm mono">{formatSigned(rhythm.net, { cents: false })} / month</span>
-  </div>
+<div class="no-print">
   <p class="hint">These dials sit over your ledger without changing it. The lines on the left stay as you typed them.</p>
 
   {#each SLIDERS as slider (slider.key)}
@@ -86,30 +79,9 @@
       <button type="button" class="button" onclick={onkeep}>Keep these figures</button>
     </div>
   {/if}
-</section>
+</div>
 
 <style>
-  .group {
-    border-top: 1px solid var(--ink);
-    padding-top: 8px;
-  }
-  .head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  h2 {
-    font-family: 'Newsreader', Georgia, serif;
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin: 0 0 6px;
-  }
-  .rhythm {
-    font-size: 12.5px;
-    color: var(--ink-2);
-    font-weight: 500;
-  }
   .hint {
     font-size: 11.5px;
     color: var(--ink-3);

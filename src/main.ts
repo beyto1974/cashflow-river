@@ -2,6 +2,7 @@ import './ui/app.css';
 import { mount } from 'svelte';
 import App from './ui/App.svelte';
 import { createLedgerStore } from './persistence/ledgerStore';
+import { createPreferenceStore } from './persistence/preferences';
 import { sampleScenario } from './data/sample';
 import { today } from './domain/dates';
 import { createLedgerState } from './ui/state.svelte';
@@ -14,7 +15,12 @@ const storage = ((): Storage | undefined => {
   }
 })();
 
-const ledger = createLedgerState(createLedgerStore(storage), sampleScenario(today()));
+const ledger = createLedgerState(
+  createLedgerStore(storage),
+  sampleScenario(today()),
+  today(),
+  createPreferenceStore(storage)
+);
 
 export default mount(App, {
   target: document.getElementById('app') as HTMLElement,

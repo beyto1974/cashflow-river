@@ -1,25 +1,18 @@
 <script lang="ts">
-  import { formatEUR, type Cents } from '../domain/money';
   import type { Account } from '../domain/types';
   import AmountInput from './AmountInput.svelte';
   import ConfirmButton from './ConfirmButton.svelte';
 
   interface Props {
     accounts: Account[];
-    opening: Cents;
     onpatch: (id: string, patch: Partial<Account>) => void;
     onadd: () => void;
     onremove: (id: string) => void;
   }
-  const { accounts, opening, onpatch, onadd, onremove }: Props = $props();
+  const { accounts, onpatch, onadd, onremove }: Props = $props();
 </script>
 
-<section>
-  <div class="head">
-    <h2>What you have now</h2>
-    <span class="total mono" title="The accounts counted in the forecast">{formatEUR(opening)}</span>
-  </div>
-
+<div>
   {#each accounts as account (account.id)}
     <div class="account" class:out={!account.inForecast}>
       <input
@@ -58,29 +51,9 @@
   <button type="button" class="button ghost add no-print" onclick={onadd}>Add an account</button>
   <p class="hint no-print">Untick an account to hold it outside the forecast — a savings pot you are not spending from.
     A balance can be negative: type <span class="mono">-320.50</span> for an account in the red.</p>
-</section>
+</div>
 
 <style>
-  section {
-    border-top: 1px solid var(--ink);
-    padding-top: 8px;
-  }
-  .head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  h2 {
-    font-family: 'Newsreader', Georgia, serif;
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin: 0 0 6px;
-  }
-  .total {
-    font-size: 13px;
-    font-weight: 600;
-  }
   .account {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 84px 22px auto;

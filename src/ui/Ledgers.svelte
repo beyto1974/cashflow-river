@@ -96,8 +96,7 @@
   }
 </script>
 
-<section class="group no-print">
-  <h2>Ledgers</h2>
+<div class="no-print">
   <p class="hint">Keep the household's own figures and the variants worth keeping side by side.</p>
 
   <div class="pick">
@@ -166,19 +165,9 @@
       <p class="hint">Restoring saves a new version, so nothing is lost by trying one.</p>
     </details>
   {/if}
-</section>
+</div>
 
 <style>
-  .group {
-    border-top: 1px solid var(--ink);
-    padding-top: 8px;
-  }
-  h2 {
-    font-family: 'Newsreader', Georgia, serif;
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin: 0 0 6px;
-  }
   .hint {
     font-size: 11.5px;
     color: var(--ink-3);

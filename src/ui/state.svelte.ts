@@ -11,6 +11,7 @@ import { freezeScenario } from '../domain/freeze';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { LedgerStore, Revision } from '../persistence/ports';
 import { exportLedgers, importLedgers } from '../persistence/transfer';
+import { DEFAULT_PREFERENCES, type ForecastView, type PreferenceStore } from '../persistence/preferences';
 
 export interface LedgerState {
   readonly scenario: Scenario;
@@ -36,6 +37,11 @@ export interface LedgerState {
   saveLedgerAs(name: string): boolean;
   removeLedger(name: string): void;
   restoreRevision(revision: number): void;
+  /** Which reading of the forecast is on screen, and which sections are folded. */
+  readonly view: ForecastView;
+  setView(view: ForecastView): void;
+  isFolded(section: string): boolean;
+  toggleSection(section: string): void;
   /** Every ledger in this browser, as one JSON file's worth of text. */
   exportAll(): string;
   /** Adds a bundle's ledgers alongside these ones, overwriting nothing. */
@@ -75,7 +81,13 @@ export interface LedgerState {
  * store, and the forecast is derived rather than kept, so nothing can hold a
  * projection that no longer matches the ledger.
  */
-export function createLedgerState(store: LedgerStore, sample: Scenario, now: PlainDate = today()): LedgerState {
+export function createLedgerState(
+  store: LedgerStore,
+  sample: Scenario,
+  now: PlainDate = today(),
+  preferences: PreferenceStore = { load: () => DEFAULT_PREFERENCES, save: () => {} }
+): LedgerState {
+  const saved0 = preferences.load();
   const saved = store.load();
   /* A stored ledger is dated the day it was last saved. Roll it forward so the
      forecast starts today, folding what has happened since into the balance. */
@@ -96,6 +108,12 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
   /* Bumped whenever storage changes under us, so the ledger list and the
      version history are read again rather than cached stale. */
   let storeVersion = $state(0);
+  let view = $state<ForecastView>(saved0.view);
+  let folded = $state<string[]>(saved0.collapsed);
+
+  function rememberView(): void {
+    preferences.save({ view, collapsed: folded });
+  }
 
   /* The dials are a layer: the forecast is of the scenario as dialled, while the
      ledger on screen stays the household's own figures. */
@@ -171,6 +189,19 @@ export function createLedgerState(store: LedgerStore, sample: Scenario, now: Pla
     restoreRevision(revision) {
       const restored = store.restore(revision);
       if (restored) commit(advanceTo(restored, now));
+    },
+
+    get view() { return view; },
+    setView(next) {
+      view = next;
+      rememberView();
+    },
+    isFolded(section) {
+      return folded.includes(section);
+    },
+    toggleSection(section) {
+      folded = folded.includes(section) ? folded.filter((name) => name !== section) : [...folded, section];
+      rememberView();
     },
 
     exportAll() {

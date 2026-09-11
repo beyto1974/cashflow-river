@@ -13,6 +13,7 @@
   import FixPanel from './FixPanel.svelte';
   import Comparison from './Comparison.svelte';
   import ConfirmButton from './ConfirmButton.svelte';
+  import Settings from './Settings.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -29,8 +30,7 @@
   const distance = $derived(distanceFrom(ledger.forecast.asOf, ledger.target));
   const shown = $derived(worstFirst(ledger.summary.likelyStretches, 6));
 
-  /* Two readings of the same projection: the river, and every day as a cell. */
-  let view = $state<'river' | 'grid'>('river');
+
 
   /** A date outside the horizon is clamped, so the field is rewritten to match. */
   function pickDate(event: Event): void {
@@ -74,7 +74,20 @@
       {ledger.ledgerName} · forecast from {longDate(ledger.forecast.asOf)}, {ledger.scenario.horizonMonths} months
       ahead · buffer {formatEUR(ledger.forecast.buffer, { cents: false })}
     </p>
-    <button type="button" class="button ghost print no-print" onclick={() => window.print()}>Print this</button>
+    <div class="tools no-print">
+      <button type="button" class="button ghost" onclick={() => window.print()}>Print this</button>
+      <Settings
+        names={ledger.ledgerNames}
+        current={ledger.ledgerName}
+        history={ledger.history}
+        onselect={(name) => ledger.selectLedger(name)}
+        onsaveas={(name) => ledger.saveLedgerAs(name)}
+        onremove={(name) => ledger.removeLedger(name)}
+        onrestore={(revision) => ledger.restoreRevision(revision)}
+        onexport={() => ledger.exportAll()}
+        onimport={(text) => ledger.importAll(text)}
+      />
+    </div>
   </header>
 
   <div class="askline">
@@ -147,15 +160,25 @@
 
     <main>
       <div class="views no-print" role="group" aria-label="How to read the forecast">
-        <button type="button" class:on={view === 'river'} aria-pressed={view === 'river'} onclick={() => (view = 'river')}>
+        <button
+          type="button"
+          class:on={ledger.view === 'river'}
+          aria-pressed={ledger.view === 'river'}
+          onclick={() => ledger.setView('river')}
+        >
           River
         </button>
-        <button type="button" class:on={view === 'grid'} aria-pressed={view === 'grid'} onclick={() => (view = 'grid')}>
+        <button
+          type="button"
+          class:on={ledger.view === 'grid'}
+          aria-pressed={ledger.view === 'grid'}
+          onclick={() => ledger.setView('grid')}
+        >
           Grid
         </button>
       </div>
 
-      {#if view === 'grid'}
+      {#if ledger.view === 'grid'}
         <GridChart forecast={ledger.forecast} target={ledger.target} onpick={(date) => ledger.setTarget(date)} />
       {:else}
       <RiverChart
@@ -245,7 +268,10 @@
     font-size: 12px;
     margin: 0;
   }
-  .print {
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     align-self: flex-end;
   }
   .stand {
