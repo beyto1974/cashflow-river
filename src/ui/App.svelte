@@ -10,6 +10,7 @@
   import MonthDetail from './MonthDetail.svelte';
   import MonthTable from './MonthTable.svelte';
   import FixPanel from './FixPanel.svelte';
+  import Comparison from './Comparison.svelte';
 
   interface Props {
     ledger: LedgerState;
@@ -136,6 +137,12 @@
           <span><i class="red-key"></i>overdrawn</span>
         {/if}
       </div>
+
+      <Comparison
+        comparison={ledger.comparison}
+        onpin={() => ledger.pinBaseline()}
+        onclear={() => ledger.clearBaseline()}
+      />
 
       <MonthDetail month={selected} monthName={longMonth(selected.month)} />
       <MonthTable months={ledger.months} monthName={shortMonth} />

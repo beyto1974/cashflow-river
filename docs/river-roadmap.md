@@ -78,8 +78,12 @@ that reads it.
    transfers to savings — with "keep these figures" to write them in and "put
    the dials back" to throw them away. The needle drags along the bed panel, so
    any day can be read without going near the date field.
-10. **Compare two rivers.** Baseline against a variant (solar panels in June,
-    car sold, one salary drops): two beds overlaid, a per-month delta strip.
+10. **Compare two rivers.** *(done)* Pin the ledger as a baseline, change
+    anything — a line, a dial, a date — and the two are compared: one line on
+    what it did to the end of the forecast and to the tightest point, plus a
+    per-month strip of where each month now ends against the baseline.
+
+## M3 — Answer "so what" — **done**
 
 ## M4 — Keep it, share it
 

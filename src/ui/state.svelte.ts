@@ -5,6 +5,7 @@ import { byMonth, monthlyRhythm, type MonthSummary, type Rhythm } from '../domai
 import { summarise, type Summary } from '../domain/summary';
 import { applyChange, suggestFixes, type Fix } from '../domain/fixes';
 import { applyWhatIf, isNeutral, NEUTRAL, type WhatIf } from '../domain/whatIf';
+import { compare, type Comparison } from '../domain/comparison';
 import { advanceTo, applyPatch, switchKind } from '../domain/scenarioOps';
 import type { Account, Line, LinePatch, Scenario } from '../domain/types';
 import type { ScenarioStore } from '../persistence/ports';
@@ -25,6 +26,11 @@ export interface LedgerState {
   resetDials(): void;
   /** Writes the dials into the ledger as real edits. */
   keepDials(): void;
+  /** The pinned baseline to compare against, and the comparison itself. */
+  readonly baseline: Scenario | null;
+  readonly comparison: Comparison | null;
+  pinBaseline(): void;
+  clearBaseline(): void;
   readonly target: PlainDate;
   readonly selectedMonth: MonthKey;
   readonly editing: string | null;
@@ -67,6 +73,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   let selected = $state<MonthKey | null>(null);
   let editing = $state<string | null>(null);
   let dials = $state<WhatIf>({ ...NEUTRAL });
+  let baseline = $state<Scenario | null>(null);
 
   /* The dials are a layer: the forecast is of the scenario as dialled, while the
      ledger on screen stays the household's own figures. */
@@ -76,6 +83,7 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
   const months = $derived(byMonth(forecast));
   const rhythm = $derived(monthlyRhythm(dialled));
   const summary = $derived(summarise(banded, scenario.buffer, target));
+  const comparison = $derived(baseline ? compare(baseline, dialled) : null);
 
   function commit(next: Scenario): void {
     scenario = next;
@@ -95,6 +103,15 @@ export function createLedgerState(store: ScenarioStore, sample: Scenario, now: P
     get rhythm() { return rhythm; },
     get summary() { return summary; },
     get dials() { return dials; },
+    get baseline() { return baseline; },
+    get comparison() { return comparison; },
+
+    pinBaseline() {
+      baseline = dialled;
+    },
+    clearBaseline() {
+      baseline = null;
+    },
     get dialsTouched() { return !isNeutral(dials); },
 
     setDial(dial, value) {
